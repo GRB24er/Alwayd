@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import styles from "./landing.module.css";
 
@@ -13,7 +12,7 @@ export default function LandingPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowModal(true), 2000);
+    const timer = setTimeout(() => setShowModal(true), 2500);
     
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
@@ -26,94 +25,119 @@ export default function LandingPage() {
     };
   }, []);
 
-  const accountTypes = [
-    {
-      title: "Personal Banking",
-      icon: "👤",
-      items: ["Checking Accounts", "Savings Accounts", "Credit Cards", "Personal Loans"]
-    },
-    {
-      title: "Business Banking", 
-      icon: "💼",
-      items: ["Business Checking", "Business Savings", "Business Loans", "Merchant Services"]
-    },
-    {
-      title: "Wealth Management",
-      icon: "📈", 
-      items: ["Investment Advisory", "Retirement Planning", "Trust Services", "Private Banking"]
-    }
-  ];
-
   const products = [
     {
-      icon: "💳",
-      title: "Checking Accounts",
-      description: "Simple, secure checking with mobile banking and fraud protection"
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:'40px',height:'40px'}}>
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <path d="M2 10h20"/>
+        </svg>
+      ),
+      title: "Premier Checking",
+      description: "Elite checking with unlimited transfers, premium rates, and dedicated concierge support"
     },
     {
-      icon: "💰",
-      title: "Savings Accounts",
-      description: "Competitive rates with flexible access to your money"
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:'40px',height:'40px'}}>
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+      ),
+      title: "High-Yield Savings",
+      description: "Competitive rates with flexible access and compound growth strategies"
     },
     {
-      icon: "🏠",
-      title: "Home Loans",
-      description: "Mortgages and home equity solutions for every stage of life"
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:'40px',height:'40px'}}>
+          <path d="M3 3v18h18"/>
+          <path d="M18 17V9"/>
+          <path d="M13 17V5"/>
+          <path d="M8 17v-3"/>
+        </svg>
+      ),
+      title: "Investment Portfolio",
+      description: "Diversified investment solutions managed by expert advisors"
     },
     {
-      icon: "🎓",
-      title: "Student Banking",
-      description: "Financial tools designed specifically for students"
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:'40px',height:'40px'}}>
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <polyline points="9 12 11 14 15 10"/>
+        </svg>
+      ),
+      title: "Wealth Protection",
+      description: "Trust services and estate planning for generational wealth preservation"
     }
   ];
 
   const features = [
     {
-      image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop",
-      title: "Simplified Checking and Payments",
-      description: "Seamlessly switch banks, manage direct deposit, and streamline your payment methods. Open a checking account today.",
-      cta: "Get Started",
+      image: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&h=400&fit=crop",
+      title: "Private Banking Excellence",
+      description: "Bespoke financial solutions tailored to sophisticated investors. Experience banking designed for your lifestyle.",
+      cta: "Apply Now",
       link: "/auth/signup"
     },
     {
-      image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&h=400&fit=crop",
-      title: "Advanced Security Protection",
-      description: "Two-factor authentication, biometric login, and 24/7 fraud monitoring keep your accounts secure.",
+      image: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=400&fit=crop",
+      title: "Institutional-Grade Security",
+      description: "256-bit encryption, biometric authentication, and 24/7 fraud monitoring protect your assets.",
       cta: "Learn More",
       link: "#security"
     },
     {
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop",
-      title: "Smart Financial Insights",
-      description: "AI-powered analytics and personalized recommendations help you achieve your financial goals.",
-      cta: "Explore Tools",
+      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&h=400&fit=crop",
+      title: "Global Market Access",
+      description: "Multi-currency accounts and international wire transfers with preferential exchange rates.",
+      cta: "Explore",
       link: "#features"
     }
   ];
 
   const services = [
     {
-      icon: "📱",
-      title: "Mobile & Online Banking",
-      description: "Bank from anywhere with our secure mobile app and online platform",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:'40px',height:'40px'}}>
+          <rect x="5" y="2" width="14" height="20" rx="2"/>
+          <path d="M12 18h.01"/>
+        </svg>
+      ),
+      title: "Digital Banking Suite",
+      description: "Full-featured mobile and web platform with real-time portfolio tracking",
       link: "/banking/online"
     },
     {
-      icon: "☎️",
-      title: "Contact Us",
-      description: "Connect with our customer service team by phone, chat, or in person",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:'40px',height:'40px'}}>
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+      ),
+      title: "Private Client Services",
+      description: "Dedicated relationship manager available around the clock",
       link: "/contact"
     },
     {
-      icon: "📍",
-      title: "Find a Branch/ATM",
-      description: "Locate our branches and fee-free ATMs near you",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:'40px',height:'40px'}}>
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+      ),
+      title: "Global Presence",
+      description: "Access your accounts from anywhere with worldwide ATM network",
       link: "/locations"
     },
     {
-      icon: "🤝",
-      title: "Meet with a Banker",
-      description: "Schedule an appointment with a financial advisor",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:'40px',height:'40px'}}>
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      ),
+      title: "Advisory Consultation",
+      description: "Schedule a private consultation with our wealth advisors",
       link: "/appointments"
     }
   ];
@@ -127,36 +151,71 @@ export default function LandingPage() {
             <button className={styles.closeModal} onClick={() => setShowModal(false)}>×</button>
             
             <div className={styles.modalHeader}>
-              <div className={styles.modalIcon}>🎉</div>
-              <h2 className={styles.modalTitle}>Welcome to ZentriBank</h2>
-              <p className={styles.modalSubtitle}>Banking Made Simple</p>
+              <div className={styles.modalIcon}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:'48px',height:'48px',color:'#c9a962'}}>
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <polyline points="9 12 11 14 15 10"/>
+                </svg>
+              </div>
+              <h2 className={styles.modalTitle}>Welcome to Aldwych</h2>
+              <p className={styles.modalSubtitle}>European Capital • Private Banking</p>
             </div>
             
             <div className={styles.modalBody}>
               <div className={styles.welcomeMessage}>
-                <h3>Experience Premium Banking</h3>
+                <h3>Experience Elite Private Banking</h3>
                 <ul className={styles.benefitsList}>
-                  <li>✓ No monthly maintenance fees</li>
-                  <li>✓ Advanced security with 2FA</li>
-                  <li>✓ Real-time transaction alerts</li>
-                  <li>✓ 24/7 customer support</li>
-                  <li>✓ Mobile check deposit</li>
-                  <li>✓ Fee-free ATM access</li>
+                  <li>
+                    <span className={styles.checkIcon}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#c9a962" strokeWidth="2" style={{width:'16px',height:'16px'}}><polyline points="20 6 9 17 4 12"/></svg>
+                    </span>
+                    Dedicated relationship manager
+                  </li>
+                  <li>
+                    <span className={styles.checkIcon}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#c9a962" strokeWidth="2" style={{width:'16px',height:'16px'}}><polyline points="20 6 9 17 4 12"/></svg>
+                    </span>
+                    Institutional-grade security
+                  </li>
+                  <li>
+                    <span className={styles.checkIcon}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#c9a962" strokeWidth="2" style={{width:'16px',height:'16px'}}><polyline points="20 6 9 17 4 12"/></svg>
+                    </span>
+                    Preferential rates & terms
+                  </li>
+                  <li>
+                    <span className={styles.checkIcon}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#c9a962" strokeWidth="2" style={{width:'16px',height:'16px'}}><polyline points="20 6 9 17 4 12"/></svg>
+                    </span>
+                    24/7 concierge support
+                  </li>
+                  <li>
+                    <span className={styles.checkIcon}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#c9a962" strokeWidth="2" style={{width:'16px',height:'16px'}}><polyline points="20 6 9 17 4 12"/></svg>
+                    </span>
+                    Global portfolio access
+                  </li>
+                  <li>
+                    <span className={styles.checkIcon}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="#c9a962" strokeWidth="2" style={{width:'16px',height:'16px'}}><polyline points="20 6 9 17 4 12"/></svg>
+                    </span>
+                    Wealth preservation strategies
+                  </li>
                 </ul>
               </div>
 
               <div className={styles.modalInfo}>
                 <div className={styles.infoItem}>
-                  <strong>Online Banking</strong>
-                  <p>Available 24/7</p>
+                  <strong>Private Banking</strong>
+                  <p>By invitation</p>
                 </div>
                 <div className={styles.infoItem}>
-                  <strong>Customer Support</strong>
-                  <p>Mon-Fri: 8AM-8PM EST</p>
+                  <strong>Concierge</strong>
+                  <p>24/7 Available</p>
                 </div>
                 <div className={styles.infoItem}>
-                  <strong>Mobile App</strong>
-                  <p>iOS & Android</p>
+                  <strong>Global Access</strong>
+                  <p>180+ Countries</p>
                 </div>
               </div>
             </div>
@@ -166,7 +225,7 @@ export default function LandingPage() {
                 setShowModal(false);
                 router.push('/auth/signup');
               }} className={styles.btnModalPrimary}>
-                Open Account Now
+                Apply for Membership
               </button>
               <button onClick={() => setShowModal(false)} className={styles.btnModalSecondary}>
                 Continue Browsing
@@ -182,10 +241,15 @@ export default function LandingPage() {
         <div className={styles.topBar}>
           <div className={styles.container}>
             <div className={styles.topBarContent}>
+              <div className={styles.topBarLeft}>
+                <span className={styles.statusIndicator}>
+                  <span className={styles.statusDot}></span>
+                  All Systems Operational
+                </span>
+              </div>
               <nav className={styles.utilityNav}>
-                <Link href="/es">Español</Link>
-                <Link href="/locations">Find a Branch/ATM</Link>
-                <Link href="/contact">Customer Service</Link>
+                <Link href="/locations">Global Offices</Link>
+                <Link href="/contact">Private Client Services</Link>
               </nav>
             </div>
           </div>
@@ -196,13 +260,10 @@ export default function LandingPage() {
           <div className={styles.container}>
             <div className={styles.headerContent}>
               <Link href="/" className={styles.logo}>
-                <Image
+                <img
                   src="/images/Logo.png"
-                  alt="ZentriBank Logo"
-                  width={240}
-                  height={65}
+                  alt="Aldwych European Capital"
                   className={styles.logoImage}
-                  priority
                 />
               </Link>
 
@@ -212,30 +273,14 @@ export default function LandingPage() {
                   onMouseEnter={() => setActiveNav('personal')}
                   onMouseLeave={() => setActiveNav(null)}
                 >
-                  <button className={styles.navLink}>Personal</button>
+                  <button className={styles.navLink}>Private Banking</button>
                   {activeNav === 'personal' && (
                     <div className={styles.dropdown}>
-                      <Link href="/checking">Checking Accounts</Link>
-                      <Link href="/savings">Savings Accounts</Link>
-                      <Link href="/credit-cards">Credit Cards</Link>
-                      <Link href="/loans">Personal Loans</Link>
-                      <Link href="/mortgages">Home Loans</Link>
-                    </div>
-                  )}
-                </div>
-
-                <div 
-                  className={styles.navItem}
-                  onMouseEnter={() => setActiveNav('business')}
-                  onMouseLeave={() => setActiveNav(null)}
-                >
-                  <button className={styles.navLink}>Business</button>
-                  {activeNav === 'business' && (
-                    <div className={styles.dropdown}>
-                      <Link href="/business/checking">Business Checking</Link>
-                      <Link href="/business/savings">Business Savings</Link>
-                      <Link href="/business/loans">Business Loans</Link>
-                      <Link href="/business/credit-cards">Business Cards</Link>
+                      <Link href="/checking">Premier Checking</Link>
+                      <Link href="/savings">High-Yield Savings</Link>
+                      <Link href="/credit-cards">Elite Cards</Link>
+                      <Link href="/loans">Private Credit</Link>
+                      <Link href="/mortgages">Property Finance</Link>
                     </div>
                   )}
                 </div>
@@ -245,13 +290,29 @@ export default function LandingPage() {
                   onMouseEnter={() => setActiveNav('wealth')}
                   onMouseLeave={() => setActiveNav(null)}
                 >
-                  <button className={styles.navLink}>Wealth</button>
+                  <button className={styles.navLink}>Wealth Management</button>
                   {activeNav === 'wealth' && (
                     <div className={styles.dropdown}>
                       <Link href="/wealth/advisory">Investment Advisory</Link>
                       <Link href="/wealth/retirement">Retirement Planning</Link>
-                      <Link href="/wealth/trust">Trust Services</Link>
-                      <Link href="/wealth/private">Private Banking</Link>
+                      <Link href="/wealth/trust">Trust & Estate</Link>
+                      <Link href="/wealth/private">Family Office</Link>
+                    </div>
+                  )}
+                </div>
+
+                <div 
+                  className={styles.navItem}
+                  onMouseEnter={() => setActiveNav('markets')}
+                  onMouseLeave={() => setActiveNav(null)}
+                >
+                  <button className={styles.navLink}>Markets</button>
+                  {activeNav === 'markets' && (
+                    <div className={styles.dropdown}>
+                      <Link href="/markets/forex">Foreign Exchange</Link>
+                      <Link href="/markets/commodities">Commodities</Link>
+                      <Link href="/markets/fixed-income">Fixed Income</Link>
+                      <Link href="/markets/equities">Equities</Link>
                     </div>
                   )}
                 </div>
@@ -261,20 +322,13 @@ export default function LandingPage() {
 
               <div className={styles.headerActions}>
                 <Link href="/auth/signin" className={styles.btnLogin}>
-                  <span className={styles.lockIcon}>🔒</span>
-                  Log In
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:'16px',height:'16px'}}>
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  Client Portal
                 </Link>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* FDIC Badge */}
-        <div className={styles.fdicBar}>
-          <div className={styles.container}>
-            <div className={styles.fdicBadge}>
-              <span className={styles.fdicIcon}>🏛️</span>
-              <span className={styles.fdicText}>FDIC-Insured - Backed by the full faith and credit of the U.S. Government</span>
             </div>
           </div>
         </div>
@@ -282,33 +336,72 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className={styles.hero}>
+        <div className={styles.heroBackground}>
+          <div className={styles.heroPattern}></div>
+          <div className={styles.heroGlow}></div>
+        </div>
         <div className={styles.container}>
           <div className={styles.heroContent}>
             <div className={styles.heroText}>
+              <div className={styles.heroBadge}>
+                <span>European Private Banking</span>
+              </div>
               <h1 className={styles.heroTitle}>
-                Welcome to simplified checking and payments.
+                <span className={styles.heroHighlight}>Private</span> Banking
+                <br />Excellence
               </h1>
               <p className={styles.heroDescription}>
-                Seamlessly switch banks, manage your direct deposit, and streamline saved payment methods. Open a checking account today.
+                Discreet wealth management for sophisticated investors. 
+                Experience precision-engineered financial solutions designed 
+                for optimal control and performance.
               </p>
               <div className={styles.heroActions}>
                 <Link href="/auth/signup" className={styles.btnPrimary}>
-                  Get Started
+                  Apply for Membership
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:'18px',height:'18px'}}>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <polyline points="12 5 19 12 12 19"/>
+                  </svg>
                 </Link>
-                <Link href="/products" className={styles.btnSecondary}>
-                  Explore Products
+                <Link href="/about" className={styles.btnSecondary}>
+                  Learn More
                 </Link>
               </div>
+              <div className={styles.heroStats}>
+                <div className={styles.stat}>
+                  <span className={styles.statValue}>$48B+</span>
+                  <span className={styles.statLabel}>Assets Under Management</span>
+                </div>
+                <div className={styles.statDivider}></div>
+                <div className={styles.stat}>
+                  <span className={styles.statValue}>180+</span>
+                  <span className={styles.statLabel}>Countries Served</span>
+                </div>
+                <div className={styles.statDivider}></div>
+                <div className={styles.stat}>
+                  <span className={styles.statValue}>1897</span>
+                  <span className={styles.statLabel}>Established</span>
+                </div>
+              </div>
             </div>
-            <div className={styles.heroImage}>
-              <Image
-                src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=600&fit=crop"
-                alt="Modern banking on mobile device"
-                width={600}
-                height={450}
-                className={styles.heroImg}
-                priority
-              />
+            <div className={styles.heroVisual}>
+              <div className={styles.heroCard}>
+                <div className={styles.cardHeader}>
+                  <span className={styles.cardChip}></span>
+                  <span className={styles.cardLogo}>ALDWYCH</span>
+                </div>
+                <div className={styles.cardNumber}>•••• •••• •••• 4589</div>
+                <div className={styles.cardFooter}>
+                  <div>
+                    <span className={styles.cardLabel}>Card Holder</span>
+                    <span className={styles.cardName}>PLATINUM MEMBER</span>
+                  </div>
+                  <div>
+                    <span className={styles.cardLabel}>Valid Thru</span>
+                    <span className={styles.cardName}>12/28</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -332,15 +425,17 @@ export default function LandingPage() {
       {/* Featured Offers */}
       <section className={styles.featuredSection}>
         <div className={styles.container}>
+          <div className={styles.sectionHeader}>
+            <h2>Exceptional Service, Exceptional Results</h2>
+            <p>Discover the Aldwych advantage</p>
+          </div>
           <div className={styles.featuresRow}>
             {features.map((feature, index) => (
               <div key={index} className={styles.featureCard}>
                 <div className={styles.featureImage}>
-                  <Image
+                  <img
                     src={feature.image}
                     alt={feature.title}
-                    width={400}
-                    height={300}
                     className={styles.featImg}
                   />
                 </div>
@@ -348,7 +443,11 @@ export default function LandingPage() {
                   <h3>{feature.title}</h3>
                   <p>{feature.description}</p>
                   <Link href={feature.link} className={styles.featureLink}>
-                    {feature.cta} →
+                    {feature.cta}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:'16px',height:'16px'}}>
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                      <polyline points="12 5 19 12 12 19"/>
+                    </svg>
                   </Link>
                 </div>
               </div>
@@ -362,31 +461,49 @@ export default function LandingPage() {
         <div className={styles.container}>
           <div className={styles.trustGrid}>
             <div className={styles.trustBadge}>
-              <span className={styles.trustIcon}>🏛️</span>
+              <span className={styles.trustIcon}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:'28px',height:'28px'}}>
+                  <path d="M3 21h18M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7H3l2-4h14l2 4M5 21V10.85M19 21V10.85M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4"/>
+                </svg>
+              </span>
               <div>
-                <div className={styles.trustTitle}>FDIC</div>
-                <div className={styles.trustLabel}>Insured</div>
+                <div className={styles.trustTitle}>FCA</div>
+                <div className={styles.trustLabel}>Regulated</div>
               </div>
             </div>
             <div className={styles.trustBadge}>
-              <span className={styles.trustIcon}>🔒</span>
+              <span className={styles.trustIcon}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:'28px',height:'28px'}}>
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+              </span>
               <div>
-                <div className={styles.trustTitle}>256-bit SSL</div>
+                <div className={styles.trustTitle}>256-bit</div>
                 <div className={styles.trustLabel}>Encrypted</div>
               </div>
             </div>
             <div className={styles.trustBadge}>
-              <span className={styles.trustIcon}>✅</span>
+              <span className={styles.trustIcon}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:'28px',height:'28px'}}>
+                  <polyline points="9 11 12 14 22 4"/>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+              </span>
               <div>
                 <div className={styles.trustTitle}>SOC 2</div>
                 <div className={styles.trustLabel}>Compliant</div>
               </div>
             </div>
             <div className={styles.trustBadge}>
-              <span className={styles.trustIcon}>💳</span>
+              <span className={styles.trustIcon}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{width:'28px',height:'28px'}}>
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </span>
               <div>
-                <div className={styles.trustTitle}>PCI DSS</div>
-                <div className={styles.trustLabel}>Certified</div>
+                <div className={styles.trustTitle}>24/7</div>
+                <div className={styles.trustLabel}>Support</div>
               </div>
             </div>
           </div>
@@ -397,7 +514,8 @@ export default function LandingPage() {
       <section className={styles.servicesSection}>
         <div className={styles.container}>
           <div className={styles.sectionHeader}>
-            <h2>Customer service at your fingertips</h2>
+            <h2>White-Glove Service</h2>
+            <p>Concierge banking at your fingertips</p>
           </div>
           <div className={styles.servicesGrid}>
             {services.map((service, index) => (
@@ -406,7 +524,11 @@ export default function LandingPage() {
                 <h3>{service.title}</h3>
                 <p>{service.description}</p>
                 <Link href={service.link} className={styles.serviceLink}>
-                  Learn More →
+                  Learn More
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{width:'14px',height:'14px'}}>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                    <polyline points="12 5 19 12 12 19"/>
+                  </svg>
                 </Link>
               </div>
             ))}
@@ -418,14 +540,14 @@ export default function LandingPage() {
       <section className={styles.ctaSection}>
         <div className={styles.container}>
           <div className={styles.ctaContent}>
-            <h2>Ready to Start Your Financial Journey?</h2>
-            <p>Join thousands of satisfied customers who trust ZentriBank</p>
+            <h2>Ready to Experience Elite Banking?</h2>
+            <p>Join a select group of clients who demand excellence</p>
             <div className={styles.ctaActions}>
               <Link href="/auth/signup" className={styles.btnCtaPrimary}>
-                Open Your Account
+                Apply for Membership
               </Link>
               <Link href="/contact" className={styles.btnCtaSecondary}>
-                Contact Us
+                Schedule Consultation
               </Link>
             </div>
           </div>
@@ -438,53 +560,63 @@ export default function LandingPage() {
           <div className={styles.footerMain}>
             <div className={styles.footerBrand}>
               <div className={styles.footerLogo}>
-                <Image
+                <img
                   src="/images/Logo.png"
-                  alt="ZentriBank Logo"
-                  width={220}
-                  height={60}
+                  alt="Aldwych European Capital"
                   className={styles.footerLogoImage}
                 />
               </div>
               <p className={styles.footerTagline}>
-                Your trusted partner in financial services
+                European Private Banking Excellence Since 1897
               </p>
+              <div className={styles.footerSocial}>
+                <a href="#" aria-label="LinkedIn">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style={{width:'20px',height:'20px'}}>
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                  </svg>
+                </a>
+                <a href="#" aria-label="Twitter">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style={{width:'20px',height:'20px'}}>
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            <div className={styles.footerColumn}>
+              <h4>Private Banking</h4>
+              <Link href="/checking">Premier Checking</Link>
+              <Link href="/savings">High-Yield Savings</Link>
+              <Link href="/credit-cards">Elite Cards</Link>
+              <Link href="/loans">Private Credit</Link>
+            </div>
+
+            <div className={styles.footerColumn}>
+              <h4>Wealth Management</h4>
+              <Link href="/wealth/advisory">Investment Advisory</Link>
+              <Link href="/wealth/retirement">Retirement Planning</Link>
+              <Link href="/wealth/trust">Trust Services</Link>
+              <Link href="/wealth/private">Family Office</Link>
             </div>
 
             <div className={styles.footerColumn}>
               <h4>Company</h4>
               <Link href="/about">About Us</Link>
               <Link href="/careers">Careers</Link>
-              <Link href="/newsroom">Newsroom</Link>
-              <Link href="/community">Community</Link>
-            </div>
-
-            <div className={styles.footerColumn}>
-              <h4>Help</h4>
-              <Link href="/contact">Contact Us</Link>
-              <Link href="/support">Help Center</Link>
-              <Link href="/security">Security Center</Link>
-              <Link href="/accessibility">Accessibility</Link>
-            </div>
-
-            <div className={styles.footerColumn}>
-              <h4>Resources</h4>
-              <Link href="/locations">Branch Locator</Link>
-              <Link href="/education">Financial Education</Link>
-              <Link href="/rates">Rates</Link>
-              <Link href="/forms">Forms & Documents</Link>
+              <Link href="/contact">Contact</Link>
+              <Link href="/security">Security</Link>
             </div>
           </div>
 
           <div className={styles.footerBottom}>
             <div className={styles.footerLinks}>
-              <Link href="/privacy">Privacy Rights</Link>
+              <Link href="/privacy">Privacy Policy</Link>
               <Link href="/terms">Terms of Service</Link>
-              <Link href="/security">Security & Legal</Link>
+              <Link href="/security">Security</Link>
               <Link href="/disclosures">Disclosures</Link>
             </div>
             <div className={styles.footerCopy}>
-              <p>© 2024 ZentriBank. All rights reserved. Member FDIC. Equal Housing Lender.</p>
+              <p>© 2024 Aldwych European Capital. All rights reserved. Authorised and regulated by the Financial Conduct Authority.</p>
             </div>
           </div>
         </div>

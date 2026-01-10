@@ -1,119 +1,158 @@
+/* statement-request.module.css */
+/* Aldwych European Capital - Statement Request */
+
 .wrapper {
   display: flex;
   min-height: 100vh;
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f8f7f5 0%, #faf9f7 100%);
 }
 
 .main {
   flex: 1;
-  margin-left: 280px;
+  margin-left: 300px;
   transition: margin-left 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .content {
-  padding: 40px;
+  padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
+  width: 100%;
+  flex: 1;
 }
 
 .pageHeader {
-  margin-bottom: 40px;
+  margin-bottom: 3rem;
+}
+
+.headerInfo {
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.headerInfo::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #c9a962 0%, #a8935f 100%);
+  border-radius: 2px;
 }
 
 .headerInfo h1 {
-  font-size: 32px;
+  font-size: 2.25rem;
   font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 8px 0;
+  color: #1a1f2e;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.02em;
 }
 
 .headerInfo p {
-  color: #64748b;
-  font-size: 16px;
+  color: #6b7280;
+  font-size: 0.95rem;
   margin: 0;
+  font-weight: 500;
 }
 
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  margin-bottom: 40px;
+  gap: 2rem;
+  margin-bottom: 3rem;
 }
 
 .requestCard,
 .infoCard {
   background: white;
   border-radius: 20px;
-  padding: 32px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  padding: 2.5rem;
+  box-shadow: 0 4px 24px rgba(26, 31, 46, 0.08);
+  border: 1px solid rgba(201, 169, 98, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.requestCard:hover,
+.infoCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(26, 31, 46, 0.12);
 }
 
 .cardHeader {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(201, 169, 98, 0.15);
 }
 
 .cardHeader svg {
-  color: #2563eb;
+  color: #a8935f;
+  flex-shrink: 0;
 }
 
 .cardHeader h2 {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #1a1f2e;
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .cardDescription {
-  color: #64748b;
-  font-size: 15px;
-  margin: 0 0 32px 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin: 0 0 2rem 0;
   line-height: 1.6;
+  font-weight: 500;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 1.5rem;
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .formGroup label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6b7280;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.08em;
 }
 
 .select {
-  padding: 14px 16px;
-  border: 2px solid #e5e7eb;
+  padding: 0.875rem 1rem;
+  border: 2px solid rgba(201, 169, 98, 0.2);
   border-radius: 12px;
-  font-size: 15px;
-  color: #1e293b;
+  font-size: 0.95rem;
+  color: #1a1f2e;
   background: white;
   cursor: pointer;
   transition: all 0.2s;
+  font-weight: 500;
 }
 
 .select:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: #a8935f;
+  box-shadow: 0 0 0 3px rgba(201, 169, 98, 0.1);
 }
 
 .dateRange {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 1rem;
 }
 
 .inputIcon {
@@ -124,70 +163,74 @@
 
 .inputIcon svg {
   position: absolute;
-  left: 16px;
-  color: #94a3b8;
+  left: 1rem;
+  color: #a8935f;
   pointer-events: none;
+  z-index: 1;
 }
 
 .inputIcon input {
   width: 100%;
-  padding: 14px 16px 14px 48px;
-  border: 2px solid #e5e7eb;
+  padding: 0.875rem 1rem 0.875rem 3rem;
+  border: 2px solid rgba(201, 169, 98, 0.2);
   border-radius: 12px;
-  font-size: 15px;
-  color: #1e293b;
+  font-size: 0.95rem;
+  color: #1a1f2e;
   transition: all 0.2s;
+  font-weight: 500;
 }
 
 .inputIcon input:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: #a8935f;
+  box-shadow: 0 0 0 3px rgba(201, 169, 98, 0.1);
 }
 
 .errorMessage {
-  padding: 14px 16px;
-  background: #fee;
-  border: 1px solid #fcc;
-  border-radius: 10px;
-  color: #c00;
-  font-size: 14px;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  color: #dc2626;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
 .successMessage {
-  padding: 14px 16px;
-  background: #d1fae5;
-  border: 1px solid #6ee7b7;
-  border-radius: 10px;
-  color: #065f46;
-  font-size: 14px;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 12px;
+  color: #047857;
+  font-size: 0.875rem;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .requestButton {
-  padding: 16px 24px;
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-  color: white;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #c9a962 0%, #a8935f 100%);
+  color: #1a1f2e;
   border: none;
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(201, 169, 98, 0.3);
+  letter-spacing: 0.05em;
+  margin-top: 1rem;
 }
 
-.requestButton:hover {
+.requestButton:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 8px 20px rgba(201, 169, 98, 0.4);
 }
 
 .requestButton:disabled {
-  background: #cbd5e1;
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
@@ -196,130 +239,142 @@
 .infoHeader {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #f1f5f9;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(201, 169, 98, 0.15);
 }
 
 .infoHeader svg {
-  color: #10b981;
+  color: #a8935f;
+  flex-shrink: 0;
 }
 
 .infoHeader h3 {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #1a1f2e;
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .infoList {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  margin-bottom: 24px;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
 }
 
 .infoItem {
   display: flex;
-  gap: 16px;
+  gap: 1rem;
   align-items: flex-start;
 }
 
 .infoIcon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(201, 169, 98, 0.15) 0%, rgba(201, 169, 98, 0.1) 100%);
+  color: #a8935f;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 0.875rem;
   flex-shrink: 0;
+  border: 1px solid rgba(201, 169, 98, 0.2);
 }
 
 .infoItem strong {
   display: block;
-  font-size: 15px;
+  font-size: 0.95rem;
   font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 4px;
+  color: #1a1f2e;
+  margin-bottom: 0.25rem;
 }
 
 .infoItem p {
-  font-size: 14px;
-  color: #64748b;
+  font-size: 0.875rem;
+  color: #6b7280;
   margin: 0;
   line-height: 1.5;
+  font-weight: 500;
 }
 
 .infoNote {
-  padding: 16px;
-  background: #f8fafc;
-  border-radius: 10px;
-  border-left: 4px solid #2563eb;
-  font-size: 13px;
-  color: #475569;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(201, 169, 98, 0.08) 0%, rgba(201, 169, 98, 0.04) 100%);
+  border-radius: 12px;
+  border-left: 4px solid #a8935f;
+  font-size: 0.875rem;
+  color: #6b7280;
   line-height: 1.6;
 }
 
 .infoNote strong {
-  color: #1e293b;
+  color: #1a1f2e;
+  font-weight: 700;
 }
 
 .quickActions {
   background: white;
   border-radius: 20px;
-  padding: 32px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  padding: 2.5rem;
+  box-shadow: 0 4px 24px rgba(26, 31, 46, 0.08);
+  border: 1px solid rgba(201, 169, 98, 0.15);
 }
 
 .quickActions h3 {
-  font-size: 20px;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 20px 0;
+  color: #1a1f2e;
+  margin: 0 0 1.5rem 0;
+  letter-spacing: -0.01em;
 }
 
 .quickButtons {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 1rem;
 }
 
 .quickBtn {
-  padding: 14px 20px;
-  background: #f8fafc;
-  border: 2px solid #e5e7eb;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(201, 169, 98, 0.08) 0%, rgba(201, 169, 98, 0.04) 100%);
+  border: 2px solid rgba(201, 169, 98, 0.2);
   border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #6b7280;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0.5rem;
+  text-align: center;
 }
 
 .quickBtn:hover {
-  background: white;
-  border-color: #2563eb;
-  color: #2563eb;
+  background: rgba(201, 169, 98, 0.15);
+  border-color: rgba(201, 169, 98, 0.4);
+  color: #1a1f2e;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
 }
 
 .quickBtn svg {
   flex-shrink: 0;
+  color: #a8935f;
 }
 
 @media (max-width: 1200px) {
   .grid {
     grid-template-columns: 1fr;
+  }
+  
+  .quickButtons {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -329,14 +384,40 @@
   }
 
   .content {
-    padding: 20px;
+    padding: 1.5rem;
   }
 
   .dateRange {
     grid-template-columns: 1fr;
   }
+  
+  .requestCard,
+  .infoCard,
+  .quickActions {
+    padding: 2rem;
+  }
+  
+  .headerInfo h1 {
+    font-size: 1.75rem;
+  }
+  
+  .cardHeader h2 {
+    font-size: 1.25rem;
+  }
+}
 
+@media (max-width: 480px) {
+  .content {
+    padding: 1rem;
+  }
+  
   .quickButtons {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+  }
+  
+  .requestCard,
+  .infoCard,
+  .quickActions {
+    padding: 1.5rem;
   }
 }

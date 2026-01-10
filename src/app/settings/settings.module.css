@@ -1,12 +1,15 @@
+/* src/app/settings/settings.module.css */
+/* Aldwych European Capital - Enterprise Settings */
+
 .wrapper {
   display: flex;
   min-height: 100vh;
-  background: #f7f8fa;
+  background: linear-gradient(135deg, #f8f7f5 0%, #faf9f7 100%);
 }
 
 .main {
   flex: 1;
-  margin-left: 230px;
+  margin-left: 300px;
   display: flex;
   flex-direction: column;
 }
@@ -19,44 +22,67 @@
   width: 100%;
 }
 
+/* Page Header */
 .pageHeader {
   margin-bottom: 2rem;
+  position: relative;
+  padding-left: 1rem;
+}
+
+.pageHeader::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #c9a962 0%, #a8935f 100%);
+  border-radius: 2px;
 }
 
 .pageHeader h1 {
   font-size: 2rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #1a1f2e;
   margin: 0 0 0.5rem 0;
+  letter-spacing: -0.02em;
 }
 
 .pageHeader p {
-  color: #64748b;
+  color: #6b7280;
   font-size: 0.95rem;
   margin: 0;
 }
 
+/* Success Message */
 .successMessage {
-  background: #dcfce7;
-  color: #16a34a;
-  padding: 1rem;
-  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+  color: #047857;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
   margin-bottom: 1.5rem;
   font-weight: 600;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
+/* Settings Container */
 .settingsContainer {
   display: grid;
-  grid-template-columns: 250px 1fr;
+  grid-template-columns: 260px 1fr;
   gap: 2rem;
 }
 
+/* Settings Tabs */
 .settingsTabs {
   background: white;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 1rem;
   height: fit-content;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(201, 169, 98, 0.15);
+  box-shadow: 0 4px 16px rgba(26, 31, 46, 0.06);
 }
 
 .settingsTabs button {
@@ -67,38 +93,62 @@
   padding: 0.875rem 1rem;
   background: transparent;
   border: none;
-  color: #64748b;
+  color: #6b7280;
   font-weight: 500;
   text-align: left;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 0.25rem;
+  font-size: 0.9375rem;
 }
 
 .settingsTabs button:hover {
-  background: #f8fafc;
+  background: rgba(201, 169, 98, 0.08);
+  color: #1a1f2e;
+}
+
+.settingsTabs button span {
+  font-size: 1.125rem;
 }
 
 .settingsTabs button.activeTab {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
+  background: linear-gradient(135deg, #c9a962 0%, #a8935f 100%);
+  color: #1a1f2e;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(201, 169, 98, 0.3);
 }
 
+/* Settings Content */
 .settingsContent {
   background: white;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 2rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(201, 169, 98, 0.15);
+  box-shadow: 0 4px 24px rgba(26, 31, 46, 0.08);
 }
 
 .settingsContent h2 {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #1a1f2e;
   margin: 0 0 2rem 0;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid rgba(201, 169, 98, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
+.settingsContent h2::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(180deg, #c9a962 0%, #a8935f 100%);
+  border-radius: 2px;
+}
+
+/* Settings Form */
 .settingsForm {
   display: flex;
   flex-direction: column;
@@ -118,90 +168,119 @@
 }
 
 .formGroup label {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: #374151;
+  color: #1a1f2e;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .formGroup input {
-  padding: 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  border: 2px solid rgba(201, 169, 98, 0.15);
+  border-radius: 10px;
   font-size: 0.95rem;
-  transition: all 0.2s;
+  color: #1a1f2e;
+  background: white;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.formGroup input::placeholder {
+  color: #9ca3af;
 }
 
 .formGroup input:focus {
-  outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: #c9a962;
+  box-shadow: 0 0 0 3px rgba(201, 169, 98, 0.1);
 }
 
+/* Save Button */
 .saveBtn {
   align-self: flex-start;
   padding: 0.875rem 2rem;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
+  background: linear-gradient(135deg, #c9a962 0%, #a8935f 100%);
+  color: #1a1f2e;
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
+  border-radius: 10px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(201, 169, 98, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-size: 0.875rem;
 }
 
 .saveBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 6px 20px rgba(201, 169, 98, 0.4);
+}
+
+.saveBtn:active {
+  transform: translateY(0);
 }
 
 /* Security Settings */
-.securityOptions {
+.securityOptions,
+.notificationOptions {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 
-.securityItem {
+.securityItem,
+.notificationItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
-  background: #f8fafc;
-  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #faf9f7 0%, #f5f4f2 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(201, 169, 98, 0.1);
+  transition: all 0.2s;
 }
 
-.securityItem h3 {
+.securityItem:hover,
+.notificationItem:hover {
+  border-color: rgba(201, 169, 98, 0.3);
+}
+
+.securityItem h3,
+.notificationItem h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #0f172a;
+  color: #1a1f2e;
   margin: 0 0 0.25rem 0;
 }
 
-.securityItem p {
+.securityItem p,
+.notificationItem p {
   font-size: 0.875rem;
-  color: #64748b;
+  color: #6b7280;
   margin: 0;
 }
 
+/* Password Section */
 .passwordSection {
   padding-top: 2rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 2px solid rgba(201, 169, 98, 0.15);
 }
 
 .passwordSection h3 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #0f172a;
+  color: #1a1f2e;
   margin: 0 0 1.5rem 0;
 }
 
-/* Toggle Switch */
+/* Toggle Switch - Aldwych Gold */
 .switch {
   position: relative;
   display: inline-block;
-  width: 50px;
-  height: 26px;
+  width: 52px;
+  height: 28px;
 }
 
 .switch input {
@@ -217,80 +296,50 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #cbd5e1;
-  transition: 0.4s;
-  border-radius: 34px;
+  background-color: #d1d5db;
+  transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 28px;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 20px;
-  width: 20px;
+  height: 22px;
+  width: 22px;
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: 0.4s;
+  transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .switch input:checked + .slider {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #c9a962 0%, #a8935f 100%);
 }
 
 .switch input:checked + .slider:before {
   transform: translateX(24px);
 }
 
-/* Notification Settings */
-.notificationOptions {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.notificationItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  background: #f8fafc;
-  border-radius: 10px;
-}
-
-.notificationItem h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #0f172a;
-  margin: 0 0 0.25rem 0;
-}
-
-.notificationItem p {
-  font-size: 0.875rem;
-  color: #64748b;
-  margin: 0;
-}
-
-/* Profile Settings */
-.profileSettings {
-  display: flex;
-  flex-direction: column;
-}
-
-.securitySettings {
-  display: flex;
-  flex-direction: column;
-}
-
+/* Profile/Security/Notification Settings Containers */
+.profileSettings,
+.securitySettings,
 .notificationSettings {
   display: flex;
   flex-direction: column;
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .main {
     margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding: 1rem;
   }
   
   .settingsContainer {
@@ -300,14 +349,35 @@
   .settingsTabs {
     display: flex;
     overflow-x: auto;
-    padding: 0.5rem;
+    padding: 0.75rem;
+    gap: 0.5rem;
   }
   
   .settingsTabs button {
-    min-width: 120px;
+    min-width: fit-content;
+    white-space: nowrap;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0;
   }
   
   .formRow {
     grid-template-columns: 1fr;
+  }
+  
+  .settingsContent {
+    padding: 1.5rem;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .settingsTabs,
+  .saveBtn {
+    display: none;
+  }
+  
+  .settingsContent {
+    box-shadow: none;
+    border: 1px solid #ccc;
   }
 }

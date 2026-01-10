@@ -1,20 +1,24 @@
 /* savings.module.css */
+/* Aldwych European Capital - Luxury Savings */
+
 .wrapper {
   display: flex;
   min-height: 100vh;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f8f7f5 0%, #faf9f7 100%);
 }
 
 .mainContent {
   flex: 1;
-  margin-left: 280px;
+  margin-left: 300px;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Hero Section */
 .hero {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #1a1f2e 0%, #2d3748 100%);
   padding: 5rem 2rem;
 }
 
@@ -34,13 +38,16 @@
   font-weight: 800;
   margin-bottom: 1.5rem;
   line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 .highlight {
-  background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+  background: linear-gradient(135deg, #c9a962 0%, #a8935f 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  position: relative;
+  z-index: 1;
 }
 
 .heroSubtitle {
@@ -50,6 +57,8 @@
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+  font-weight: 400;
+  line-height: 1.6;
 }
 
 .heroStats {
@@ -57,6 +66,7 @@
   justify-content: center;
   gap: 4rem;
   margin-bottom: 3rem;
+  flex-wrap: wrap;
 }
 
 .stat {
@@ -69,6 +79,7 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
+  font-feature-settings: "tnum";
 }
 
 .statLabel {
@@ -76,29 +87,31 @@
   opacity: 0.9;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  font-weight: 600;
 }
 
 .ctaButton {
   padding: 1.25rem 2.5rem;
-  background: white;
-  color: #059669;
+  background: linear-gradient(135deg, #c9a962 0%, #a8935f 100%);
+  color: #1a1f2e;
   border: none;
   border-radius: 12px;
   font-size: 1.125rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 10px 30px rgba(201, 169, 98, 0.3);
+  letter-spacing: 0.05em;
 }
 
 .ctaButton:hover {
   transform: translateY(-3px);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+  box-shadow: 0 15px 40px rgba(201, 169, 98, 0.4);
 }
 
 /* Calculator Section */
 .calculator {
-  padding: 4rem 2rem;
+  padding: 5rem 2rem;
   max-width: 1000px;
   margin: 0 auto;
 }
@@ -108,45 +121,65 @@
   font-weight: 700;
   text-align: center;
   margin-bottom: 3rem;
-  color: #0f172a;
+  color: #1a1f2e;
+  letter-spacing: -0.01em;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.sectionTitle::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(135deg, #c9a962 0%, #a8935f 100%);
+  border-radius: 2px;
 }
 
 .calculatorCard {
   background: white;
   border-radius: 20px;
-  padding: 2.5rem;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+  padding: 3rem;
+  box-shadow: 0 10px 40px rgba(26, 31, 46, 0.1);
+  border: 1px solid rgba(201, 169, 98, 0.15);
 }
 
 .calculatorInputs {
   display: grid;
-  gap: 2rem;
+  gap: 2.5rem;
   margin-bottom: 3rem;
 }
 
 .inputGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .inputGroup label {
-  font-weight: 600;
-  color: #475569;
+  font-weight: 700;
+  color: #6b7280;
   font-size: 0.875rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .inputGroup input[type="range"] {
   width: 100%;
-  height: 6px;
-  background: #e2e8f0;
-  border-radius: 3px;
+  height: 8px;
+  background: linear-gradient(135deg, rgba(201, 169, 98, 0.1) 0%, rgba(201, 169, 98, 0.05) 100%);
+  border-radius: 4px;
   outline: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  appearance: none; /* Fixed: Added standard property */
+  appearance: none;
+  border: 1px solid rgba(201, 169, 98, 0.2);
 }
 
 .inputGroup input[type="range"]::-webkit-slider-thumb {
@@ -154,90 +187,98 @@
   appearance: none;
   width: 24px;
   height: 24px;
-  background: #10b981;
+  background: linear-gradient(135deg, #c9a962 0%, #a8935f 100%);
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(201, 169, 98, 0.4);
+  border: 2px solid white;
 }
 
 .inputGroup input[type="range"]::-moz-range-thumb {
   width: 24px;
   height: 24px;
-  background: #10b981;
+  background: linear-gradient(135deg, #c9a962 0%, #a8935f 100%);
   border-radius: 50%;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  border: none;
+  box-shadow: 0 4px 12px rgba(201, 169, 98, 0.4);
+  border: 2px solid white;
 }
 
 .inputValue {
   font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
+  font-weight: 800;
+  color: #1a1f2e;
+  font-feature-settings: "tnum";
 }
 
 .rateSelect {
-  padding: 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  border: 2px solid rgba(201, 169, 98, 0.2);
+  border-radius: 12px;
   font-size: 1rem;
-  color: #0f172a;
+  color: #1a1f2e;
   cursor: pointer;
-  transition: border-color 0.3s;
+  transition: all 0.2s;
   -webkit-appearance: none;
   -moz-appearance: none;
-  appearance: none; /* Fixed: Added standard property */
+  appearance: none;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-position: right 1rem center;
+  background-position: right 1.5rem center;
   background-size: 1em;
-  padding-right: 2.5rem;
+  padding-right: 3rem;
+  font-weight: 600;
 }
 
 .rateSelect:focus {
-  border-color: #10b981;
+  border-color: #a8935f;
   outline: none;
+  box-shadow: 0 0 0 3px rgba(201, 169, 98, 0.1);
 }
 
 .calculatorResults {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  padding: 2rem;
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  gap: 2.5rem;
+  padding: 2.5rem;
+  background: linear-gradient(135deg, rgba(201, 169, 98, 0.08) 0%, rgba(201, 169, 98, 0.04) 100%);
   border-radius: 16px;
+  border: 1px solid rgba(201, 169, 98, 0.15);
 }
 
 .resultCard {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  text-align: center;
 }
 
 .resultLabel {
   font-size: 0.875rem;
-  color: #64748b;
+  color: #6b7280;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  font-weight: 700;
 }
 
 .resultValue {
   font-size: 2rem;
-  font-weight: 700;
-  color: #059669;
+  font-weight: 800;
+  color: #047857;
+  font-feature-settings: "tnum";
 }
 
 /* Account Types */
 .accountTypes {
-  padding: 4rem 2rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  padding: 5rem 2rem;
+  background: linear-gradient(135deg, #f8f7f5 0%, #ffffff 100%);
 }
 
 .accountsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 2rem;
+  gap: 2.5rem;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -245,16 +286,34 @@
 .accountCard {
   background: white;
   border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-  border: 1px solid #e5e7eb;
-  transition: all 0.3s;
+  padding: 2.5rem;
+  box-shadow: 0 4px 24px rgba(26, 31, 46, 0.08);
+  border: 1px solid rgba(201, 169, 98, 0.15);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .accountCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-  border-color: #10b981;
+  transform: translateY(-8px);
+  box-shadow: 0 16px 40px rgba(26, 31, 46, 0.15);
+  border-color: #a8935f;
+}
+
+.accountCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #c9a962 0%, #a8935f 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.accountCard:hover::before {
+  opacity: 1;
 }
 
 .accountHeader {
@@ -262,23 +321,26 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(201, 169, 98, 0.15);
 }
 
 .accountHeader h3 {
   font-size: 1.5rem;
-  color: #0f172a;
+  font-weight: 700;
+  color: #1a1f2e;
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .apyBadge {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #c9a962 0%, #a8935f 100%);
+  color: #1a1f2e;
+  padding: 0.5rem 1.25rem;
   border-radius: 20px;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.875rem;
+  box-shadow: 0 4px 12px rgba(201, 169, 98, 0.3);
 }
 
 .accountDetails {
@@ -291,19 +353,29 @@
 .detailRow {
   display: flex;
   justify-content: space-between;
-  color: #64748b;
+  align-items: center;
+  color: #6b7280;
   font-size: 0.95rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(201, 169, 98, 0.08);
+}
+
+.detailRow:last-child {
+  border-bottom: none;
 }
 
 .detailRow strong {
-  color: #0f172a;
+  color: #1a1f2e;
   font-weight: 600;
 }
 
 .accountFeatures h4 {
   font-size: 1rem;
-  color: #475569;
+  color: #6b7280;
   margin-bottom: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .accountFeatures ul {
@@ -316,74 +388,107 @@
   padding: 0.5rem 0;
   padding-left: 1.5rem;
   position: relative;
-  color: #64748b;
+  color: #4b5563;
   font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .accountFeatures li::before {
   content: '✓';
   position: absolute;
   left: 0;
-  color: #10b981;
+  color: #a8935f;
   font-weight: 700;
 }
 
 .accountCTA {
   width: 100%;
-  padding: 1rem;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #c9a962 0%, #a8935f 100%);
+  color: #1a1f2e;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(201, 169, 98, 0.3);
+  letter-spacing: 0.05em;
 }
 
 .accountCTA:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 8px 20px rgba(201, 169, 98, 0.4);
 }
 
 /* Benefits Section */
 .benefits {
-  padding: 4rem 2rem;
+  padding: 5rem 2rem;
+  background: linear-gradient(135deg, #1a1f2e 0%, #2d3748 100%);
+}
+
+.benefits .sectionTitle {
+  color: white;
 }
 
 .benefitsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
+  gap: 2.5rem;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .benefitItem {
   text-align: center;
-  padding: 2rem;
+  padding: 2.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  border: 1px solid rgba(201, 169, 98, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.benefitItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-4px);
+  border-color: rgba(201, 169, 98, 0.4);
 }
 
 .benefitIcon {
   font-size: 3rem;
   margin-bottom: 1rem;
+  color: #a8935f;
 }
 
 .benefitItem h3 {
   font-size: 1.25rem;
-  color: #0f172a;
+  color: white;
   margin-bottom: 0.75rem;
+  font-weight: 700;
 }
 
 .benefitItem p {
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.8);
   line-height: 1.6;
+  font-size: 0.95rem;
 }
 
 /* Responsive */
 @media (max-width: 1024px) {
   .mainContent {
     margin-left: 0;
+  }
+  
+  .heroTitle {
+    font-size: 2.75rem;
+  }
+  
+  .heroStats {
+    gap: 3rem;
+  }
+  
+  .accountsGrid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -403,5 +508,35 @@
   
   .accountsGrid {
     grid-template-columns: 1fr;
+  }
+  
+  .calculatorCard,
+  .accountCard {
+    padding: 2rem;
+  }
+  
+  .benefitItem {
+    padding: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 3rem 1.5rem;
+  }
+  
+  .calculator,
+  .accountTypes,
+  .benefits {
+    padding: 3rem 1.5rem;
+  }
+  
+  .ctaButton {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+  
+  .sectionTitle {
+    font-size: 2rem;
   }
 }

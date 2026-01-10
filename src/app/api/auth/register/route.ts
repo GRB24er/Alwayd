@@ -147,7 +147,16 @@ export async function POST(request: NextRequest) {
     const accountNumber = generateAccountNumber();
     const routingNumber = generateRoutingNumber();
 
-    // Create user object
+    // Create initial transaction - INCLUDE IN userData, don't push after
+    const initTransaction = {
+      type: 'deposit' as const,
+      amount: 0,
+      description: 'Account opened',
+      date: new Date(),
+      balanceAfter: 0,
+    };
+
+    // Create user object with transactions included
     const userData: any = {
       name: fullName,
       email: userEmail,
@@ -159,12 +168,11 @@ export async function POST(request: NextRequest) {
       investmentBalance: 0,
       accountNumber,
       routingNumber,
-      transactions: [],
+      transactions: [initTransaction], // Include initial transaction here
     };
 
     // Store enhanced profile data if available
     if (isEnhancedForm) {
-      // Add any enhanced data as metadata (you can extend your User model to store this)
       userData.metadata = {
         firstName,
         lastName,
@@ -194,21 +202,9 @@ export async function POST(request: NextRequest) {
       };
     }
 
-    // Create the user
+    // Create the user - transactions already included
     console.log('Creating user:', userEmail);
     const newUser = await User.create(userData);
-
-    // Add initial transaction
-    const initTransaction = {
-      type: 'deposit' as const,
-      amount: 0,
-      description: 'Account opened',
-      date: new Date(),
-      balanceAfter: 0,
-    };
-
-    newUser.transactions.push(initTransaction);
-    await newUser.save();
 
     console.log('User created successfully:', newUser.email);
 

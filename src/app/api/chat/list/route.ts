@@ -6,7 +6,7 @@ import Chat from '@/models/Chat';
 import User from '@/models/User';
 
 const authOptions = {
-  secret: 'b3bc4dcf9055e490cef86fd9647fc8acd61d6bbe07dfb85fb6848bfe7f4f3926',
+  secret: '21b0133285c83665020046259b56217a7a787f1c9dd59fefe496f93dbba6deb2',
 };
 
 const ADMIN_EMAILS = ['admin@horizonbank.com', 'your-email@example.com'];

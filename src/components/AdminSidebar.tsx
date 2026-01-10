@@ -1,4 +1,4 @@
-// src/components/AdminSidebar.tsx
+// src/components/AdminSidebar.tsx - Aldwych European Capital Enhanced
 "use client";
 
 import { useState } from "react";
@@ -112,10 +112,10 @@ export default function AdminSidebar() {
         {/* Logo Section */}
         <div className={styles.logoSection}>
           <div className={styles.logo}>
-            <span className={styles.logoIcon}>🦁</span>
+            <span className={styles.logoIcon}>🏛️</span>
             {!collapsed && (
               <div className={styles.logoText}>
-                <span className={styles.bankName}>ZentriBank</span>
+                <span className={styles.bankName}>Aldwych Capital</span>
                 <span className={styles.bankTagline}>Admin Panel</span>
               </div>
             )}
@@ -131,20 +131,23 @@ export default function AdminSidebar() {
 
         {/* Admin Info Card */}
         {!collapsed && (
-          <div className={styles.quickBalanceCard}>
+          <div className={styles.quickBalanceCard} style={{
+            background: 'linear-gradient(135deg, rgba(201, 169, 98, 0.15) 0%, rgba(168, 147, 95, 0.1) 100%)',
+            borderColor: 'rgba(201, 169, 98, 0.3)'
+          }}>
             <div className={styles.balanceHeader}>
-              <span className={styles.balanceTitle}>Administrator</span>
+              <span className={styles.balanceTitle} style={{ color: '#c9a962' }}>Administrator</span>
               <span style={{ fontSize: '1.25rem' }}>⚡</span>
             </div>
             <div style={{
               marginTop: '0.75rem',
               paddingTop: '0.75rem',
-              borderTop: '1px solid rgba(255,255,255,0.1)',
+              borderTop: '1px solid rgba(201, 169, 98, 0.2)',
               fontSize: '0.875rem',
-              color: '#cbd5e1'
+              color: '#6b7280'
             }}>
               <div style={{ marginBottom: '0.5rem' }}>
-                <strong style={{ color: '#fff' }}>{session?.user?.name || 'Admin'}</strong>
+                <strong style={{ color: '#1a1f2e' }}>{session?.user?.name || 'Admin'}</strong>
               </div>
               <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>
                 {session?.user?.email}
@@ -170,7 +173,10 @@ export default function AdminSidebar() {
                       <>
                         <span className={styles.navLabel}>{item.label}</span>
                         {item.badge && item.badge > 0 && (
-                          <span className={styles.navBadge}>{item.badge}</span>
+                          <span className={styles.navBadge} style={{
+                            background: '#c9a962',
+                            color: '#1a1f2e'
+                          }}>{item.badge}</span>
                         )}
                       </>
                     )}
@@ -185,23 +191,23 @@ export default function AdminSidebar() {
         {!collapsed && (
           <div className={styles.bottomSection}>
             <div className={styles.securityStatus} style={{ 
-              background: 'rgba(239, 68, 68, 0.1)',
-              borderColor: 'rgba(239, 68, 68, 0.3)'
+              background: 'rgba(239, 68, 68, 0.08)',
+              borderColor: 'rgba(239, 68, 68, 0.2)'
             }}>
               <span className={styles.securityIcon}>🛡️</span>
               <div className={styles.securityText}>
-                <span className={styles.securityLabel} style={{ color: '#fca5a5' }}>
+                <span className={styles.securityLabel} style={{ color: '#ef4444' }}>
                   Admin Mode
                 </span>
-                <span className={styles.securityDetail} style={{ color: '#fecaca' }}>
+                <span className={styles.securityDetail} style={{ color: '#fca5a5' }}>
                   Full Access
                 </span>
               </div>
             </div>
             
             <div className={styles.lastLogin}>
-              <span className={styles.lastLoginLabel}>Current Time</span>
-              <span className={styles.lastLoginTime}>
+              <span className={styles.lastLoginLabel} style={{ color: '#6b7280' }}>Current Time</span>
+              <span className={styles.lastLoginTime} style={{ color: '#1a1f2e' }}>
                 {new Date().toLocaleString('en-US', { 
                   hour: '2-digit', 
                   minute: '2-digit',

@@ -36,6 +36,73 @@ interface DashboardResponse {
   error?: string;
 }
 
+// Icons
+const Icons = {
+  transfer: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12"/>
+      <polyline points="12 5 19 12 12 19"/>
+    </svg>
+  ),
+  bills: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+    </svg>
+  ),
+  deposit: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <polyline points="19 12 12 19 5 12"/>
+    </svg>
+  ),
+  analytics: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"/>
+      <line x1="12" y1="20" x2="12" y2="4"/>
+      <line x1="6" y1="20" x2="6" y2="14"/>
+    </svg>
+  ),
+  shield: (
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
+    </svg>
+  ),
+  checking: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="1" y="4" width="22" height="16" rx="2"/>
+      <line x1="1" y1="10" x2="23" y2="10"/>
+    </svg>
+  ),
+  savings: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/>
+      <path d="M3 21h18"/>
+      <path d="M12 7v4"/>
+      <path d="M10 9h4"/>
+    </svg>
+  ),
+  investment: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+      <polyline points="17 6 23 6 23 12"/>
+    </svg>
+  ),
+  activity: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+    </svg>
+  ),
+  arrowRight: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="5" y1="12" x2="19" y2="12"/>
+      <polyline points="12 5 19 12 12 19"/>
+    </svg>
+  )
+};
+
 export default function DashboardPage() {
   const { status, data: session } = useSession();
   const router = useRouter();
@@ -44,7 +111,6 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Update time every minute
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
@@ -105,7 +171,7 @@ export default function DashboardPage() {
         <div className={styles.loadingScreen}>
           <div className={styles.loadingContent}>
             <div className={styles.loadingLogo}>
-              <div className={styles.loadingLogoIcon}>Z</div>
+              <div className={styles.loadingLogoIcon}>A</div>
               <div className={styles.loadingPulse}></div>
             </div>
             <div className={styles.loadingText}>Loading your dashboard</div>
@@ -124,7 +190,7 @@ export default function DashboardPage() {
       <div className={styles.wrapper}>
         <div className={styles.errorScreen}>
           <div className={styles.errorCard}>
-            <div className={styles.errorIcon}>⚠️</div>
+            <div className={styles.errorIcon}>⚠</div>
             <h2 className={styles.errorTitle}>Connection Error</h2>
             <p className={styles.errorMessage}>{error}</p>
             <button onClick={() => window.location.reload()} className={styles.retryBtn}>
@@ -146,8 +212,7 @@ export default function DashboardPage() {
   const checkingBalance = balances.checking || 0;
   const savingsBalance = balances.savings || 0;
   const investmentBalance = balances.investment || 0;
-  const totalNetWorth = checkingBalance + savingsBalance + investmentBalance;
-  const liquidAssets = checkingBalance + savingsBalance;
+  const cashBalance = checkingBalance + savingsBalance;
 
   // Time-based greeting
   const getGreeting = () => {
@@ -184,9 +249,8 @@ export default function DashboardPage() {
       accountNum: "****4521",
       balance: checkingBalance,
       available: checkingBalance,
-      icon: "💳",
-      color: "#6366f1",
-      gradient: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+      icon: Icons.checking,
+      color: "#c9a962",
       chartData: generateChartData(checkingBalance),
       badge: null
     },
@@ -197,9 +261,8 @@ export default function DashboardPage() {
       accountNum: "****7832",
       balance: savingsBalance,
       available: savingsBalance,
-      icon: "🏦",
-      color: "#10b981",
-      gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+      icon: Icons.savings,
+      color: "#a8935f",
       chartData: generateChartData(savingsBalance),
       badge: "4.50% APY"
     },
@@ -210,9 +273,8 @@ export default function DashboardPage() {
       accountNum: "****9103",
       balance: investmentBalance,
       available: investmentBalance * 0.85,
-      icon: "📈",
-      color: "#f59e0b",
-      gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+      icon: Icons.investment,
+      color: "#7c6b3e",
       chartData: generateChartData(investmentBalance),
       badge: investmentBalance > 0 ? "+12.4% YTD" : null
     }
@@ -220,10 +282,10 @@ export default function DashboardPage() {
 
   // Quick actions
   const quickActions = [
-    { icon: "↗️", title: "Transfer", desc: "Move money", link: "/transfers/internal", color: "#6366f1" },
-    { icon: "📄", title: "Pay Bills", desc: "Scheduled payments", link: "/bills", color: "#10b981" },
-    { icon: "💰", title: "Deposit", desc: "Add funds", link: "/deposit", color: "#f59e0b" },
-    { icon: "📊", title: "Reports", desc: "Analytics", link: "/reports", color: "#ec4899" },
+    { icon: Icons.transfer, title: "Transfer", desc: "Move funds", link: "/transfers/internal" },
+    { icon: Icons.bills, title: "Pay Bills", desc: "Scheduled payments", link: "/bills" },
+    { icon: Icons.deposit, title: "Deposit", desc: "Add funds", link: "/deposit" },
+    { icon: Icons.analytics, title: "Reports", desc: "Analytics", link: "/reports" },
   ];
 
   // Format currency
@@ -246,7 +308,6 @@ export default function DashboardPage() {
     const isDebit = ['transfer-out', 'withdrawal', 'payment', 'fee', 'charge', 'purchase', 'withdraw'].includes(t.type || '');
     const displayAmount = isDebit ? -Math.abs(t.amount) : Math.abs(t.amount);
     
-    // Map status correctly - Transaction type only accepts: Completed, Pending, Failed, Processing, Cancelled
     let mappedStatus: "Completed" | "Pending" | "Failed" | "Processing" | "Cancelled" = "Processing";
     if (t.status === "Completed" || t.rawStatus === "completed" || t.rawStatus === "approved") {
       mappedStatus = "Completed";
@@ -289,16 +350,16 @@ export default function DashboardPage() {
               </div>
               
               <div className={styles.heroBalance}>
-                <div className={styles.balanceLabel}>Total Net Worth</div>
-                <div className={styles.balanceValue}>{formatCurrency(totalNetWorth)}</div>
-                <div className={styles.balanceBreakdown}>
-                  <span>Liquid: {formatCurrency(liquidAssets, true)}</span>
-                  <span className={styles.breakdownDivider}>•</span>
-                  <span>Invested: {formatCurrency(investmentBalance, true)}</span>
-                </div>
+                <div className={styles.balanceLabel}>Cash Balance</div>
+                <div className={styles.balanceValue}>{formatCurrency(cashBalance)}</div>
+                {investmentBalance > 0 && (
+                  <div className={styles.balanceBreakdown}>
+                    <span>Investments: {formatCurrency(investmentBalance, true)}</span>
+                  </div>
+                )}
               </div>
 
-              {totalNetWorth > 0 && (
+              {cashBalance > 0 && (
                 <div className={styles.heroStats}>
                   <div className={styles.statItem}>
                     <div className={styles.statValue}>+5.2%</div>
@@ -319,19 +380,19 @@ export default function DashboardPage() {
             </div>
 
             <div className={styles.heroChart}>
-              {totalNetWorth > 0 && (
+              {cashBalance > 0 && (
                 <ResponsiveContainer width="100%" height={120}>
-                  <AreaChart data={generateChartData(totalNetWorth)}>
+                  <AreaChart data={generateChartData(cashBalance)}>
                     <defs>
                       <linearGradient id="heroGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#ffffff" stopOpacity={0.3}/>
-                        <stop offset="100%" stopColor="#ffffff" stopOpacity={0}/>
+                        <stop offset="0%" stopColor="#c9a962" stopOpacity={0.4}/>
+                        <stop offset="100%" stopColor="#c9a962" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <Area 
                       type="monotone" 
                       dataKey="value" 
-                      stroke="#ffffff" 
+                      stroke="#c9a962" 
                       strokeWidth={2}
                       fill="url(#heroGradient)"
                     />
@@ -348,14 +409,13 @@ export default function DashboardPage() {
                 key={idx}
                 className={styles.actionCard}
                 onClick={() => router.push(action.link)}
-                style={{ '--action-color': action.color } as React.CSSProperties}
               >
                 <div className={styles.actionIcon}>{action.icon}</div>
                 <div className={styles.actionInfo}>
                   <span className={styles.actionTitle}>{action.title}</span>
                   <span className={styles.actionDesc}>{action.desc}</span>
                 </div>
-                <div className={styles.actionArrow}>→</div>
+                <div className={styles.actionArrow}>{Icons.arrowRight}</div>
               </button>
             ))}
           </section>
@@ -364,7 +424,7 @@ export default function DashboardPage() {
           <section className={styles.accountsSection}>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>My Accounts</h2>
-              <a href="/accounts" className={styles.sectionLink}>View All</a>
+              <a href="/accounts" className={styles.sectionLink}>View All →</a>
             </div>
 
             <div className={styles.accountsGrid}>
@@ -399,7 +459,7 @@ export default function DashboardPage() {
                         <AreaChart data={account.chartData}>
                           <defs>
                             <linearGradient id={`grad-${account.id}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor={account.color} stopOpacity={0.2}/>
+                              <stop offset="0%" stopColor={account.color} stopOpacity={0.3}/>
                               <stop offset="100%" stopColor={account.color} stopOpacity={0}/>
                             </linearGradient>
                           </defs>
@@ -407,7 +467,7 @@ export default function DashboardPage() {
                             type="monotone" 
                             dataKey="value" 
                             stroke={account.color} 
-                            strokeWidth={2}
+                            strokeWidth={1.5}
                             fill={`url(#grad-${account.id})`}
                           />
                         </AreaChart>
@@ -443,7 +503,7 @@ export default function DashboardPage() {
                   <span className={styles.processingBadge}>{processingCount} Processing</span>
                 )}
               </div>
-              <a href="/transactions" className={styles.sectionLink}>View All</a>
+              <a href="/transactions" className={styles.sectionLink}>View All →</a>
             </div>
 
             {transactions.length > 0 ? (
@@ -452,7 +512,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className={styles.emptyState}>
-                <div className={styles.emptyIcon}>📊</div>
+                <div className={styles.emptyIcon}>{Icons.activity}</div>
                 <h3 className={styles.emptyTitle}>No Recent Activity</h3>
                 <p className={styles.emptyText}>Your transactions will appear here</p>
               </div>
@@ -461,9 +521,7 @@ export default function DashboardPage() {
 
           {/* Security Footer */}
           <div className={styles.securityBanner}>
-            <svg className={styles.securityIcon} viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/>
-            </svg>
+            <span className={styles.securityIcon}>{Icons.shield}</span>
             <span>Protected by bank-grade 256-bit SSL encryption</span>
           </div>
         </main>

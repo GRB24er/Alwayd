@@ -5,13 +5,13 @@ import { Providers } from "@/components/Providers";
 import Chatbox from "@/components/Chatbox";
 
 export const metadata: Metadata = {
-  title: "ZentriBank",
+  title: "Aldwych European Capital",
   description: "Your trusted banking partner",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "ZentriBank",
+    title: "Aldwych European Capital",
   },
 };
 

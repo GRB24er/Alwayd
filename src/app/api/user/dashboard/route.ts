@@ -1,34 +1,12 @@
 // src/app/api/user/dashboard/route.ts
+// FIXED VERSION - Shows ALL transactions including pending
+
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
-
-// Define TypeScript interfaces
-interface Transaction {
-  _id: string;
-  reference: string;
-  type: string;
-  currency: string;
-  amount: number;
-  date: Date;
-  description: string;
-  status: string;
-  accountType: string;
-  createdAt: Date;
-  userId: string;
-}
-
-interface UserData {
-  _id: string;
-  checkingBalance: number;
-  savingsBalance: number;
-  investmentBalance: number;
-  name: string;
-  email: string;
-}
 
 interface FormattedTransaction {
   reference: string;
@@ -54,29 +32,32 @@ interface DashboardResponse {
     name: string;
     email: string;
   };
+  debug?: any;
   error?: string;
 }
 
 function displayStatus(status: string): string {
-  const statusMap: Record<string, string> = {
-    completed: "Completed",
-    approved: "Completed",
-    pending_verification: "Pending – Verification",
-    pending: "Pending",
-    rejected: "Rejected"
-  };
+  const s = (status || '').toLowerCase();
   
-  return statusMap[status] || status || "Pending";
+  if (s === 'completed' || s === 'approved') return "Completed";
+  if (s === 'pending' || s === 'pending_verification') return "Pending";
+  if (s === 'processing') return "Processing";
+  if (s === 'rejected' || s === 'failed') return "Failed";
+  if (s === 'cancelled') return "Cancelled";
+  
+  return "Pending"; // Default to Pending
 }
 
 export async function GET(): Promise<NextResponse<DashboardResponse>> {
   try {
-    console.log('🔍 Dashboard API: Starting request...');
+    console.log('═══════════════════════════════════════');
+    console.log('[Dashboard API] Starting request...');
+    console.log('═══════════════════════════════════════');
     
     const session = await getServerSession(authOptions);
     
     if (!session?.user?.email) {
-      console.log('❌ No session found');
+      console.log('[Dashboard API] ❌ No session found');
       return NextResponse.json({ 
         error: "Unauthorized",
         balances: { checking: 0, savings: 0, investment: 0 },
@@ -85,18 +66,18 @@ export async function GET(): Promise<NextResponse<DashboardResponse>> {
       }, { status: 401 });
     }
     
-    console.log('🔌 Connecting to database...');
-    await connectDB();
-    console.log('✅ Database connected');
+    console.log('[Dashboard API] 📧 User email:', session.user.email);
     
-    // Get user data with timeout
+    await connectDB();
+    console.log('[Dashboard API] ✅ Database connected');
+    
+    // Get user data
     const user = await User.findOne({ email: session.user.email })
       .select("_id checkingBalance savingsBalance investmentBalance name email")
-      .lean()
-      .maxTimeMS(5000) as UserData | null;
+      .lean();
     
     if (!user) {
-      console.log('❌ User not found in database');
+      console.log('[Dashboard API] ❌ User not found in database');
       return NextResponse.json({ 
         error: "User not found",
         balances: { checking: 0, savings: 0, investment: 0 },
@@ -105,32 +86,54 @@ export async function GET(): Promise<NextResponse<DashboardResponse>> {
       }, { status: 404 });
     }
     
-    // Get transactions with error handling
-    let realTransactions: Transaction[] = [];
+    console.log('[Dashboard API] 👤 User found:', user._id, user.name);
+    console.log('[Dashboard API] 💰 Balances:', {
+      checking: user.checkingBalance,
+      savings: user.savingsBalance,
+      investment: user.investmentBalance
+    });
+    
+    // Get ALL transactions for this user (no status filter!)
+    let realTransactions: any[] = [];
     try {
       realTransactions = await Transaction.find({ userId: user._id })
         .sort({ date: -1, createdAt: -1 })
-        .limit(20) // Reduced from 50 to 20 for performance
-        .select("reference type currency amount date description status accountType createdAt")
-        .lean()
-        .maxTimeMS(10000) as Transaction[];
+        .limit(50) // Increased limit
+        .lean();
       
-      console.log('📊 Transactions found:', realTransactions.length);
+      console.log('[Dashboard API] 📊 Total transactions found:', realTransactions.length);
+      
+      // Debug: Show status breakdown
+      const statusCounts: Record<string, number> = {};
+      realTransactions.forEach(tx => {
+        const status = tx.status || 'unknown';
+        statusCounts[status] = (statusCounts[status] || 0) + 1;
+      });
+      console.log('[Dashboard API] 📊 Status breakdown:', statusCounts);
+      
+      // Debug: Show first 5 transactions
+      if (realTransactions.length > 0) {
+        console.log('[Dashboard API] 📋 First 5 transactions:');
+        realTransactions.slice(0, 5).forEach((tx, i) => {
+          console.log(`  ${i + 1}. ${tx.reference} | ${tx.type} | $${tx.amount} | ${tx.status} | ${tx.accountType}`);
+        });
+      }
+      
     } catch (txError) {
-      console.error('⚠️ Transaction query error:', txError);
+      console.error('[Dashboard API] ⚠️ Transaction query error:', txError);
       realTransactions = [];
     }
     
-    // Format transactions
+    // Format transactions - INCLUDE ALL STATUSES
     const formattedTransactions: FormattedTransaction[] = realTransactions.map(t => ({
-      reference: t.reference || t._id.toString(),
+      reference: t.reference || t._id?.toString() || 'N/A',
       type: t.type || "deposit",
       currency: t.currency || "USD",
       amount: Math.abs(t.amount) || 0,
-      date: t.date || t.createdAt,
+      date: t.date || t.createdAt || new Date(),
       description: t.description || "Transaction",
-      status: displayStatus(t.status),
-      rawStatus: t.status || "pending",
+      status: displayStatus(t.status),  // Formatted status
+      rawStatus: t.status || "pending",  // Original status
       accountType: t.accountType || "checking",
       isReal: true
     }));
@@ -138,28 +141,34 @@ export async function GET(): Promise<NextResponse<DashboardResponse>> {
     // Prepare response
     const response: DashboardResponse = {
       balances: {
-        checking: user.checkingBalance || 0,
-        savings: user.savingsBalance || 0,
-        investment: user.investmentBalance || 0
+        checking: Number(user.checkingBalance) || 0,
+        savings: Number(user.savingsBalance) || 0,
+        investment: Number(user.investmentBalance) || 0
       },
       recent: formattedTransactions,
       user: {
         name: user.name || session.user.name || "User",
-        email: user.email
+        email: user.email || session.user.email || ""
+      },
+      debug: {
+        totalTransactions: realTransactions.length,
+        userId: user._id?.toString()
       }
     };
     
-    console.log('✅ Dashboard API: Sending response');
+    console.log('[Dashboard API] ✅ Sending response with', formattedTransactions.length, 'transactions');
+    console.log('═══════════════════════════════════════');
+    
     return NextResponse.json(response, { status: 200 });
     
-  } catch (error) {
-    console.error("❌ Dashboard API error:", error);
+  } catch (error: any) {
+    console.error("[Dashboard API] ❌ Error:", error);
     
     return NextResponse.json({
       balances: { checking: 0, savings: 0, investment: 0 },
       recent: [],
       user: { name: "User", email: "unknown" },
-      error: "Partial data loaded due to server error"
+      error: "Failed to load dashboard: " + error.message
     }, { status: 200 });
   }
 }

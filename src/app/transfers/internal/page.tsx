@@ -14,6 +14,86 @@ interface UserBalances {
   investment: number;
 }
 
+// Icons
+const Icons = {
+  checking: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:'24px',height:'24px',color:'#c9a962'}}>
+      <rect x="1" y="4" width="22" height="16" rx="2"/>
+      <line x1="1" y1="10" x2="23" y2="10"/>
+    </svg>
+  ),
+  savings: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:'24px',height:'24px',color:'#c9a962'}}>
+      <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/>
+      <path d="M3 21h18"/>
+      <path d="M12 7v4"/>
+      <path d="M10 9h4"/>
+    </svg>
+  ),
+  investment: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{width:'24px',height:'24px',color:'#c9a962'}}>
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+      <polyline points="17 6 23 6 23 12"/>
+    </svg>
+  ),
+  internal: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'20px',height:'20px'}}>
+      <polyline points="17 1 21 5 17 9"/>
+      <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+      <polyline points="7 23 3 19 7 15"/>
+      <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+    </svg>
+  ),
+  external: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'20px',height:'20px'}}>
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <rect x="3" y="11" width="18" height="11" rx="2"/>
+      <line x1="12" y1="17" x2="12" y2="17.01"/>
+    </svg>
+  ),
+  standard: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'28px',height:'28px',color:'#c9a962'}}>
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
+  ),
+  express: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'28px',height:'28px',color:'#c9a962'}}>
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+    </svg>
+  ),
+  wire: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'28px',height:'28px',color:'#c9a962'}}>
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+  ),
+  lock: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'18px',height:'18px'}}>
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+  ),
+  warning: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'20px',height:'20px',color:'#f59e0b'}}>
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+  ),
+  arrowLeft: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'18px',height:'18px'}}>
+      <line x1="19" y1="12" x2="5" y2="12"/>
+      <polyline points="12 19 5 12 12 5"/>
+    </svg>
+  ),
+  arrowRight: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'18px',height:'18px'}}>
+      <line x1="5" y1="12" x2="19" y2="12"/>
+      <polyline points="12 5 19 12 12 19"/>
+    </svg>
+  )
+};
+
 export default function TransferPage() {
   const { data: session } = useSession();
   const router = useRouter();
@@ -23,7 +103,6 @@ export default function TransferPage() {
   const [success, setSuccess] = useState("");
   const [step, setStep] = useState(1);
   
-  // GET ACTUAL USER BALANCES - NOT HARDCODED
   const [userBalances, setUserBalances] = useState<UserBalances>({
     checking: 0,
     savings: 0,
@@ -35,18 +114,17 @@ export default function TransferPage() {
 
   const [formData, setFormData] = useState({
     fromAccount: "checking",
-    toAccount: "", // For internal transfers
+    toAccount: "",
     recipientName: "",
     recipientAccount: "",
     recipientBank: "",
     recipientRoutingNumber: "",
     amount: "",
     description: "",
-    transferType: "external", // internal or external
-    transferSpeed: "standard" // standard, express, wire
+    transferType: "external",
+    transferSpeed: "standard"
   });
 
-  // Fetch actual user data on mount
   useEffect(() => {
     if (session?.user?.email) {
       fetchUserData();
@@ -59,14 +137,11 @@ export default function TransferPage() {
       const response = await fetch('/api/user/dashboard');
       if (response.ok) {
         const data = await response.json();
-        
-        // Set actual user balances
         setUserBalances({
           checking: data.balances?.checking || 0,
           savings: data.balances?.savings || 0,
           investment: data.balances?.investment || 0
         });
-        
         setUserName(data.user?.name || session?.user?.name || "User");
         setUserEmail(session?.user?.email || "");
       } else {
@@ -135,12 +210,9 @@ export default function TransferPage() {
         throw new Error(data.error || "Transfer failed");
       }
 
-      setSuccess("✅ Transfer completed successfully!");
-      
-      // Refresh balances
+      setSuccess("Transfer completed successfully!");
       await fetchUserData();
       
-      // Reset form after 2 seconds and redirect
       setTimeout(() => {
         router.push("/transactions");
       }, 2000);
@@ -181,12 +253,9 @@ export default function TransferPage() {
         throw new Error(data.error || "Transfer failed");
       }
 
-      setSuccess("✅ Transfer initiated! Pending approval. You will receive a confirmation email.");
-      
-      // Refresh balances
+      setSuccess("Transfer initiated! Pending approval. You will receive a confirmation email.");
       await fetchUserData();
       
-      // Redirect after 3 seconds
       setTimeout(() => {
         router.push("/transactions");
       }, 3000);
@@ -211,7 +280,6 @@ export default function TransferPage() {
   const nextStep = () => {
     setError("");
     
-    // Validation for each step
     if (step === 1) {
       if (!formData.fromAccount) {
         setError("Please select a source account");
@@ -239,6 +307,15 @@ export default function TransferPage() {
   const prevStep = () => {
     setError("");
     setStep(step - 1);
+  };
+
+  const getAccountIcon = (type: string) => {
+    switch(type) {
+      case 'checking': return Icons.checking;
+      case 'savings': return Icons.savings;
+      case 'investment': return Icons.investment;
+      default: return Icons.checking;
+    }
   };
 
   if (fetchingBalance) {
@@ -289,7 +366,8 @@ export default function TransferPage() {
                 setError("");
               }}
             >
-              🔄 Between My Accounts
+              {Icons.internal}
+              Between My Accounts
             </button>
             <button
               className={formData.transferType === "external" ? styles.active : ""}
@@ -299,7 +377,8 @@ export default function TransferPage() {
                 setError("");
               }}
             >
-              🏦 To Another Bank
+              {Icons.external}
+              To Another Bank
             </button>
           </div>
 
@@ -307,13 +386,13 @@ export default function TransferPage() {
           <div className={styles.progressSteps}>
             <div className={`${styles.step} ${step >= 1 ? styles.active : ''}`}>
               <div className={styles.stepNumber}>1</div>
-              <div className={styles.stepLabel}>From Account</div>
+              <div className={styles.stepLabel}>From</div>
             </div>
             <div className={styles.stepLine}></div>
             <div className={`${styles.step} ${step >= 2 ? styles.active : ''}`}>
               <div className={styles.stepNumber}>2</div>
               <div className={styles.stepLabel}>
-                {formData.transferType === "internal" ? "To Account" : "Recipient"}
+                {formData.transferType === "internal" ? "To" : "Recipient"}
               </div>
             </div>
             <div className={styles.stepLine}></div>
@@ -344,7 +423,7 @@ export default function TransferPage() {
                       className={`${styles.accountOption} ${formData.fromAccount === "checking" ? styles.selected : ''}`}
                       onClick={() => setFormData({...formData, fromAccount: "checking"})}
                     >
-                      <div className={styles.accountIcon}>💳</div>
+                      <div className={styles.accountIcon}>{Icons.checking}</div>
                       <div className={styles.accountInfo}>
                         <div className={styles.accountName}>Checking Account</div>
                         <div className={styles.accountNumber}>****1234</div>
@@ -362,7 +441,7 @@ export default function TransferPage() {
                       className={`${styles.accountOption} ${formData.fromAccount === "savings" ? styles.selected : ''}`}
                       onClick={() => setFormData({...formData, fromAccount: "savings"})}
                     >
-                      <div className={styles.accountIcon}>🏦</div>
+                      <div className={styles.accountIcon}>{Icons.savings}</div>
                       <div className={styles.accountInfo}>
                         <div className={styles.accountName}>Savings Account</div>
                         <div className={styles.accountNumber}>****5678</div>
@@ -381,7 +460,7 @@ export default function TransferPage() {
                         className={`${styles.accountOption} ${formData.fromAccount === "investment" ? styles.selected : ''}`}
                         onClick={() => setFormData({...formData, fromAccount: "investment"})}
                       >
-                        <div className={styles.accountIcon}>📈</div>
+                        <div className={styles.accountIcon}>{Icons.investment}</div>
                         <div className={styles.accountInfo}>
                           <div className={styles.accountName}>Investment Account</div>
                           <div className={styles.accountNumber}>****9012</div>
@@ -398,7 +477,7 @@ export default function TransferPage() {
                 </div>
               )}
 
-              {/* Step 2: Destination (Internal or External) */}
+              {/* Step 2: Destination */}
               {step === 2 && (
                 <div className={styles.stepContent}>
                   {formData.transferType === "internal" ? (
@@ -412,7 +491,7 @@ export default function TransferPage() {
                             className={`${styles.accountOption} ${formData.toAccount === "checking" ? styles.selected : ''}`}
                             onClick={() => setFormData({...formData, toAccount: "checking"})}
                           >
-                            <div className={styles.accountIcon}>💳</div>
+                            <div className={styles.accountIcon}>{Icons.checking}</div>
                             <div className={styles.accountInfo}>
                               <div className={styles.accountName}>Checking Account</div>
                               <div className={styles.accountNumber}>****1234</div>
@@ -431,7 +510,7 @@ export default function TransferPage() {
                             className={`${styles.accountOption} ${formData.toAccount === "savings" ? styles.selected : ''}`}
                             onClick={() => setFormData({...formData, toAccount: "savings"})}
                           >
-                            <div className={styles.accountIcon}>🏦</div>
+                            <div className={styles.accountIcon}>{Icons.savings}</div>
                             <div className={styles.accountInfo}>
                               <div className={styles.accountName}>Savings Account</div>
                               <div className={styles.accountNumber}>****5678</div>
@@ -450,7 +529,7 @@ export default function TransferPage() {
                             className={`${styles.accountOption} ${formData.toAccount === "investment" ? styles.selected : ''}`}
                             onClick={() => setFormData({...formData, toAccount: "investment"})}
                           >
-                            <div className={styles.accountIcon}>📈</div>
+                            <div className={styles.accountIcon}>{Icons.investment}</div>
                             <div className={styles.accountInfo}>
                               <div className={styles.accountName}>Investment Account</div>
                               <div className={styles.accountNumber}>****9012</div>
@@ -527,7 +606,7 @@ export default function TransferPage() {
                             className={`${styles.speedOption} ${formData.transferSpeed === "standard" ? styles.selected : ''}`}
                             onClick={() => setFormData({...formData, transferSpeed: "standard"})}
                           >
-                            <span className={styles.speedIcon}>🐢</span>
+                            <span className={styles.speedIcon}>{Icons.standard}</span>
                             <span className={styles.speedName}>Standard</span>
                             <span className={styles.speedTime}>3-5 days • Free</span>
                           </div>
@@ -535,7 +614,7 @@ export default function TransferPage() {
                             className={`${styles.speedOption} ${formData.transferSpeed === "express" ? styles.selected : ''}`}
                             onClick={() => setFormData({...formData, transferSpeed: "express"})}
                           >
-                            <span className={styles.speedIcon}>🚀</span>
+                            <span className={styles.speedIcon}>{Icons.express}</span>
                             <span className={styles.speedName}>Express</span>
                             <span className={styles.speedTime}>1-2 days • $15</span>
                           </div>
@@ -543,7 +622,7 @@ export default function TransferPage() {
                             className={`${styles.speedOption} ${formData.transferSpeed === "wire" ? styles.selected : ''}`}
                             onClick={() => setFormData({...formData, transferSpeed: "wire"})}
                           >
-                            <span className={styles.speedIcon}>⚡</span>
+                            <span className={styles.speedIcon}>{Icons.wire}</span>
                             <span className={styles.speedName}>Wire</span>
                             <span className={styles.speedTime}>Same day • $30</span>
                           </div>
@@ -583,7 +662,6 @@ export default function TransferPage() {
                         />
                       </div>
                       
-                      {/* Quick amount buttons */}
                       <div className={styles.quickAmounts}>
                         {[50, 100, 500, 1000].map(amt => (
                           <button
@@ -685,8 +763,8 @@ export default function TransferPage() {
                     
                     {formData.transferType === "external" && (
                       <div className={styles.warningBox}>
-                        <span className={styles.warningIcon}>⚠️</span>
-                        <p>External transfers require Bank approval and may take {
+                        <span className={styles.warningIcon}>{Icons.warning}</span>
+                        <p>External transfers require approval and may take {
                           formData.transferSpeed === "wire" ? "same day" :
                           formData.transferSpeed === "express" ? "1-2 business days" :
                           "3-5 business days"
@@ -710,7 +788,8 @@ export default function TransferPage() {
                     className={styles.backButton}
                     disabled={loading}
                   >
-                    ← Back
+                    {Icons.arrowLeft}
+                    Back
                   </button>
                 )}
                 
@@ -720,7 +799,8 @@ export default function TransferPage() {
                     onClick={nextStep}
                     className={styles.continueButton}
                   >
-                    Continue →
+                    Continue
+                    {Icons.arrowRight}
                   </button>
                 ) : (
                   <button 
@@ -734,7 +814,10 @@ export default function TransferPage() {
                         Processing...
                       </>
                     ) : (
-                      <>🔒 Confirm Transfer</>
+                      <>
+                        {Icons.lock}
+                        Confirm Transfer
+                      </>
                     )}
                   </button>
                 )}

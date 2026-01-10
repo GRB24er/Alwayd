@@ -1,13 +1,25 @@
-/* Footer.module.css - Elite Enterprise Footer */
+/* Footer.module.css - Aldwych European Capital - Enterprise Grade */
 
-/* ===== BASE FOOTER ===== */
+/* ===== CSS VARIABLES ===== */
 .footer {
-  background: linear-gradient(180deg, #064e3b 0%, #022c22 100%);
-  color: #d1fae5;
+  --aec-gold: #c9a962;
+  --aec-gold-light: #d4b978;
+  --aec-gold-dark: #a8935f;
+  --aec-navy: #1a1f2e;
+  --aec-navy-light: #252b3d;
+  --aec-navy-dark: #12151f;
+  --aec-cream: #faf9f7;
+  --aec-text: #e8e6e3;
+  --aec-text-muted: rgba(255, 255, 255, 0.6);
+  --aec-border: rgba(201, 169, 98, 0.2);
+  
+  background: linear-gradient(180deg, var(--aec-navy) 0%, var(--aec-navy-dark) 100%);
+  color: var(--aec-text);
   margin-top: auto;
   position: relative;
   overflow: hidden;
 }
+
 
 .footer::before {
   content: '';
@@ -16,7 +28,8 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.5) 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, var(--aec-gold) 50%, transparent 100%);
+  opacity: 0.5;
 }
 
 /* ===== MAIN SECTION ===== */
@@ -32,7 +45,7 @@
   right: -100px;
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(201, 169, 98, 0.08) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -51,61 +64,55 @@
 .brandSection {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.75rem;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
 }
 
-.brandIcon {
-  width: 56px;
-  height: 56px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 
-    0 8px 24px rgba(16, 185, 129, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-.brandIcon svg {
-  width: 32px;
-  height: 32px;
-}
-
-.brandText {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.brandName {
-  font-size: 1.75rem;
-  font-weight: 800;
-  color: white;
-  margin: 0;
-  letter-spacing: -0.02em;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.brandTagline {
-  font-size: 0.875rem;
-  color: #6ee7b7;
-  margin: 0;
-  font-weight: 500;
+.brandLogo {
+  width: 200px;
+  height: auto;
+  object-fit: contain;
+  filter: brightness(1.1);
 }
 
 .brandDescription {
   font-size: 0.9375rem;
   line-height: 1.7;
-  color: #a7f3d0;
+  color: rgba(255, 255, 255, 0.7);
   max-width: 400px;
+}
+
+/* ===== APP BADGES ===== */
+.appBadges {
+  display: flex;
+  gap: 0.875rem;
+  flex-wrap: wrap;
+}
+
+.appBadge {
+  display: block;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.appBadge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.appStoreBadge {
+  height: 40px;
+  width: auto;
+}
+
+.googlePlayBadge {
+  height: 40px;
+  width: auto;
 }
 
 /* ===== NEWSLETTER ===== */
@@ -118,47 +125,44 @@
 .newsletterInput {
   flex: 1;
   padding: 1rem 1.25rem;
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 12px;
-  color: white;
+  background: rgba(201, 169, 98, 0.08);
+  border: 1px solid var(--aec-border);
+  border-radius: 10px;
+  color: #ffffff;
   font-size: 0.9375rem;
   outline: none;
   transition: all 0.3s;
 }
 
 .newsletterInput::placeholder {
-  color: #6ee7b7;
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .newsletterInput:focus {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  background: rgba(201, 169, 98, 0.12);
+  border-color: var(--aec-gold);
+  box-shadow: 0 0 0 3px rgba(201, 169, 98, 0.15);
 }
 
 .newsletterButton {
   width: 52px;
   height: 52px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, var(--aec-gold) 0%, var(--aec-gold-dark) 100%);
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  color: white;
-  box-shadow: 
-    0 4px 12px rgba(16, 185, 129, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  color: var(--aec-navy-dark);
+  box-shadow: 0 4px 12px rgba(201, 169, 98, 0.3);
+  flex-shrink: 0;
 }
 
 .newsletterButton:hover {
   transform: translateY(-2px);
-  box-shadow: 
-    0 6px 20px rgba(16, 185, 129, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 20px rgba(201, 169, 98, 0.4);
 }
 
 .newsletterButton svg {
@@ -167,7 +171,7 @@
 }
 
 .successMessage {
-  color: #34d399;
+  color: var(--aec-gold);
   font-size: 0.875rem;
   margin: 0;
   font-weight: 600;
@@ -197,20 +201,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(16, 185, 129, 0.08);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  border-radius: 12px;
-  color: #6ee7b7;
+  background: rgba(201, 169, 98, 0.08);
+  border: 1px solid var(--aec-border);
+  border-radius: 10px;
+  color: var(--aec-gold);
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .socialLink:hover {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, var(--aec-gold) 0%, var(--aec-gold-dark) 100%);
   border-color: transparent;
-  color: white;
+  color: var(--aec-navy-dark);
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 8px 20px rgba(201, 169, 98, 0.4);
 }
 
 .socialLink svg {
@@ -231,12 +235,12 @@
 }
 
 .linkTitle {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
-  color: white;
+  color: var(--aec-gold);
   margin-bottom: 1.25rem;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   position: relative;
   padding-bottom: 0.75rem;
 }
@@ -248,7 +252,7 @@
   left: 0;
   width: 40px;
   height: 2px;
-  background: linear-gradient(90deg, #10b981 0%, transparent 100%);
+  background: linear-gradient(90deg, var(--aec-gold) 0%, transparent 100%);
   border-radius: 1px;
 }
 
@@ -266,7 +270,7 @@
 }
 
 .linkList a {
-  color: #a7f3d0;
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   font-size: 0.9375rem;
   transition: all 0.3s;
@@ -282,12 +286,12 @@
   left: -8px;
   width: 0;
   height: 2px;
-  background: #10b981;
+  background: var(--aec-gold);
   transition: width 0.3s;
 }
 
 .linkList a:hover {
-  color: white;
+  color: #ffffff;
   transform: translateX(8px);
 }
 
@@ -298,9 +302,13 @@
 /* ===== TRUST SECTION ===== */
 .trustSection {
   background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid rgba(16, 185, 129, 0.15);
-  border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+  border-top: 1px solid var(--aec-border);
+  border-bottom: 1px solid var(--aec-border);
   padding: 2rem 2rem;
+}
+
+.trustSection .container {
+  display: block;
 }
 
 .trustGrid {
@@ -308,7 +316,7 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .trustBadge {
@@ -317,25 +325,25 @@
   justify-content: center;
   gap: 0.75rem;
   padding: 1rem;
-  background: rgba(16, 185, 129, 0.05);
-  border: 1px solid rgba(16, 185, 129, 0.15);
-  border-radius: 12px;
+  background: rgba(201, 169, 98, 0.05);
+  border: 1px solid var(--aec-border);
+  border-radius: 10px;
   transition: all 0.3s;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #a7f3d0;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .trustBadge:hover {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(201, 169, 98, 0.1);
+  border-color: var(--aec-gold);
   transform: translateY(-2px);
 }
 
 .trustIcon {
-  width: 24px;
-  height: 24px;
-  color: #10b981;
+  width: 22px;
+  height: 22px;
+  color: var(--aec-gold);
   flex-shrink: 0;
 }
 
@@ -343,6 +351,10 @@
 .bottomBar {
   background: rgba(0, 0, 0, 0.3);
   padding: 1.5rem 2rem;
+}
+
+.bottomBar .container {
+  display: block;
 }
 
 .bottomContent {
@@ -364,14 +376,13 @@
 .copyright p {
   margin: 0;
   font-size: 0.875rem;
-  color: #a7f3d0;
+  color: rgba(255, 255, 255, 0.7);
   font-weight: 500;
 }
 
 .legalText {
-  font-size: 0.8125rem;
-  color: #6ee7b7;
-  opacity: 0.9;
+  font-size: 0.75rem !important;
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .legalLinks {
@@ -382,7 +393,7 @@
 }
 
 .legalLinks a {
-  color: #a7f3d0;
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
@@ -390,12 +401,12 @@
 }
 
 .legalLinks a:hover {
-  color: white;
+  color: var(--aec-gold);
 }
 
 .separator {
-  color: #6ee7b7;
-  opacity: 0.5;
+  color: var(--aec-gold);
+  opacity: 0.4;
 }
 
 /* ===== RESPONSIVE ===== */
@@ -419,6 +430,10 @@
     padding: 3rem 1.5rem 2rem;
   }
   
+  .brandLogo {
+    width: 180px;
+  }
+  
   .linksGrid {
     grid-template-columns: 1fr;
     gap: 2rem;
@@ -426,6 +441,7 @@
   
   .trustGrid {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
   
   .trustSection {
@@ -442,12 +458,62 @@
     gap: 1rem;
   }
   
+  .copyright {
+    align-items: center;
+  }
+  
   .legalLinks {
     justify-content: center;
   }
   
   .newsletter {
     max-width: 100%;
+  }
+  
+  .appBadges {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 375px) {
+  .footerMain {
+    padding: 2rem 1rem 1.5rem;
+  }
+  
+  .brandLogo {
+    width: 160px;
+  }
+  
+  .brandDescription {
+    font-size: 0.875rem;
+  }
+  
+  .newsletterInput {
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .newsletterButton {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .socialLink {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .trustBadge {
+    font-size: 0.8125rem;
+    padding: 0.75rem;
+  }
+  
+  .copyright p {
+    font-size: 0.8125rem;
+  }
+  
+  .legalLinks a {
+    font-size: 0.8125rem;
   }
 }
 
@@ -472,4 +538,18 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Add this to your existing Footer.module.css */
+
+.brandLogo {
+  width: 200px;
+  height: auto;
+  object-fit: contain;
+  filter: brightness(1.1) invert(1) brightness(1.5);
+  transition: filter 0.3s ease;
+}
+
+.brandLogo:hover {
+  filter: brightness(1.2) invert(1) brightness(1.6);
 }
