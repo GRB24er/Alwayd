@@ -5,8 +5,6 @@ import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 
-const AUTH_SECRET = '21b0133285c83665020046259b56217a7a787f1c9dd59fefe496f93dbba6deb2';
-
 declare module 'next-auth/jwt' {
   interface JWT {
     id?: string;
@@ -33,7 +31,8 @@ declare module 'next-auth' {
 }
 
 export const authOptions: NextAuthOptions = {
-  secret: AUTH_SECRET,
+  // FIX: Use environment variable, not hardcoded secret
+  secret: process.env.NEXTAUTH_SECRET,
 
   session: {
     strategy: 'jwt',
@@ -50,7 +49,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         try {
           if (!credentials?.email || !credentials?.password) {
-            console.log('Missing credentials');
+            console.log('❌ Missing credentials');
             throw new Error('Email and password required');
           }
 
@@ -77,6 +76,7 @@ export const authOptions: NextAuthOptions = {
           console.log('🔐 Password match:', isMatch);
 
           if (!isMatch) {
+            console.log('❌ Password mismatch');
             throw new Error('Invalid credentials');
           }
 
@@ -92,7 +92,7 @@ export const authOptions: NextAuthOptions = {
             investmentBalance: user.investmentBalance || 0,
           };
         } catch (error) {
-          console.error('Auth error:', error);
+          console.error('❌ Auth error:', error);
           return null;
         }
       }
@@ -135,5 +135,5 @@ export const authOptions: NextAuthOptions = {
     }
   },
 
-  debug: false,
+  debug: process.env.NODE_ENV === 'development',
 };
