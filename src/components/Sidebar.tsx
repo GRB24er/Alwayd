@@ -342,7 +342,7 @@ export default function Sidebar() {
           <Link href="/dashboard" className={styles.logoLink}>
             <div className={styles.logoContainer}>
               <Image
-                src="/images/logo.png"
+                src="/images/Logo.png"
                 alt="Aldwych European Capital"
                 width={220}
                 height={60}

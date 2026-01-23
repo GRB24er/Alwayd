@@ -31,7 +31,7 @@ const Footer = () => {
           <div className={styles.brandSection}>
             <div className={styles.brand}>
               <Image
-                src="/images/logo.png"
+                src="/images/Logo.png"
                 alt="Aldwych European Capital"
                 width={200}
                 height={55}
