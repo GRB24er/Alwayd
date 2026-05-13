@@ -182,8 +182,7 @@ TransactionSchema.index({ userId: 1, status: 1 });
 TransactionSchema.index({ userId: 1, type: 1 });
 TransactionSchema.index({ userId: 1, date: -1 });
 TransactionSchema.index({ userId: 1, accountType: 1 });
-TransactionSchema.index({ reference: 1 });
-TransactionSchema.index({ origin: 1 });
+// `reference` and `origin` already have inline `index: true` on their field definitions
 
 const Transaction: Model<ITransaction> =
   mongoose.models.Transaction || mongoose.model<ITransaction>('Transaction', TransactionSchema);

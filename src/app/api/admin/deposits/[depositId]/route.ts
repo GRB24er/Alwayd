@@ -2,18 +2,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
-import clientPromise from '@/lib/mongodb';
+import connectDB from '@/lib/mongodb';
+import mongoose from 'mongoose';
 import { ObjectId } from 'mongodb';
 
 // POST /api/admin/deposits/[depositId] - Approve or reject deposit
-export async function POST(request: NextRequest, { params }: { params: { depositId: string } }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ depositId: string }> }
+) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.role || !['admin', 'superadmin'].includes(session.user.role)) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { depositId } = params;
+    const { depositId } = await params;
     const body = await request.json();
     const { action, note } = body; // action: 'approve' or 'reject'
 
@@ -21,8 +25,15 @@ export async function POST(request: NextRequest, { params }: { params: { deposit
       return NextResponse.json({ success: false, error: 'Invalid action' }, { status: 400 });
     }
 
-    const client = await clientPromise;
-    const db = client.db();
+    if (!ObjectId.isValid(depositId)) {
+      return NextResponse.json({ success: false, error: 'Invalid deposit ID' }, { status: 400 });
+    }
+
+    await connectDB();
+    const db = mongoose.connection.db;
+    if (!db) {
+      return NextResponse.json({ success: false, error: 'Database not ready' }, { status: 503 });
+    }
 
     // Find the deposit
     const deposit = await db.collection('deposits').findOne({ _id: new ObjectId(depositId) });

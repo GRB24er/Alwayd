@@ -2,6 +2,8 @@
 // APPROVE TRANSACTION - Updates balance and status
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
@@ -29,14 +31,20 @@ function getBalanceField(accountType: string): string {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   console.log('═══════════════════════════════════════');
   console.log('[APPROVE TX] Starting approval process');
   console.log('═══════════════════════════════════════');
-  
+
   try {
-    const { id } = params;
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.role || !['admin', 'superadmin'].includes(session.user.role)) {
+      console.log('[APPROVE TX] ❌ Unauthorized');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
     const body = await request.json().catch(() => ({}));
     const { sendNotification = true, customMessage } = body;
 
@@ -109,7 +117,7 @@ export async function POST(
     transaction.posted = true;
     transaction.postedAt = new Date();
     transaction.approvedAt = new Date();
-    transaction.approvedBy = 'admin';
+    transaction.approvedBy = session.user.email || 'admin';
     if (customMessage) {
       transaction.adminNotes = customMessage;
     }
@@ -182,7 +190,7 @@ export async function POST(
         linkedTx.posted = true;
         linkedTx.postedAt = new Date();
         linkedTx.approvedAt = new Date();
-        linkedTx.approvedBy = 'admin';
+        linkedTx.approvedBy = session.user.email || 'admin';
         await linkedTx.save();
         
         // Update linked balance

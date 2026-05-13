@@ -2,7 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
-import clientPromise from '@/lib/mongodb';
+import connectDB from '@/lib/mongodb';
+import mongoose from 'mongoose';
 
 // GET /api/admin/deposits - Get all pending deposits for admin
 export async function GET(request: NextRequest) {
@@ -12,8 +13,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const client = await clientPromise;
-    const db = client.db();
+    await connectDB();
+    const db = mongoose.connection.db;
+    if (!db) {
+      return NextResponse.json({ success: false, error: 'Database not ready' }, { status: 503 });
+    }
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'pending';
@@ -31,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      deposits: deposits.map(d => ({
+      deposits: deposits.map((d: any) => ({
         _id: d._id.toString(),
         userId: d.userId,
         userEmail: d.userEmail,

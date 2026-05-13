@@ -1,5 +1,7 @@
 // src/app/api/admin/transactions/[id]/reject/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
@@ -10,16 +12,21 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.role || !['admin', 'superadmin'].includes(session.user.role)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     await connectDB();
-    
+
     // Get the transaction ID from params
     const { id: transactionId } = await params;
     const body = await req.json();
-    
-    const { 
+
+    const {
       reason,
       adminNotes,
-      adminId 
+      adminId
     } = body;
     
     // Find the transaction to reject
@@ -52,7 +59,7 @@ export async function POST(
     
     // Update transaction to rejected
     transaction.status = 'rejected';
-    transaction.rejectedBy = adminId || 'admin';
+    transaction.rejectedBy = adminId || session.user.email || 'admin';
     transaction.rejectedAt = new Date();
     transaction.rejectionReason = reason || 'Administrative review';
     transaction.adminNotes = adminNotes;
