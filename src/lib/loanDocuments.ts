@@ -103,6 +103,118 @@ function drawWatermark(page: PDFPage, font: PDFFont) {
   });
 }
 
+/** Draw text characters spaced along an arc, each rotated to remain
+ *  tangent to the circle. `arc='top'` reads left→right across the top,
+ *  `arc='bottom'` reads left→right across the bottom (characters upright).
+ *  `radius` is the baseline radius for the text. */
+function drawArcText(
+  page: PDFPage,
+  text: string,
+  font: PDFFont,
+  size: number,
+  color: any,
+  cx: number,
+  cy: number,
+  radius: number,
+  arc: 'top' | 'bottom',
+  letterSpacing: number = 0.6
+) {
+  // Compute total angular span needed.
+  const widths = Array.from(text).map((c) => font.widthOfTextAtSize(c, size) + letterSpacing);
+  const totalArcLength = widths.reduce((s, w) => s + w, 0);
+  const totalAngle = totalArcLength / radius; // radians
+
+  // Center angle (math convention: 0 = +x, π/2 = +y/top).
+  // pdf-lib y-axis goes up, so 'top' = +y direction = 90°.
+  const centerAngleRad = arc === 'top' ? Math.PI / 2 : -Math.PI / 2;
+
+  // For top arc: characters laid out from left (high angle) to right (low angle) → start at centerAngle + totalAngle/2, then decrement.
+  // For bottom arc: characters laid out from left (low angle going down then up) → start at centerAngle - totalAngle/2 then increment.
+  let cursor = arc === 'top' ? centerAngleRad + totalAngle / 2 : centerAngleRad - totalAngle / 2;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const charArc = widths[i] / radius;
+    const angle = arc === 'top' ? cursor - charArc / 2 : cursor + charArc / 2;
+
+    const px = cx + radius * Math.cos(angle);
+    const py = cy + radius * Math.sin(angle);
+
+    // Tangential rotation in degrees:
+    // - top arc: rotation = angle - 90°
+    // - bottom arc: rotation = angle + 90° (so character reads right-side-up)
+    const rotDeg = (angle * 180) / Math.PI + (arc === 'top' ? -90 : 90);
+
+    page.drawText(ch, {
+      x: px,
+      y: py,
+      size,
+      font,
+      color,
+      rotate: degrees(rotDeg),
+    });
+
+    if (arc === 'top') cursor -= charArc;
+    else cursor += charArc;
+  }
+}
+
+/** Decorative 8-pointed star drawn with two overlapping rotated squares
+ *  rendered as path strokes. Used as separators between top/bottom text. */
+function drawStar(
+  page: PDFPage,
+  cx: number,
+  cy: number,
+  r: number,
+  color: any
+) {
+  const points: Array<[number, number]> = [];
+  for (let i = 0; i < 8; i++) {
+    const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
+    const radius = i % 2 === 0 ? r : r * 0.42;
+    points.push([cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)]);
+  }
+  for (let i = 0; i < points.length; i++) {
+    const [x1, y1] = points[i];
+    const [x2, y2] = points[(i + 1) % points.length];
+    page.drawLine({
+      start: { x: x1, y: y1 },
+      end: { x: x2, y: y2 },
+      thickness: 0.8,
+      color,
+    });
+  }
+}
+
+/** Draw an ornamental laurel "swirl" pair flanking the monogram. Each side
+ *  is a curved line of small dots from a path so it reads as a wreath
+ *  flourish without requiring external assets. */
+function drawLaurelFlourish(
+  page: PDFPage,
+  cx: number,
+  cy: number,
+  color: any
+) {
+  // Left flourish: arc of small dots
+  for (let i = 0; i < 6; i++) {
+    const t = i / 5;
+    const angle = Math.PI - t * Math.PI * 0.55;
+    const r = 14 + Math.sin(t * Math.PI) * 3;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle) - 3;
+    page.drawCircle({ x, y, size: 0.7, color });
+  }
+  // Right flourish: mirrored
+  for (let i = 0; i < 6; i++) {
+    const t = i / 5;
+    const angle = t * Math.PI * 0.55;
+    const r = 14 + Math.sin(t * Math.PI) * 3;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle) - 3;
+    page.drawCircle({ x, y, size: 0.7, color });
+  }
+}
+
 function drawSeal(
   page: PDFPage,
   font: PDFFont,
@@ -111,71 +223,116 @@ function drawSeal(
   y: number,
   referenceNumber: string
 ) {
-  const outerR = 52;
-  const innerR = 40;
+  const outerR = 50;
+  const ringR = 45;
+  const textR = 41; // baseline radius for arc text
+  const innerR = 33;
+  const coreR = 29;
 
-  // Outer ring
-  page.drawCircle({ x, y, size: outerR, borderColor: GOLD, borderWidth: 2.5, color: undefined, opacity: 0.85 });
-  // Inner ring
-  page.drawCircle({ x, y, size: innerR, borderColor: GOLD_DARK, borderWidth: 1, color: undefined, opacity: 0.7 });
-  // Subtle fill
-  page.drawCircle({ x, y, size: innerR - 2, color: GOLD, opacity: 0.06 });
+  // Outer thin ring
+  page.drawCircle({ x, y, size: outerR, borderColor: GOLD, borderWidth: 0.7, color: undefined, opacity: 0.9 });
+  // Outer bold ring (the main visible rim)
+  page.drawCircle({ x, y, size: ringR, borderColor: GOLD, borderWidth: 2, color: undefined, opacity: 0.95 });
+  // Inner thin ring (defines the text band)
+  page.drawCircle({ x, y, size: innerR, borderColor: GOLD_DARK, borderWidth: 0.7, color: undefined, opacity: 0.85 });
+  // Core ring
+  page.drawCircle({ x, y, size: coreR, borderColor: GOLD_DARK, borderWidth: 0.5, color: undefined, opacity: 0.6 });
+  // Soft tonal fill in the very middle
+  page.drawCircle({ x, y, size: coreR - 1, color: GOLD, opacity: 0.05 });
 
-  // Top arc text
-  const topText = 'ALDWYCH EUROPEAN CAPITAL';
-  const topSize = 6;
-  const topW = boldFont.widthOfTextAtSize(topText, topSize);
-  page.drawText(topText, {
-    x: x - topW / 2,
-    y: y + outerR - 8,
-    size: topSize,
-    font: boldFont,
-    color: GOLD_DARK,
-  });
+  // Decorative dots just inside the inner ring (only on the sides so they
+  // don't clash with the curved text band above and below).
+  for (let i = 0; i < 24; i++) {
+    const a = (i / 24) * Math.PI * 2;
+    // Skip top and bottom regions where text sits
+    const inTop = a > Math.PI * 0.25 && a < Math.PI * 0.75;
+    const inBottom = a > Math.PI * 1.25 && a < Math.PI * 1.75;
+    if (inTop || inBottom) continue;
+    const px = x + (innerR - 2) * Math.cos(a);
+    const py = y + (innerR - 2) * Math.sin(a);
+    page.drawCircle({ x: px, y: py, size: 0.5, color: GOLD_DARK, opacity: 0.75 });
+  }
 
-  // Bottom arc text
-  const bottomText = 'EST. 1897 · LONDON';
-  const bottomSize = 6;
-  const bottomW = boldFont.widthOfTextAtSize(bottomText, bottomSize);
-  page.drawText(bottomText, {
-    x: x - bottomW / 2,
-    y: y - outerR + 4,
-    size: bottomSize,
-    font: boldFont,
-    color: GOLD_DARK,
-  });
+  // Curved top text
+  drawArcText(
+    page,
+    'ALDWYCH EUROPEAN CAPITAL',
+    boldFont,
+    5.5,
+    GOLD_DARK,
+    x,
+    y,
+    textR,
+    'top',
+    0.4
+  );
 
-  // Center monogram
-  page.drawText('AEC', {
-    x: x - 13,
-    y: y + 4,
-    size: 16,
+  // Curved bottom text
+  drawArcText(
+    page,
+    'EST. 1897 · LONDON',
+    boldFont,
+    5,
+    GOLD_DARK,
+    x,
+    y,
+    textR,
+    'bottom',
+    0.4
+  );
+
+  // Side separator stars (between top and bottom text bands)
+  drawStar(page, x - textR - 1.5, y, 3, GOLD_DARK);
+  drawStar(page, x + textR + 1.5, y, 3, GOLD_DARK);
+
+  // Laurel flourish above monogram
+  drawLaurelFlourish(page, x, y, GOLD_DARK);
+
+  // Center monogram — large, bold, navy
+  const monogram = 'AEC';
+  const monoSize = 15;
+  const monoW = boldFont.widthOfTextAtSize(monogram, monoSize);
+  page.drawText(monogram, {
+    x: x - monoW / 2,
+    y: y - 1,
+    size: monoSize,
     font: boldFont,
     color: NAVY,
   });
 
-  // "OFFICIAL SEAL" under monogram
+  // Thin underline beneath monogram
+  page.drawLine({
+    start: { x: x - 12, y: y - 4 },
+    end: { x: x + 12, y: y - 4 },
+    thickness: 0.6,
+    color: GOLD_DARK,
+  });
+
+  // "OFFICIAL SEAL" below underline
   const seal = 'OFFICIAL SEAL';
-  const sealSize = 5;
-  const sealW = boldFont.widthOfTextAtSize(seal, sealSize);
+  const sealSize = 4,
+    sealW = boldFont.widthOfTextAtSize(seal, sealSize);
   page.drawText(seal, {
     x: x - sealW / 2,
-    y: y - 8,
+    y: y - 11,
     size: sealSize,
     font: boldFont,
     color: NAVY,
   });
 
-  // Reference under seal
-  const refSize = 5;
+  // Reference number micro-text below seal label
+  const refSize = 3.8;
   const refW = font.widthOfTextAtSize(referenceNumber, refSize);
   page.drawText(referenceNumber, {
     x: x - refW / 2,
-    y: y - 18,
+    y: y - 17,
     size: refSize,
     font,
     color: GOLD_DARK,
   });
+
+  // Tiny center mark dot above monogram
+  page.drawCircle({ x, y: y + 9, size: 0.8, color: GOLD_DARK });
 }
 
 function drawHeader(
@@ -444,112 +601,152 @@ function drawFooter(
   qrImage: any,
   data: LoanDocumentData
 ) {
-  const footerY = 130;
+  // Signature row label at the top of the footer area.
+  const sigY = 210;
+  const sigLineY = sigY - 36;
 
-  // Signature block (left)
   page.drawText('SIGNATURE & EXECUTION', {
     x: MARGIN,
-    y: footerY,
+    y: sigY,
     size: 9,
     font: boldFont,
     color: GOLD_DARK,
   });
 
+  // Borrower (left)
   page.drawLine({
-    start: { x: MARGIN, y: footerY - 36 },
-    end: { x: MARGIN + 220, y: footerY - 36 },
+    start: { x: MARGIN, y: sigLineY },
+    end: { x: MARGIN + 200, y: sigLineY },
     thickness: 0.7,
     color: NAVY,
   });
-
   if (data.agreementSignature) {
     page.drawText(data.agreementSignature, {
       x: MARGIN + 4,
-      y: footerY - 22,
-      size: 14,
+      y: sigLineY + 5,
+      size: 13,
       font: boldFont,
       color: NAVY_DEEP,
     });
   }
-
   page.drawText('Borrower Signature', {
     x: MARGIN,
-    y: footerY - 48,
-    size: 8,
+    y: sigLineY - 11,
+    size: 7.5,
     font,
     color: TEXT,
   });
-
   if (data.agreementSignedAt) {
     page.drawText(`Signed: ${fmtDate(data.agreementSignedAt)}`, {
       x: MARGIN,
-      y: footerY - 60,
-      size: 8,
+      y: sigLineY - 21,
+      size: 7.5,
       font,
       color: TEXT,
     });
   }
 
-  // For the Lender — pre-signed
-  page.drawText('For Aldwych European Capital', {
-    x: MARGIN + 260,
-    y: footerY - 48,
-    size: 8,
-    font,
-    color: TEXT,
-  });
+  // Aldwych (right) — pre-signed authorised signatory
+  const rightSigX = PAGE_W - MARGIN - 200;
   page.drawLine({
-    start: { x: MARGIN + 260, y: footerY - 36 },
-    end: { x: MARGIN + 460, y: footerY - 36 },
+    start: { x: rightSigX, y: sigLineY },
+    end: { x: rightSigX + 200, y: sigLineY },
     thickness: 0.7,
     color: NAVY,
   });
   page.drawText('Authorised Signatory', {
-    x: MARGIN + 264,
-    y: footerY - 22,
-    size: 11,
+    x: rightSigX + 4,
+    y: sigLineY + 5,
+    size: 10,
     font: boldFont,
     color: NAVY_DEEP,
   });
+  page.drawText('For Aldwych European Capital', {
+    x: rightSigX,
+    y: sigLineY - 11,
+    size: 7.5,
+    font,
+    color: TEXT,
+  });
   page.drawText(`Date: ${fmtDate(data.issuedAt)}`, {
-    x: MARGIN + 260,
-    y: footerY - 60,
-    size: 8,
+    x: rightSigX,
+    y: sigLineY - 21,
+    size: 7.5,
     font,
     color: TEXT,
   });
 
-  // QR code bottom-right
-  const qrSize = 80;
-  page.drawImage(qrImage, {
-    x: PAGE_W - MARGIN - qrSize,
-    y: 36,
-    width: qrSize,
-    height: qrSize,
-  });
+  // Seal centered horizontally, positioned below the signature block in
+  // its own dedicated band so it reads as a final executed stamp.
+  const sealCx = PAGE_W / 2;
+  const sealCy = 78;
+  drawSeal(page, font, boldFont, sealCx, sealCy, data.referenceNumber);
 
-  page.drawText('Scan to verify', {
-    x: PAGE_W - MARGIN - qrSize,
-    y: 30,
+  // QR code with framed label, bottom-right
+  const qrSize = 84;
+  const qrX = PAGE_W - MARGIN - qrSize;
+  const qrY = 36;
+  page.drawRectangle({
+    x: qrX - 4,
+    y: qrY - 4,
+    width: qrSize + 8,
+    height: qrSize + 8,
+    borderColor: SOFT_BORDER,
+    borderWidth: 0.6,
+    color: rgb(1, 1, 1),
+  });
+  page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
+  page.drawText('SCAN TO VERIFY', {
+    x: qrX,
+    y: qrY + qrSize + 6,
     size: 7,
     font: boldFont,
     color: GOLD_DARK,
   });
-  page.drawText('this document', {
-    x: PAGE_W - MARGIN - qrSize,
-    y: 22,
-    size: 7,
+  page.drawText('aldwycheuropeancapital.com/verify', {
+    x: qrX,
+    y: qrY - 12,
+    size: 6,
     font,
     color: TEXT,
   });
 
-  // Seal mid-bottom
-  drawSeal(page, font, boldFont, PAGE_W / 2 - 30, 76, data.referenceNumber);
+  // Reference + issuance label bottom-left, mirroring the QR block on the right
+  page.drawText('SEALED & EXECUTED', {
+    x: MARGIN,
+    y: 96,
+    size: 8,
+    font: boldFont,
+    color: GOLD_DARK,
+  });
+  page.drawText(`Reference: ${data.referenceNumber}`, {
+    x: MARGIN,
+    y: 84,
+    size: 7,
+    font,
+    color: TEXT,
+  });
+  page.drawText(`Issued: ${fmtDate(data.issuedAt)}`, {
+    x: MARGIN,
+    y: 74,
+    size: 7,
+    font,
+    color: TEXT,
+  });
+  if (data.offerExpiry) {
+    page.drawText(`Valid until: ${fmtDate(data.offerExpiry)}`, {
+      x: MARGIN,
+      y: 64,
+      size: 7,
+      font,
+      color: TEXT,
+    });
+  }
 
   // Bottom footer line
   page.drawLine({
-    start: { x: MARGIN, y: 14 },
-    end: { x: PAGE_W - MARGIN, y: 14 },
+    start: { x: MARGIN, y: 22 },
+    end: { x: PAGE_W - MARGIN, y: 22 },
     thickness: 0.4,
     color: SOFT_BORDER,
   });
@@ -557,8 +754,15 @@ function drawFooter(
   const footerLine = `Aldwych European Capital · 85 Aldwych, London WC2B 4HP · support@aldwycheuropeancapital.com · +44 20 3917 8200`;
   page.drawText(footerLine, {
     x: MARGIN,
-    y: 4,
+    y: 12,
     size: 6.5,
+    font,
+    color: MUTED,
+  });
+  page.drawText('Authorised and regulated. This document is the property of Aldwych European Capital.', {
+    x: MARGIN,
+    y: 4,
+    size: 6,
     font,
     color: MUTED,
   });
