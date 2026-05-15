@@ -416,95 +416,6 @@ function drawHeader(
   });
 }
 
-function drawTitleBlock(
-  page: PDFPage,
-  font: PDFFont,
-  boldFont: PDFFont,
-  data: LoanDocumentData,
-  yStart: number
-): number {
-  const title = DOC_TITLES[data.documentType];
-  page.drawText(title, {
-    x: MARGIN,
-    y: yStart,
-    size: 20,
-    font: boldFont,
-    color: NAVY,
-  });
-
-  const subtitle =
-    data.documentType === 'agreement'
-      ? 'Binding agreement between Aldwych European Capital and the borrower'
-      : data.documentType === 'offer'
-      ? 'Conditional offer of finance — valid for 14 days from issuance'
-      : 'Confirmation of disbursement of approved loan facility';
-
-  page.drawText(subtitle, {
-    x: MARGIN,
-    y: yStart - 18,
-    size: 10,
-    font,
-    color: TEXT,
-  });
-
-  return yStart - 44;
-}
-
-function drawTermsTable(
-  page: PDFPage,
-  font: PDFFont,
-  boldFont: PDFFont,
-  data: LoanDocumentData,
-  yStart: number
-): number {
-  const colLabelX = MARGIN;
-  const colValueX = MARGIN + 200;
-  const rowH = 22;
-
-  const rows: Array<[string, string]> = [
-    ['Borrower', data.borrowerName],
-    ['Loan Type', LOAN_TYPE_LABELS[data.loanType] || data.loanType],
-    ['Facility Amount', fmtEUR(data.amount)],
-    ['Repayment Term', `${data.termMonths} months`],
-  ];
-
-  if (data.interestRate !== undefined) rows.push(['Interest Rate (APR)', `${data.interestRate}%`]);
-  if (data.monthlyPayment !== undefined) rows.push(['Monthly Payment', fmtEUR(data.monthlyPayment)]);
-  if (data.totalRepayable !== undefined) rows.push(['Total Repayable', fmtEUR(data.totalRepayable)]);
-  if (data.offerExpiry) rows.push(['Offer Valid Until', fmtDate(data.offerExpiry)]);
-  if (data.agreementSignedAt) rows.push(['Agreement Signed', fmtDate(data.agreementSignedAt)]);
-
-  // Section box
-  const boxH = rows.length * rowH + 28;
-  page.drawRectangle({
-    x: MARGIN - 4,
-    y: yStart - boxH,
-    width: PAGE_W - 2 * MARGIN + 8,
-    height: boxH,
-    borderColor: SOFT_BORDER,
-    borderWidth: 0.6,
-    color: rgb(0.984, 0.984, 0.973),
-    opacity: 0.6,
-  });
-
-  page.drawText('FACILITY DETAILS', {
-    x: MARGIN + 4,
-    y: yStart - 18,
-    size: 9,
-    font: boldFont,
-    color: GOLD_DARK,
-  });
-
-  let y = yStart - 36;
-  for (const [label, value] of rows) {
-    page.drawText(label, { x: colLabelX + 4, y, size: 10, font, color: TEXT });
-    page.drawText(value, { x: colValueX, y, size: 10.5, font: boldFont, color: NAVY });
-    y -= rowH;
-  }
-
-  return yStart - boxH - 16;
-}
-
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const words = text.split(/\s+/);
   const lines: string[] = [];
@@ -522,13 +433,147 @@ function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): 
   return lines;
 }
 
-function drawTerms(
-  page: PDFPage,
-  font: PDFFont,
-  boldFont: PDFFont,
-  data: LoanDocumentData,
-  yStart: number
-): number {
+// ============== PAGINATED RENDER CONTEXT ==============
+// Keeps track of the current page and the y cursor, and rolls over to a
+// new page (with the same header/watermark) when content would collide
+// with the footer reserved area at the bottom.
+
+interface RenderCtx {
+  pdfDoc: PDFDocument;
+  font: PDFFont;
+  boldFont: PDFFont;
+  logoImage: { width: number; height: number; embed: any } | null;
+  data: LoanDocumentData;
+  page: PDFPage;
+  y: number;
+  pageNumber: number;
+  pages: PDFPage[];
+}
+
+/** Bottom Y above which body content must end on each page to leave room
+ *  for the footer (signatures + seal + QR + regulatory line). The final
+ *  page reserves the full footer; mid-document pages reserve less but
+ *  still leave a regulatory micro-line at the very bottom. */
+const FOOTER_RESERVED = 240; // last-page footer height
+const MID_PAGE_BOTTOM = 60; // mid-document pages: keep above bottom 60pt
+
+function newPage(ctx: RenderCtx, withHeader = true): void {
+  const p = ctx.pdfDoc.addPage([PAGE_W, PAGE_H]);
+  ctx.pages.push(p);
+  ctx.page = p;
+  ctx.pageNumber++;
+  drawWatermark(p, ctx.boldFont);
+  if (withHeader) drawHeader(p, ctx.font, ctx.boldFont, ctx.logoImage, ctx.data);
+  ctx.y = PAGE_H - 110;
+}
+
+/** If drawing `needed` points would push the cursor below `bottom`,
+ *  spill onto a new page. `bottom` defaults to FOOTER_RESERVED so the
+ *  last-page footer is always preserved. */
+function ensureSpace(ctx: RenderCtx, needed: number, bottom = FOOTER_RESERVED): void {
+  if (ctx.y - needed < bottom) {
+    newPage(ctx);
+  }
+}
+
+function drawTitleBlockCtx(ctx: RenderCtx): void {
+  ensureSpace(ctx, 50);
+  const title = DOC_TITLES[ctx.data.documentType];
+  ctx.page.drawText(title, {
+    x: MARGIN,
+    y: ctx.y,
+    size: 20,
+    font: ctx.boldFont,
+    color: NAVY,
+  });
+  const subtitle =
+    ctx.data.documentType === 'agreement'
+      ? 'Binding agreement between Aldwych European Capital and the borrower'
+      : ctx.data.documentType === 'offer'
+      ? 'Conditional offer of finance — valid for 14 days from issuance'
+      : 'Confirmation of disbursement of approved loan facility';
+  ctx.page.drawText(subtitle, {
+    x: MARGIN,
+    y: ctx.y - 18,
+    size: 10,
+    font: ctx.font,
+    color: TEXT,
+  });
+  ctx.y -= 44;
+}
+
+function drawTermsTableCtx(ctx: RenderCtx): void {
+  const colLabelX = MARGIN;
+  const colValueX = MARGIN + 200;
+  const rowH = 22;
+
+  const data = ctx.data;
+  const rows: Array<[string, string]> = [
+    ['Borrower', data.borrowerName],
+    ['Loan Type', LOAN_TYPE_LABELS[data.loanType] || data.loanType],
+    ['Facility Amount', fmtEUR(data.amount)],
+    ['Repayment Term', `${data.termMonths} months`],
+  ];
+  if (data.interestRate !== undefined) rows.push(['Interest Rate (APR)', `${data.interestRate}%`]);
+  if (data.monthlyPayment !== undefined) rows.push(['Monthly Payment', fmtEUR(data.monthlyPayment)]);
+  if (data.totalRepayable !== undefined) rows.push(['Total Repayable', fmtEUR(data.totalRepayable)]);
+  if (data.offerExpiry) rows.push(['Offer Valid Until', fmtDate(data.offerExpiry)]);
+  if (data.agreementSignedAt) rows.push(['Agreement Signed', fmtDate(data.agreementSignedAt)]);
+
+  const boxH = rows.length * rowH + 28;
+  ensureSpace(ctx, boxH + 16);
+
+  ctx.page.drawRectangle({
+    x: MARGIN - 4,
+    y: ctx.y - boxH,
+    width: PAGE_W - 2 * MARGIN + 8,
+    height: boxH,
+    borderColor: SOFT_BORDER,
+    borderWidth: 0.6,
+    color: rgb(0.984, 0.984, 0.973),
+    opacity: 0.6,
+  });
+  ctx.page.drawText('FACILITY DETAILS', {
+    x: MARGIN + 4,
+    y: ctx.y - 18,
+    size: 9,
+    font: ctx.boldFont,
+    color: GOLD_DARK,
+  });
+
+  let y = ctx.y - 36;
+  for (const [label, value] of rows) {
+    ctx.page.drawText(label, { x: colLabelX + 4, y, size: 10, font: ctx.font, color: TEXT });
+    ctx.page.drawText(value, { x: colValueX, y, size: 10.5, font: ctx.boldFont, color: NAVY });
+    y -= rowH;
+  }
+  ctx.y -= boxH + 16;
+}
+
+function drawPurposeCtx(ctx: RenderCtx): void {
+  if (!ctx.data.purpose) return;
+  const lines = wrapText(ctx.data.purpose, ctx.font, 9.5, PAGE_W - 2 * MARGIN);
+  const showLines = lines.slice(0, 4);
+  const blockH = 14 + showLines.length * 12 + 8;
+  ensureSpace(ctx, blockH);
+
+  ctx.page.drawText('PURPOSE', {
+    x: MARGIN,
+    y: ctx.y,
+    size: 9,
+    font: ctx.boldFont,
+    color: GOLD_DARK,
+  });
+  ctx.y -= 14;
+  for (const line of showLines) {
+    ctx.page.drawText(line, { x: MARGIN, y: ctx.y, size: 9.5, font: ctx.font, color: TEXT });
+    ctx.y -= 12;
+  }
+  ctx.y -= 8;
+}
+
+function drawTermsCtx(ctx: RenderCtx): void {
+  const data = ctx.data;
   const clauses = [
     {
       title: 'Facility & Disbursement',
@@ -556,30 +601,51 @@ function drawTerms(
     },
   ];
 
-  let y = yStart;
-  const maxWidth = PAGE_W - 2 * MARGIN;
-
-  page.drawText('TERMS', {
+  ensureSpace(ctx, 24);
+  ctx.page.drawText('TERMS', {
     x: MARGIN,
-    y,
+    y: ctx.y,
     size: 9,
-    font: boldFont,
+    font: ctx.boldFont,
     color: GOLD_DARK,
   });
-  y -= 16;
+  ctx.y -= 16;
 
+  const maxWidth = PAGE_W - 2 * MARGIN;
   for (const c of clauses) {
-    page.drawText(c.title, { x: MARGIN, y, size: 10.5, font: boldFont, color: NAVY });
-    y -= 14;
-    const lines = wrapText(c.body, font, 9.5, maxWidth);
+    const lines = wrapText(c.body, ctx.font, 9.5, maxWidth);
+    const clauseHeight = 14 + lines.length * 12 + 6;
+    ensureSpace(ctx, clauseHeight);
+    ctx.page.drawText(c.title, {
+      x: MARGIN,
+      y: ctx.y,
+      size: 10.5,
+      font: ctx.boldFont,
+      color: NAVY,
+    });
+    ctx.y -= 14;
     for (const line of lines) {
-      page.drawText(line, { x: MARGIN, y, size: 9.5, font, color: TEXT });
-      y -= 12;
+      ctx.page.drawText(line, { x: MARGIN, y: ctx.y, size: 9.5, font: ctx.font, color: TEXT });
+      ctx.y -= 12;
     }
-    y -= 6;
+    ctx.y -= 6;
   }
+}
 
-  return y;
+function drawPageNumbers(ctx: RenderCtx): void {
+  if (ctx.pages.length < 2) return; // only number multi-page documents
+  ctx.pages.forEach((p, i) => {
+    const total = ctx.pages.length;
+    const label = `Page ${i + 1} of ${total}`;
+    const w = ctx.font.widthOfTextAtSize(label, 8);
+    p.drawText(label, {
+      x: PAGE_W - MARGIN - w,
+      y: PAGE_H - 78,
+      size: 8,
+      font: ctx.font,
+      color: MUTED,
+    });
+  });
 }
 
 async function embedQR(pdfDoc: PDFDocument, verificationUrl: string) {
@@ -777,13 +843,12 @@ export async function generateLoanDocument(data: LoanDocumentData): Promise<Uint
   pdfDoc.setCreator('Aldwych European Capital');
   pdfDoc.setCreationDate(data.issuedAt);
 
-  const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
   // Embed logo
   const logoBytes = await loadLogoBytes();
-  let logoImage = null;
+  let logoImage: { width: number; height: number; embed: any } | null = null;
   if (logoBytes) {
     try {
       const embed = await pdfDoc.embedPng(logoBytes);
@@ -793,37 +858,36 @@ export async function generateLoanDocument(data: LoanDocumentData): Promise<Uint
     }
   }
 
-  // Draw watermark first so other content sits on top
-  drawWatermark(page, boldFont);
+  // Start the first page through the render context so we get the header
+  // + watermark consistently.
+  const firstPage = pdfDoc.addPage([PAGE_W, PAGE_H]);
+  drawWatermark(firstPage, boldFont);
+  drawHeader(firstPage, font, boldFont, logoImage, data);
 
-  // Header
-  drawHeader(page, font, boldFont, logoImage, data);
+  const ctx: RenderCtx = {
+    pdfDoc,
+    font,
+    boldFont,
+    logoImage,
+    data,
+    page: firstPage,
+    y: PAGE_H - 120,
+    pageNumber: 1,
+    pages: [firstPage],
+  };
 
-  // Title
-  let y = PAGE_H - 120;
-  y = drawTitleBlock(page, font, boldFont, data, y);
+  // Paginated body
+  drawTitleBlockCtx(ctx);
+  drawTermsTableCtx(ctx);
+  drawPurposeCtx(ctx);
+  drawTermsCtx(ctx);
 
-  // Terms table
-  y = drawTermsTable(page, font, boldFont, data, y);
-
-  // Purpose paragraph
-  if (data.purpose) {
-    page.drawText('PURPOSE', { x: MARGIN, y, size: 9, font: boldFont, color: GOLD_DARK });
-    y -= 14;
-    const purposeLines = wrapText(data.purpose, font, 9.5, PAGE_W - 2 * MARGIN);
-    for (const line of purposeLines.slice(0, 3)) {
-      page.drawText(line, { x: MARGIN, y, size: 9.5, font, color: TEXT });
-      y -= 12;
-    }
-    y -= 8;
-  }
-
-  // Terms clauses
-  drawTerms(page, font, boldFont, data, y);
-
-  // Footer: signatures, seal, QR
+  // Footer (signatures, seal, QR) only on the FINAL page
   const qrImage = await embedQR(pdfDoc, data.verificationUrl);
-  drawFooter(page, font, boldFont, qrImage, data);
+  drawFooter(ctx.page, font, boldFont, qrImage, data);
+
+  // Add page numbers across all pages if multi-page
+  drawPageNumbers(ctx);
 
   return pdfDoc.save();
 }
