@@ -1,4 +1,4 @@
-package com.zentribank.app;
+package com.aldwycheuropeancapital.app;
 
 import com.getcapacitor.BridgeActivity;
 

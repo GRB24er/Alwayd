@@ -9,7 +9,7 @@ async function createAdmin() {
     console.log("✅ Connected to MongoDB");
     
     // Create admin user
-    const adminEmail = "admin@horizonbank.com";
+    const adminEmail = "admin@aldwycheuropeancapital.com";
     const adminPassword = "Admin123!";
     
     // Delete existing admin
@@ -31,7 +31,7 @@ async function createAdmin() {
    
    console.log("✅ Admin user created!");
    console.log("📧 Admin credentials:");
-   console.log("   Email: admin@horizonbank.com");
+   console.log("   Email: admin@aldwycheuropeancapital.com");
    console.log("   Password: Admin123!");
    
  } catch (error) {

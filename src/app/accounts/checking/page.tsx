@@ -233,7 +233,7 @@ export default function CheckingAccountPage() {
 
         {/* Benefits Section */}
         <section className={styles.benefits}>
-          <h2 className={styles.sectionTitle}>Why Choose Horizon Checking?</h2>
+          <h2 className={styles.sectionTitle}>Why Choose Aldwych Checking?</h2>
           <div className={styles.benefitsGrid}>
             <div className={styles.benefitCard}>
               <div className={styles.benefitIcon}>🌍</div>
@@ -281,7 +281,7 @@ export default function CheckingAccountPage() {
               <button className={styles.secondaryButton}>Schedule Appointment</button>
             </div>
             <p className={styles.ctaNote}>
-              Or call us at 1-800-HORIZON (1-800-467-4966)
+              Or call us at +44 20 3917 8200 (+44 20 3917 8200)
             </p>
           </div>
         </section>

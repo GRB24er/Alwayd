@@ -674,7 +674,7 @@ export default function SendMoneyPage() {
 
                   <div className={styles.termsBox}>
                     <p>
-                      By confirming this transfer, you authorize ZentriBank to debit your account 
+                      By confirming this transfer, you authorize Aldwych European Capital to debit your account 
                       for the total amount shown above. Transfers are subject to review and may 
                       require additional verification.
                     </p>

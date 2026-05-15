@@ -20,7 +20,7 @@ export default function SupportPage() {
       questions: [
         { q: "How do I reset my password?", a: "You can reset your password from the login page by clicking 'Forgot Password' or from your account settings." },
         { q: "How do I update my personal information?", a: "Go to Settings > Profile to update your personal information." },
-        { q: "What are the account requirements?", a: "You need to be 18+ with a valid ID and Social Security number to open an account." }
+        { q: "What are the account requirements?", a: "You need to be 18+ with a valid government-issued ID and proof of address to open an account. KYC verification is required under European banking regulations." }
       ]
     },
     {
@@ -34,8 +34,8 @@ export default function SupportPage() {
     {
       category: "Security",
       questions: [
-        { q: "How is my account protected?", a: "We use 256-bit encryption, two-factor authentication, and FDIC insurance up to $250,000." },
-        { q: "What should I do if I notice suspicious activity?", a: "Contact us immediately at 1-800-HORIZON or lock your card in the app." },
+        { q: "How is my account protected?", a: "We use 256-bit encryption, two-factor authentication, and operate under European banking secrecy standards with full GDPR compliance." },
+        { q: "What should I do if I notice suspicious activity?", a: "Contact us immediately at +44 20 3917 8200 or lock your card in the app." },
         { q: "How do I enable two-factor authentication?", a: "Go to Settings > Security and enable 2FA with your phone number." }
       ]
     }
@@ -54,14 +54,14 @@ export default function SupportPage() {
       title: "Phone Support", 
       desc: "Call us anytime", 
       available: "24/7", 
-      action: () => window.location.href = "tel:1800ZentriBank" 
+      action: () => window.location.href = "tel:+442039178200" 
     },
     { 
       icon: "📧", 
       title: "Email Support", 
       desc: "Get help via email", 
       available: "1-2 business days", 
-      action: () => window.location.href = "mailto:admin@zentribank.capital" 
+      action: () => window.location.href = "mailto:support@aldwycheuropeancapital.com" 
     },
     { 
       icon: "📅", 
@@ -87,8 +87,8 @@ export default function SupportPage() {
             </div>
             <div className={styles.emergencyContact}>
               <span>Need urgent help?</span>
-              <a href="tel:1800ZentriBank" className={styles.phoneNumber}>
-                📞 1-800-ZentriBank
+              <a href="tel:+442039178200" className={styles.phoneNumber}>
+                📞 +44 20 3917 8200
               </a>
             </div>
           </div>
