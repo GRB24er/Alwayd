@@ -1,0 +1,652 @@
+/* src/app/accounts/[type]/account.module.css */
+
+.wrapper {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.mainContent {
+  flex: 1;
+  margin-left: 260px;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  padding: 2rem 2.5rem;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Loading */
+.loadingScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 1rem;
+  color: #64748b;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #10b981;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Back Button */
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 1.5rem;
+  transition: color 0.2s;
+}
+
+.backButton:hover {
+  color: #0f172a;
+}
+
+/* Account Header */
+.accountHeader {
+  border-radius: 24px;
+  padding: 2.5rem;
+  color: white;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.accountHeader::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -25%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.accountIcon {
+  width: 64px;
+  height: 64px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+.accountName {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.accountNumber {
+  font-size: 0.9375rem;
+  opacity: 0.9;
+  margin: 0.25rem 0 0;
+}
+
+.balanceSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.balanceMain {
+  display: flex;
+  flex-direction: column;
+}
+
+.balanceLabel {
+  font-size: 0.875rem;
+  opacity: 0.85;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.balanceValue {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.balanceSecondary {
+  display: flex;
+  gap: 2.5rem;
+}
+
+.balanceItem {
+  text-align: right;
+}
+
+.itemLabel {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.itemValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+  position: relative;
+}
+
+.primaryAction {
+  background: white;
+  color: #0f172a;
+  padding: 0.875rem 1.75rem;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.primaryAction:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+.secondaryAction {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  padding: 0.875rem 1.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.3);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.secondaryAction:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0;
+}
+
+.tab {
+  background: none;
+  border: none;
+  padding: 1rem 1.5rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.tab:hover {
+  color: #0f172a;
+}
+
+.activeTab {
+  color: #10b981;
+}
+
+.activeTab::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #10b981;
+}
+
+/* Tab Content */
+.tabContent {
+  min-height: 400px;
+}
+
+/* Overview Grid */
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+.chartCard,
+.featuresCard,
+.actionsCard,
+.recentCard {
+  background: white;
+  border-radius: 20px;
+  padding: 1.75rem;
+  border: 1px solid #e2e8f0;
+}
+
+.chartCard {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.featuresCard {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.actionsCard {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.recentCard {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.cardTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 1rem;
+}
+
+.cardDescription {
+  color: #64748b;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+}
+
+.chartContainer {
+  margin: 0 -0.5rem;
+}
+
+/* Features List */
+.featuresList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  color: #475569;
+  font-size: 0.9375rem;
+}
+
+.featureItem:last-child {
+  border-bottom: none;
+}
+
+.featureCheck {
+  width: 20px;
+  height: 20px;
+  background: #dcfce7;
+  color: #16a34a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Actions List */
+.actionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.actionButton:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.actionIcon {
+  font-size: 1.25rem;
+}
+
+/* Recent Activity */
+.recentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.viewAllBtn {
+  background: none;
+  border: none;
+  color: #10b981;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.viewAllBtn:hover {
+  color: #059669;
+}
+
+.recentList {
+  display: flex;
+  flex-direction: column;
+}
+
+.recentItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.recentItem:last-child {
+  border-bottom: none;
+}
+
+.recentInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.recentDesc {
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.recentDate {
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.recentAmount {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.recentAmount.credit {
+  color: #16a34a;
+}
+
+.recentAmount.debit {
+  color: #dc2626;
+}
+
+/* Empty State */
+.emptyState {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+}
+
+.emptyTransactions {
+  background: white;
+  border-radius: 20px;
+  padding: 4rem 2rem;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.emptyIcon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.4;
+}
+
+.emptyTransactions h3 {
+  font-size: 1.25rem;
+  color: #0f172a;
+  margin: 0 0 0.5rem;
+}
+
+.emptyTransactions p {
+  color: #64748b;
+  margin: 0 0 1.5rem;
+}
+
+.emptyAction {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 0.875rem 1.75rem;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.emptyAction:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+}
+
+/* Settings Tab */
+.settingsTab {
+  max-width: 700px;
+}
+
+.settingsCard {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 2rem;
+}
+
+.settingsTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 1.5rem;
+}
+
+.settingItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.settingItem:last-child {
+  border-bottom: none;
+}
+
+.settingInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.settingLabel {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.settingValue {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.settingAction {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.settingAction:hover {
+  background: #f1f5f9;
+}
+
+/* Danger Zone */
+.dangerZone {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.dangerTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #dc2626;
+  margin: 0 0 0.5rem;
+}
+
+.dangerText {
+  font-size: 0.875rem;
+  color: #7f1d1d;
+  margin: 0 0 1rem;
+}
+
+.dangerButton {
+  background: white;
+  border: 1px solid #dc2626;
+  color: #dc2626;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dangerButton:hover {
+  background: #dc2626;
+  color: white;
+}
+
+/* Transactions Tab */
+.transactionsTab {
+  /* Inherits TransactionTable styles */
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .mainContent {
+    margin-left: 0;
+  }
+  
+  .overviewGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chartCard,
+  .featuresCard,
+  .actionsCard,
+  .recentCard {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding: 1.5rem;
+  }
+  
+  .accountHeader {
+    padding: 1.75rem;
+  }
+  
+  .balanceValue {
+    font-size: 2.25rem;
+  }
+  
+  .balanceSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+  
+  .balanceSecondary {
+    gap: 1.5rem;
+  }
+  
+  .balanceItem {
+    text-align: left;
+  }
+  
+  .headerActions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .primaryAction,
+  .secondaryAction {
+    width: 100%;
+    text-align: center;
+  }
+}

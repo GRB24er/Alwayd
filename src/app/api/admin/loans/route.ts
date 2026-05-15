@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     }
     await connectDB();
     const user = await User.findById(session.user.id);
-    if (!user?.isAdmin) {
+    if (!user || user.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
     const { searchParams } = new URL(req.url);
@@ -44,7 +44,7 @@ export async function PATCH(req: NextRequest) {
     }
     await connectDB();
     const user = await User.findById(session.user.id);
-    if (!user?.isAdmin) {
+    if (!user || user.role !== 'admin') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
     const body = await req.json();
