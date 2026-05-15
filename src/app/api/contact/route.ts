@@ -3,7 +3,7 @@ import { sendSimpleEmail } from '@/lib/mail';
 
 export const runtime = 'nodejs';
 
-const CONTACT_RECIPIENT = 'info@aldwycheuropeancapital.com';
+const CONTACT_RECIPIENT = 'support@aldwycheuropeancapital.com';
 
 function escapeHtml(str: string): string {
   return String(str)
