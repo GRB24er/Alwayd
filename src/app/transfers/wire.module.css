@@ -1,0 +1,289 @@
+/* src/app/transfer/transfer.module.css */
+/* Aldwych European Capital - Enterprise Transfer Styling */
+
+.transferContainer {
+  /* Aldwych European Capital color scheme */
+  --aec-gold: #c9a962;
+  --aec-gold-light: #d4b978;
+  --aec-gold-dark: #a8935f;
+  --aec-navy: #1a1f2e;
+  --aec-navy-light: #252b3d;
+  --aec-navy-dark: #12151f;
+  --aec-cream: #faf9f7;
+  --aec-text: #1a1f2e;
+  --aec-text-muted: #6b7280;
+  --aec-border: rgba(201, 169, 98, 0.15);
+  --aec-success: #10b981;
+  --aec-danger: #ef4444;
+  --aec-warning: #f59e0b;
+
+  /* Component-specific variables mapped to Aldwych theme */
+  --transfer-primary: var(--aec-gold);
+  --transfer-primary-hover: var(--aec-gold-dark);
+  --transfer-text-dark: var(--aec-navy);
+
+  max-width: 540px;
+  margin: 2.5rem auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(26, 31, 46, 0.08);
+  border: 1px solid var(--aec-border);
+  position: relative;
+}
+
+/* Decorative top border accent */
+.transferContainer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--aec-gold) 0%, var(--aec-gold-dark) 100%);
+  border-radius: 16px 16px 0 0;
+}
+
+.transferTitle {
+  margin-bottom: 1.5rem;
+  color: var(--aec-navy);
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+/* Gold underline accent */
+.transferTitle::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--aec-gold) 0%, var(--aec-gold-dark) 100%);
+  border-radius: 2px;
+}
+
+.recipientInfo {
+  background: linear-gradient(135deg, var(--aec-cream) 0%, #f5f4f2 100%);
+  padding: 1.25rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--aec-border);
+  position: relative;
+}
+
+/* Gold left accent bar */
+.recipientInfo::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 60%;
+  background: linear-gradient(180deg, var(--aec-gold) 0%, var(--aec-gold-dark) 100%);
+  border-radius: 0 2px 2px 0;
+}
+
+.transferForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Form field styling */
+.transferForm input,
+.transferForm select,
+.transferForm textarea {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid var(--aec-border);
+  border-radius: 10px;
+  font-size: 1rem;
+  color: var(--aec-navy);
+  background-color: #ffffff;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.transferForm input::placeholder,
+.transferForm textarea::placeholder {
+  color: var(--aec-text-muted);
+}
+
+.transferForm input:focus,
+.transferForm select:focus,
+.transferForm textarea:focus {
+  border-color: var(--aec-gold);
+  box-shadow: 0 0 0 3px rgba(201, 169, 98, 0.1);
+}
+
+/* Form labels */
+.transferForm label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--aec-navy);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.transferBtn {
+  background: linear-gradient(135deg, var(--aec-gold) 0%, var(--aec-gold-dark) 100%);
+  color: var(--aec-navy-dark);
+  border: none;
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(201, 169, 98, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.transferBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(201, 169, 98, 0.4);
+  background: linear-gradient(135deg, var(--aec-gold-light) 0%, var(--aec-gold) 100%);
+}
+
+.transferBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(201, 169, 98, 0.3);
+}
+
+.transferBtn:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Loading state for button */
+.transferBtn.loading {
+  position: relative;
+  color: transparent;
+}
+
+.transferBtn.loading::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--aec-navy-dark);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Error state for inputs */
+.transferForm input.error,
+.transferForm select.error {
+  border-color: var(--aec-danger);
+  background-color: rgba(239, 68, 68, 0.02);
+}
+
+.transferForm input.error:focus,
+.transferForm select.error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Error message */
+.errorMessage {
+  color: var(--aec-danger);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Success message */
+.successMessage {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #047857;
+  padding: 1rem;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Amount input special styling */
+.amountWrapper {
+  position: relative;
+}
+
+.amountWrapper .currencySymbol {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--aec-gold-dark);
+}
+
+.amountWrapper input {
+  padding-left: 2.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+/* Balance display */
+.balanceDisplay {
+  font-size: 0.8125rem;
+  color: var(--aec-text-muted);
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+.balanceDisplay strong {
+  color: var(--aec-navy);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .transferContainer {
+    margin: 1rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+
+  .transferTitle {
+    font-size: 1.5rem;
+  }
+
+  .transferBtn {
+    padding: 0.875rem 1.25rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .transferContainer {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+
+  .transferBtn {
+    display: none;
+  }
+}

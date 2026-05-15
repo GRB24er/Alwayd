@@ -1,0 +1,559 @@
+/* src/app/admin/transfers/transfers.module.css */
+
+.wrapper {
+  display: flex;
+  min-height: 100vh;
+  background: #f1f5f9;
+}
+
+.mainContent {
+  flex: 1;
+  margin-left: 260px;
+  padding: 2rem;
+}
+
+.loadingScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.25rem;
+}
+
+.header p {
+  color: #64748b;
+  margin: 0;
+}
+
+.refreshBtn {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refreshBtn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* Alerts */
+.errorAlert,
+.successAlert {
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.errorAlert {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+}
+
+.successAlert {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+}
+
+/* Filter Tabs */
+.filterTabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  background: white;
+  padding: 0.5rem;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.filterTab {
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filterTab:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.filterTab.active {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Transfers List */
+.transfersList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.emptyState span {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.emptyState p {
+  color: #64748b;
+  margin: 0;
+}
+
+/* Transfer Card */
+.transferCard {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.transferHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.transferRef {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.refLabel {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.transferRef strong {
+  font-family: 'SF Mono', monospace;
+  color: #0f172a;
+}
+
+/* Badges */
+.badge {
+  padding: 0.375rem 0.875rem;
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge.awaiting {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge.verified {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge.completed {
+  background: #10b981;
+  color: white;
+}
+
+.badge.rejected {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Transfer Body */
+.transferBody {
+  padding: 1.5rem;
+}
+
+.transferAmount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.feeTag {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.transferDetails {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.detailRow span {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.detailRow strong {
+  color: #0f172a;
+  font-size: 0.875rem;
+}
+
+.codeDisplay {
+  font-family: 'SF Mono', monospace;
+  background: #f0fdf4;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  color: #059669;
+}
+
+.confirmedBadge {
+  color: #16a34a !important;
+}
+
+/* Transfer Actions */
+.transferActions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.attachBtn,
+.approveBtn,
+.rejectBtn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.attachBtn {
+  background: #3b82f6;
+  color: white;
+}
+
+.attachBtn:hover {
+  background: #2563eb;
+}
+
+.approveBtn {
+  background: #10b981;
+  color: white;
+}
+
+.approveBtn:hover:not(:disabled) {
+  background: #059669;
+}
+
+.rejectBtn {
+  background: white;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.rejectBtn:hover:not(:disabled) {
+  background: #fef2f2;
+}
+
+.approveBtn:disabled,
+.rejectBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.waitingNote {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modalHeader h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.closeBtn:hover {
+  background: #e2e8f0;
+}
+
+.modalBody {
+  padding: 1.5rem;
+}
+
+.modalInfo {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.modalInfo p {
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.modalInfo strong {
+  color: #0f172a;
+}
+
+.inputGroup {
+  margin-bottom: 1.5rem;
+}
+
+.inputGroup label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.codeInput {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.25rem;
+  font-family: 'SF Mono', monospace;
+  letter-spacing: 0.1em;
+  text-align: center;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.codeInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.hint {
+  display: block;
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.textarea {
+  width: 100%;
+  padding: 0.875rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.modalError {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+.warningBox {
+  display: flex;
+  gap: 0.75rem;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.warningBox span {
+  font-size: 1.25rem;
+}
+
+.warningBox p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+.modalFooter {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.cancelBtn,
+.submitBtn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelBtn {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.cancelBtn:hover {
+  background: #f8fafc;
+}
+
+.submitBtn {
+  background: #3b82f6;
+  border: none;
+  color: white;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .mainContent {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    padding: 1rem;
+  }
+  
+  .transferDetails {
+    grid-template-columns: 1fr;
+  }
+  
+  .transferActions {
+    flex-direction: column;
+  }
+  
+  .filterTabs {
+    flex-wrap: wrap;
+  }
+}

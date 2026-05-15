@@ -1,0 +1,555 @@
+/* Footer.module.css - Aldwych European Capital - Enterprise Grade */
+
+/* ===== CSS VARIABLES ===== */
+.footer {
+  --aec-gold: #c9a962;
+  --aec-gold-light: #d4b978;
+  --aec-gold-dark: #a8935f;
+  --aec-navy: #1a1f2e;
+  --aec-navy-light: #252b3d;
+  --aec-navy-dark: #12151f;
+  --aec-cream: #faf9f7;
+  --aec-text: #e8e6e3;
+  --aec-text-muted: rgba(255, 255, 255, 0.6);
+  --aec-border: rgba(201, 169, 98, 0.2);
+  
+  background: linear-gradient(180deg, var(--aec-navy) 0%, var(--aec-navy-dark) 100%);
+  color: var(--aec-text);
+  margin-top: auto;
+  position: relative;
+  overflow: hidden;
+}
+
+
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--aec-gold) 50%, transparent 100%);
+  opacity: 0.5;
+}
+
+/* ===== MAIN SECTION ===== */
+.footerMain {
+  padding: 4rem 2rem 3rem;
+  position: relative;
+}
+
+.footerMain::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(201, 169, 98, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.5fr 2.5fr;
+  gap: 4rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== BRAND SECTION ===== */
+.brandSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+}
+
+.brandLogo {
+  width: 200px;
+  height: auto;
+  object-fit: contain;
+  filter: brightness(1.1);
+}
+
+.brandDescription {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 400px;
+}
+
+/* ===== APP BADGES ===== */
+.appBadges {
+  display: flex;
+  gap: 0.875rem;
+  flex-wrap: wrap;
+}
+
+.appBadge {
+  display: block;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.appBadge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.appStoreBadge {
+  height: 40px;
+  width: auto;
+}
+
+.googlePlayBadge {
+  height: 40px;
+  width: auto;
+}
+
+/* ===== NEWSLETTER ===== */
+.newsletter {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 400px;
+}
+
+.newsletterInput {
+  flex: 1;
+  padding: 1rem 1.25rem;
+  background: rgba(201, 169, 98, 0.08);
+  border: 1px solid var(--aec-border);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.newsletterInput::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.newsletterInput:focus {
+  background: rgba(201, 169, 98, 0.12);
+  border-color: var(--aec-gold);
+  box-shadow: 0 0 0 3px rgba(201, 169, 98, 0.15);
+}
+
+.newsletterButton {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, var(--aec-gold) 0%, var(--aec-gold-dark) 100%);
+  border: none;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--aec-navy-dark);
+  box-shadow: 0 4px 12px rgba(201, 169, 98, 0.3);
+  flex-shrink: 0;
+}
+
+.newsletterButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(201, 169, 98, 0.4);
+}
+
+.newsletterButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.successMessage {
+  color: var(--aec-gold);
+  font-size: 0.875rem;
+  margin: 0;
+  font-weight: 600;
+  animation: fadeSlideUp 0.4s ease-out;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== SOCIAL LINKS ===== */
+.socialLinks {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.socialLink {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(201, 169, 98, 0.08);
+  border: 1px solid var(--aec-border);
+  border-radius: 10px;
+  color: var(--aec-gold);
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.socialLink:hover {
+  background: linear-gradient(135deg, var(--aec-gold) 0%, var(--aec-gold-dark) 100%);
+  border-color: transparent;
+  color: var(--aec-navy-dark);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(201, 169, 98, 0.4);
+}
+
+.socialLink svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ===== LINKS GRID ===== */
+.linksGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3rem;
+}
+
+.linkSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.linkTitle {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--aec-gold);
+  margin-bottom: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  position: relative;
+  padding-bottom: 0.75rem;
+}
+
+.linkTitle::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--aec-gold) 0%, transparent 100%);
+  border-radius: 1px;
+}
+
+.linkList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.linkList li {
+  margin: 0;
+}
+
+.linkList a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  position: relative;
+}
+
+.linkList a::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  width: 0;
+  height: 2px;
+  background: var(--aec-gold);
+  transition: width 0.3s;
+}
+
+.linkList a:hover {
+  color: #ffffff;
+  transform: translateX(8px);
+}
+
+.linkList a:hover::before {
+  width: 4px;
+}
+
+/* ===== TRUST SECTION ===== */
+.trustSection {
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid var(--aec-border);
+  border-bottom: 1px solid var(--aec-border);
+  padding: 2rem 2rem;
+}
+
+.trustSection .container {
+  display: block;
+}
+
+.trustGrid {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.trustBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(201, 169, 98, 0.05);
+  border: 1px solid var(--aec-border);
+  border-radius: 10px;
+  transition: all 0.3s;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.trustBadge:hover {
+  background: rgba(201, 169, 98, 0.1);
+  border-color: var(--aec-gold);
+  transform: translateY(-2px);
+}
+
+.trustIcon {
+  width: 22px;
+  height: 22px;
+  color: var(--aec-gold);
+  flex-shrink: 0;
+}
+
+/* ===== BOTTOM BAR ===== */
+.bottomBar {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1.5rem 2rem;
+}
+
+.bottomBar .container {
+  display: block;
+}
+
+.bottomContent {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.copyright {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.copyright p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.legalText {
+  font-size: 0.75rem !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.legalLinks {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.legalLinks a {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.legalLinks a:hover {
+  color: var(--aec-gold);
+}
+
+.separator {
+  color: var(--aec-gold);
+  opacity: 0.4;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+  .container {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  
+  .linksGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .trustGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .footerMain {
+    padding: 3rem 1.5rem 2rem;
+  }
+  
+  .brandLogo {
+    width: 180px;
+  }
+  
+  .linksGrid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .trustGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .trustSection {
+    padding: 1.5rem 1rem;
+  }
+  
+  .bottomBar {
+    padding: 1.5rem 1rem;
+  }
+  
+  .bottomContent {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .copyright {
+    align-items: center;
+  }
+  
+  .legalLinks {
+    justify-content: center;
+  }
+  
+  .newsletter {
+    max-width: 100%;
+  }
+  
+  .appBadges {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 375px) {
+  .footerMain {
+    padding: 2rem 1rem 1.5rem;
+  }
+  
+  .brandLogo {
+    width: 160px;
+  }
+  
+  .brandDescription {
+    font-size: 0.875rem;
+  }
+  
+  .newsletterInput {
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .newsletterButton {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .socialLink {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .trustBadge {
+    font-size: 0.8125rem;
+    padding: 0.75rem;
+  }
+  
+  .copyright p {
+    font-size: 0.8125rem;
+  }
+  
+  .legalLinks a {
+    font-size: 0.8125rem;
+  }
+}
+
+/* ===== ANIMATIONS ===== */
+.brandSection,
+.linksGrid,
+.trustBadge {
+  animation: fadeUp 0.6s ease-out both;
+}
+
+.linkSection:nth-child(1) { animation-delay: 0.1s; }
+.linkSection:nth-child(2) { animation-delay: 0.2s; }
+.linkSection:nth-child(3) { animation-delay: 0.3s; }
+.linkSection:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Add this to your existing Footer.module.css */
+
+.brandLogo {
+  width: 200px;
+  height: auto;
+  object-fit: contain;
+  filter: brightness(1.1) invert(1) brightness(1.5);
+  transition: filter 0.3s ease;
+}
+
+.brandLogo:hover {
+  filter: brightness(1.2) invert(1) brightness(1.6);
+}
