@@ -70,6 +70,7 @@ const TESTIMONIALS = [
     company: "Hoffmann Logistics GmbH",
     rating: 5,
     text: "Aldwych delivered our €1.2M working capital facility within 72 hours. Their team understood our seasonal cash flow needs immediately. The terms were transparent, the rate competitive, and our dedicated relationship manager has been outstanding.",
+    avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&h=200&q=80",
   },
   {
     name: "Élise Marchetti",
@@ -77,6 +78,7 @@ const TESTIMONIALS = [
     company: "Marchetti & Associés",
     rating: 5,
     text: "After being declined by two major banks, Aldwych funded our office expansion with a €450K SME loan. Their underwriting team genuinely engaged with our business plan rather than relying on automated scoring. A truly relationship-driven lender.",
+    avatar: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=200&h=200&q=80",
   },
   {
     name: "James Ó Briain",
@@ -84,6 +86,7 @@ const TESTIMONIALS = [
     company: "BriainBuild Construction",
     rating: 5,
     text: "Contractor financing through Aldwych has transformed how we manage project cash flow. The drawdown facility lets us bid on larger contracts with confidence. Fast, professional, and refreshingly transparent on pricing.",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&h=200&q=80",
   },
 ];
 
@@ -194,6 +197,14 @@ export default function LandingPage() {
 
       {/* HERO */}
       <section className={styles.hero}>
+        <Image
+          src="https://images.unsplash.com/photo-1561489413-985b06da5bee?auto=format&fit=crop&w=2000&q=80"
+          alt=""
+          fill
+          sizes="100vw"
+          className={styles.heroImage}
+          priority
+        />
         <div className={styles.heroBg} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroInner}>
@@ -273,6 +284,75 @@ export default function LandingPage() {
                 <div className={styles.statLabel}>{s.label}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ABOUT — Image-driven trust section */}
+      <section className={styles.aboutSection}>
+        <div className={styles.container}>
+          <div className={styles.aboutLayout}>
+            <div className={styles.aboutImageWrap}>
+              <Image
+                src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=900&q=80"
+                alt="Aldwych European Capital relationship managers in a client meeting"
+                width={640}
+                height={520}
+                className={styles.aboutImage}
+              />
+              <div className={styles.aboutImageBadge}>
+                <div className={styles.aboutBadgeIcon}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 22, height: 22 }}>
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <polyline points="9 12 11 14 15 10" />
+                  </svg>
+                </div>
+                <div>
+                  <div className={styles.aboutBadgeNum}>128 Years</div>
+                  <div className={styles.aboutBadgeLabel}>of European Lending</div>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.aboutContent}>
+              <span className={styles.sectionEyebrow}>Why Aldwych</span>
+              <h2 className={styles.sectionTitle}>Relationship-driven lending, since 1897</h2>
+              <p className={styles.aboutLead}>
+                For over a century, Aldwych European Capital has helped European businesses and entrepreneurs
+                access the funding they need to grow. We combine the discretion of private banking with the
+                speed and transparency of modern lending.
+              </p>
+
+              <div className={styles.aboutBullets}>
+                <div className={styles.aboutBullet}>
+                  <div className={styles.aboutBulletIcon}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 18, height: 18 }}><polyline points="20 6 9 17 4 12" /></svg>
+                  </div>
+                  <div>
+                    <h4>Dedicated Relationship Manager</h4>
+                    <p>A single point of contact who knows your business, from application to repayment.</p>
+                  </div>
+                </div>
+                <div className={styles.aboutBullet}>
+                  <div className={styles.aboutBulletIcon}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 18, height: 18 }}><polyline points="20 6 9 17 4 12" /></svg>
+                  </div>
+                  <div>
+                    <h4>Human Underwriting</h4>
+                    <p>Real people assess your application — not just algorithms. We listen to your story.</p>
+                  </div>
+                </div>
+                <div className={styles.aboutBullet}>
+                  <div className={styles.aboutBulletIcon}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 18, height: 18 }}><polyline points="20 6 9 17 4 12" /></svg>
+                  </div>
+                  <div>
+                    <h4>Transparent Pricing</h4>
+                    <p>The rate you see is the rate you pay. No hidden arrangement or early repayment fees.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -361,7 +441,13 @@ export default function LandingPage() {
                 </div>
                 <p className={styles.testimonialText}>&ldquo;{t.text}&rdquo;</p>
                 <div className={styles.testimonialAuthor}>
-                  <div className={styles.testimonialAvatar}>{t.name.charAt(0)}</div>
+                  <Image
+                    src={t.avatar}
+                    alt={t.name}
+                    width={56}
+                    height={56}
+                    className={styles.testimonialAvatar}
+                  />
                   <div>
                     <div className={styles.testimonialName}>{t.name}</div>
                     <div className={styles.testimonialRole}>{t.role} · {t.company}</div>
@@ -455,7 +541,7 @@ export default function LandingPage() {
                   </div>
                 </a>
 
-                <a className={styles.contactRow} href="mailto:info@aldwycheuropeancapital.com">
+                <a className={styles.contactRow} href="mailto:support@aldwycheuropeancapital.com">
                   <div className={styles.contactRowIcon}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: 22, height: 22 }}>
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -464,7 +550,7 @@ export default function LandingPage() {
                   </div>
                   <div className={styles.contactRowBody}>
                     <div className={styles.contactRowLabel}>Email</div>
-                    <div className={styles.contactRowValue}>info@aldwycheuropeancapital.com</div>
+                    <div className={styles.contactRowValue}>support@aldwycheuropeancapital.com</div>
                     <div className={styles.contactRowSub}>We respond within 24 hours</div>
                   </div>
                 </a>
@@ -583,6 +669,15 @@ export default function LandingPage() {
 
       {/* FINAL CTA */}
       <section className={styles.finalCta}>
+        <Image
+          src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1800&q=80"
+          alt="London financial district at dusk"
+          fill
+          sizes="100vw"
+          className={styles.finalCtaImage}
+          priority={false}
+        />
+        <div className={styles.finalCtaOverlay} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.finalCtaInner}>
             <h2 className={styles.finalCtaTitle}>Ready to grow with Aldwych?</h2>
@@ -664,7 +759,7 @@ export default function LandingPage() {
               </div>
               <div className={styles.footerContactItem}>
                 <strong>Email</strong>
-                <a href="mailto:info@aldwycheuropeancapital.com">info@aldwycheuropeancapital.com</a>
+                <a href="mailto:support@aldwycheuropeancapital.com">support@aldwycheuropeancapital.com</a>
               </div>
             </div>
           </div>
