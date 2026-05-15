@@ -1,0 +1,272 @@
+.root {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 60%);
+  color: #0d2440;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.nav {
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 14px 0;
+}
+
+.navInner {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.navLink {
+  color: #475569;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.navLink:hover {
+  color: #0d2440;
+}
+
+.content {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.eyebrow {
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #a8935f;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow:
+    0 30px 60px -20px rgba(13, 36, 64, 0.18),
+    0 8px 24px rgba(13, 36, 64, 0.06);
+  border: 1px solid rgba(13, 36, 64, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.verifiedCard {
+  border-top: 4px solid #10b981;
+}
+
+.unverifiedCard {
+  border-top: 4px solid #dc2626;
+}
+
+.statusBlock {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 26px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 28px;
+}
+
+.verifiedIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #d1fae5;
+  color: #065f46;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.unverifiedIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #991b1b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.statusTitle {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #0d2440;
+  margin: 0 0 6px;
+}
+
+.statusSub {
+  font-size: 14px;
+  color: #475569;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 28px;
+  margin-bottom: 28px;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detailItem span {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.detailItem strong {
+  font-size: 15px;
+  color: #0d2440;
+  font-weight: 700;
+}
+
+.detailItem em {
+  font-style: normal;
+  color: #a8935f;
+  font-weight: 500;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #d1fae5;
+  color: #065f46;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  width: fit-content;
+}
+
+.verifyStamp {
+  position: absolute;
+  top: 32px;
+  right: 32px;
+  width: 110px;
+  height: 110px;
+  border: 3px solid #c9a962;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-12deg);
+  background: rgba(201, 169, 98, 0.05);
+  opacity: 0.85;
+}
+
+.stampInner {
+  text-align: center;
+}
+
+.stampInner span {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #a8935f;
+}
+
+.stampInner strong {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #0d2440;
+  margin-top: 4px;
+}
+
+.notice {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.6;
+  padding-top: 22px;
+  border-top: 1px solid #e2e8f0;
+  margin: 28px 0 0;
+}
+
+.notice a {
+  color: #c9a962;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.notice a:hover {
+  text-decoration: underline;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin-top: 34px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.footer a {
+  color: #475569;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.footer a:hover {
+  color: #0d2440;
+}
+
+.footer span {
+  color: #cbd5e1;
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 28px 22px;
+  }
+  .detailsGrid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .verifyStamp {
+    width: 80px;
+    height: 80px;
+    top: 18px;
+    right: 18px;
+  }
+  .stampInner span {
+    font-size: 11px;
+  }
+  .stampInner strong {
+    font-size: 8px;
+  }
+  .statusBlock {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

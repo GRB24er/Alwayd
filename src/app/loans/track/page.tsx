@@ -377,6 +377,62 @@ export default function LoanTrackPage() {
                               </div>
                             )}
                           </div>
+
+                          <div className={styles.documentDownloads}>
+                            <div className={styles.documentDownloadsTitle}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="#c9a962" strokeWidth="1.8" style={{ width: "18px", height: "18px" }}>
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                              </svg>
+                              Official Documents
+                            </div>
+                            <p className={styles.documentDownloadsDesc}>
+                              Each document carries our embossed seal, watermark, and a verifiable QR code.
+                            </p>
+                            <div className={styles.documentDownloadsRow}>
+                              <a
+                                href={`/api/loans/${selectedLoan._id}/document?type=offer`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.documentDownloadBtn}
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: "16px", height: "16px" }}>
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="7 10 12 15 17 10" />
+                                  <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                Loan Offer (PDF)
+                              </a>
+                              <a
+                                href={`/api/loans/${selectedLoan._id}/document?type=agreement`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.documentDownloadBtn}
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: "16px", height: "16px" }}>
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="7 10 12 15 17 10" />
+                                  <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                Facility Agreement (PDF)
+                              </a>
+                              {(selectedLoan.status === "disbursed" || selectedLoan.status === "active") && (
+                                <a
+                                  href={`/api/loans/${selectedLoan._id}/document?type=disbursement`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={styles.documentDownloadBtn}
+                                >
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: "16px", height: "16px" }}>
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                  </svg>
+                                  Disbursement Receipt (PDF)
+                                </a>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
