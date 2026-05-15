@@ -221,7 +221,7 @@ export default function SavingsAccountPage() {
 
        {/* Benefits Section */}
        <section className={styles.benefits}>
-         <h2 className={styles.sectionTitle}>Why Save with Horizon?</h2>
+         <h2 className={styles.sectionTitle}>Why Save with Aldwych?</h2>
          <div className={styles.benefitsGrid}>
            <div className={styles.benefitItem}>
              <div className={styles.benefitIcon}>🛡️</div>

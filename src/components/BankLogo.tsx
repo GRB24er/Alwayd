@@ -15,7 +15,7 @@ export default function BankLogo({ width = 32, height = 32, className }: BankLog
   return (
     <Image
       src={src}
-      alt="Horizon Global Capital"
+      alt="Aldwych European Capital"
       width={width}
       height={height}
       className={className}

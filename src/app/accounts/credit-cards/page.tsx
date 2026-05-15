@@ -219,7 +219,7 @@ export default function CardsPage() {
                   <div className={styles.cardFront}>
                     {/* Card Logo */}
                     <div className={styles.cardHeaderRow}>
-                      <div className={styles.bankName}>HORIZON BANK</div>
+                      <div className={styles.bankName}>ALDWYCH EUROPEAN CAPITAL</div>
                       {currentCard.issuer && CARD_LOGOS[currentCard.issuer as keyof typeof CARD_LOGOS] && (
                         <img 
                           src={CARD_LOGOS[currentCard.issuer as keyof typeof CARD_LOGOS]} 

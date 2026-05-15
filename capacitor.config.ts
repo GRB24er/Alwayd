@@ -1,11 +1,11 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.zentribank.app',
-  appName: 'ZentriBank',
+  appId: 'com.aldwycheuropeancapital.app',
+  appName: 'Aldwych European Capital',
   webDir: 'public',
   server: {
-    url: 'https://www.zentribank.capital',
+    url: 'https://www.aldwycheuropeancapital.com',
     cleartext: false
   },
   android: {

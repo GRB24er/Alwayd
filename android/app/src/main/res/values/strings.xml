@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ZentriBank</string>
-    <string name="title_activity_main">ZentriBank</string>
-    <string name="package_name">com.zentribank.app</string>
-    <string name="custom_url_scheme">com.zentribank.app</string>
+    <string name="app_name">Aldwych European Capital</string>
+    <string name="title_activity_main">Aldwych European Capital</string>
+    <string name="package_name">com.aldwycheuropeancapital.app</string>
+    <string name="custom_url_scheme">com.aldwycheuropeancapital.app</string>
 </resources>

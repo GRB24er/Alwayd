@@ -145,7 +145,7 @@ export default function LandingPage() {
               <a href="#how-it-works">How it works</a>
               <a href="#testimonials">Clients</a>
               <a href="#faq">FAQ</a>
-              <Link href="/support">Support</Link>
+              <a href="#contact">Contact</a>
             </nav>
             <div className={styles.navActions}>
               <Link href="/auth/signin" className={styles.navSignIn}>Sign in</Link>
@@ -389,6 +389,70 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* CONTACT */}
+      <section id="contact" className={`${styles.section} ${styles.sectionAlt}`}>
+        <div className={styles.container}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionEyebrow}>Contact Us</span>
+            <h2 className={styles.sectionTitle}>Speak to a relationship manager</h2>
+            <p className={styles.sectionDesc}>
+              Our private banking team is available across London, Dublin, and Frankfurt. Reach out and we will
+              respond within one business hour.
+            </p>
+          </div>
+
+          <div className={styles.contactGrid}>
+            <a className={styles.contactCard} href="tel:+442039178200">
+              <div className={styles.contactIcon}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: 24, height: 24 }}>
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+              </div>
+              <div className={styles.contactLabel}>Call Us</div>
+              <div className={styles.contactValue}>+44 20 3917 8200</div>
+              <div className={styles.contactSub}>Mon–Fri · 08:00–18:00 GMT</div>
+            </a>
+
+            <a className={styles.contactCard} href="mailto:lending@aldwycheuropeancapital.com">
+              <div className={styles.contactIcon}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: 24, height: 24 }}>
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
+              </div>
+              <div className={styles.contactLabel}>Email Lending Team</div>
+              <div className={styles.contactValue}>lending@aldwycheuropeancapital.com</div>
+              <div className={styles.contactSub}>Reply within 1 business hour</div>
+            </a>
+
+            <div className={styles.contactCard}>
+              <div className={styles.contactIcon}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: 24, height: 24 }}>
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+              </div>
+              <div className={styles.contactLabel}>Head Office</div>
+              <div className={styles.contactValue}>85 Aldwych, London WC2B 4HP</div>
+              <div className={styles.contactSub}>United Kingdom</div>
+            </div>
+
+            <div className={styles.contactCard}>
+              <div className={styles.contactIcon}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: 24, height: 24 }}>
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="2" y1="12" x2="22" y2="12" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+              </div>
+              <div className={styles.contactLabel}>European Offices</div>
+              <div className={styles.contactValue}>Dublin · Frankfurt · Luxembourg</div>
+              <div className={styles.contactSub}>+353 1 437 0234 · +49 69 9999 4120</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FINAL CTA */}
       <section className={styles.finalCta}>
         <div className={styles.container}>
@@ -411,11 +475,36 @@ export default function LandingPage() {
           <div className={styles.footerGrid}>
             <div className={styles.footerBrand}>
               <Image src="/images/Logo.png" alt="Aldwych European Capital" width={170} height={42} className={styles.footerLogo} />
-              <p className={styles.footerTagline}>European Private Banking Excellence since 1897.</p>
-              <div className={styles.footerCompliance}>
-                <span>SSL Secured</span>
-                <span>GDPR</span>
-                <span>AML/KYC</span>
+              <p className={styles.footerTagline}>
+                European Private Banking Excellence since 1897. Authorized lending for businesses and
+                individuals across 42 countries.
+              </p>
+              <div className={styles.footerSocial}>
+                <a href="https://www.linkedin.com/company/aldwycheuropeancapital" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18 }}>
+                    <path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.36V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z" />
+                  </svg>
+                </a>
+                <a href="https://twitter.com/AldwychCapital" target="_blank" rel="noopener noreferrer" aria-label="X (Twitter)">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18 }}>
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
+                  </svg>
+                </a>
+                <a href="https://www.facebook.com/AldwychEuropeanCapital" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18 }}>
+                    <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.099 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.412c0-3.017 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.97h-1.514c-1.491 0-1.956.927-1.956 1.879v2.255h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.099 24 12.073z" />
+                  </svg>
+                </a>
+                <a href="https://www.instagram.com/aldwycheuropeancapital" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18 }}>
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z" />
+                  </svg>
+                </a>
+                <a href="https://www.youtube.com/@aldwycheuropeancapital" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18 }}>
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                  </svg>
+                </a>
               </div>
             </div>
             <div className={styles.footerCol}>
@@ -432,19 +521,40 @@ export default function LandingPage() {
               <a href="#how-it-works">How it works</a>
               <a href="#testimonials">Clients</a>
               <a href="#faq">FAQ</a>
+              <a href="#contact">Contact</a>
               <Link href="/support">Support Centre</Link>
             </div>
             <div className={styles.footerCol}>
-              <h5>Legal & Compliance</h5>
-              <Link href="/terms">Terms & Conditions</Link>
-              <Link href="/privacy">Privacy Policy</Link>
-              <Link href="/support">Contact Support</Link>
+              <h5>Get in Touch</h5>
+              <div className={styles.footerContactItem}>
+                <strong>Head Office</strong>
+                <span>85 Aldwych, London WC2B 4HP<br />United Kingdom</span>
+              </div>
+              <div className={styles.footerContactItem}>
+                <strong>Phone</strong>
+                <a href="tel:+442039178200">+44 20 3917 8200</a>
+              </div>
+              <div className={styles.footerContactItem}>
+                <strong>Email</strong>
+                <a href="mailto:info@aldwycheuropeancapital.com">info@aldwycheuropeancapital.com</a>
+              </div>
             </div>
           </div>
+
+          <div className={styles.footerLegal}>
+            <Link href="/terms">Terms &amp; Conditions</Link>
+            <span>·</span>
+            <Link href="/privacy">Privacy Policy</Link>
+            <span>·</span>
+            <Link href="/support">Cookie Policy</Link>
+            <span>·</span>
+            <a href="mailto:compliance@aldwycheuropeancapital.com">Compliance</a>
+          </div>
+
           <div className={styles.footerBottom}>
             <div>© {new Date().getFullYear()} Aldwych European Capital. All rights reserved.</div>
             <div className={styles.footerBottomRight}>
-              Your capital is at risk if you fail to meet repayment obligations.
+              Authorised and regulated. Your capital is at risk if you fail to meet repayment obligations.
             </div>
           </div>
         </div>

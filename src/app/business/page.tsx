@@ -189,7 +189,7 @@ export default function BusinessBankingPage() {
 
               {/* Why Choose Us */}
               <section className={styles.whyUsSection}>
-                <h2 className={styles.sectionTitle}>Why Businesses Choose Horizon</h2>
+                <h2 className={styles.sectionTitle}>Why Businesses Choose Aldwych</h2>
                 <div className={styles.benefitsGrid}>
                   <div className={styles.benefitCard}>
                     <div className={styles.benefitIcon}>🏆</div>

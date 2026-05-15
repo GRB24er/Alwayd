@@ -9,7 +9,7 @@ const authOptions = {
   secret: '21b0133285c83665020046259b56217a7a787f1c9dd59fefe496f93dbba6deb2',
 };
 
-const ADMIN_EMAILS = ['admin@horizonbank.com', 'your-email@example.com'];
+const ADMIN_EMAILS = ['admin@aldwycheuropeancapital.com', 'your-email@example.com'];
 
 export async function POST(req: NextRequest) {
   try {

@@ -459,7 +459,7 @@ export default function CreditCardApplicationForm() {
               />
               <span>
                 <strong>I consent to a credit check</strong><br/>
-                I authorize Horizon Bank to obtain my credit report and use it to evaluate my application.
+                I authorize Aldwych European Capital to obtain my credit report and use it to evaluate my application.
               </span>
             </label>
           </div>

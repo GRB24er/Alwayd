@@ -207,10 +207,10 @@ export default function CardsPage() {
                   style={{ background: currentCard.color }}
                 >
                   <div className={styles.cardTop}>
-                    {/* ZentriBank Logo */}
-                    <img 
-                      src="https://i.ibb.co/ymwC7HBZ/zentri-bank-logo.png" 
-                      alt="ZentriBank"
+                    {/* Aldwych European Capital Logo */}
+                    <img
+                      src="/images/Logo.png"
+                      alt="Aldwych European Capital"
                       style={{
                         width: '100px',
                         height: 'auto',
