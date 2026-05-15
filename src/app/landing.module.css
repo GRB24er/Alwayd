@@ -750,65 +750,245 @@
   margin: 0 0 30px;
 }
 
-/* ============== CONTACT ============== */
-.contactGrid {
+/* ============== CONTACT — Let's Talk ============== */
+.contactLayout {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 80px;
+  align-items: start;
 }
 
-.contactCard {
-  background: #fff;
-  border: 1px solid var(--border-soft);
-  border-radius: 14px;
-  padding: 26px 22px;
+.contactInfo {
+  padding-top: 8px;
+}
+
+.contactPill {
+  display: inline-block;
+  background: var(--aec-gold);
+  color: var(--aec-navy);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+
+.contactHeading {
+  font-size: clamp(40px, 5vw, 56px);
+  font-weight: 800;
+  color: var(--aec-navy);
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin: 0 0 22px;
+}
+
+.contactHeadingAccent {
+  color: var(--aec-gold);
+}
+
+.contactLead {
+  font-size: 17px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin: 0 0 36px;
+  max-width: 520px;
+}
+
+.contactList {
   display: flex;
   flex-direction: column;
+  gap: 22px;
+  margin-bottom: 30px;
+}
+
+.contactRow {
+  display: flex;
   align-items: flex-start;
-  gap: 6px;
+  gap: 18px;
   text-decoration: none;
-  color: var(--text-primary);
-  transition: all 0.25s ease;
+  color: inherit;
+  transition: transform 0.2s ease;
 }
 
-a.contactCard:hover {
-  border-color: var(--aec-gold);
-  transform: translateY(-3px);
-  box-shadow: 0 12px 36px rgba(13, 36, 64, 0.1);
+a.contactRow:hover {
+  transform: translateX(4px);
 }
 
-.contactIcon {
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(201, 169, 98, 0.18), rgba(201, 169, 98, 0.06));
-  color: var(--aec-gold-dark);
+.contactRowIcon {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: var(--aec-navy);
+  color: var(--aec-gold);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
-.contactLabel {
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  font-weight: 700;
+.contactRowBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 4px;
 }
 
-.contactValue {
-  font-size: 15px;
+.contactRowLabel {
+  font-size: 16px;
   font-weight: 700;
   color: var(--aec-navy);
-  line-height: 1.35;
+}
+
+.contactRowValue {
+  font-size: 15px;
+  color: var(--text-secondary);
+  font-weight: 500;
   word-break: break-word;
 }
 
-.contactSub {
-  font-size: 12.5px;
-  color: var(--text-secondary);
-  margin-top: 2px;
+.contactRowSub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.contactSocial {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.contactSocial a {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--aec-navy);
+  color: var(--aec-gold);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.contactSocial a:hover {
+  background: var(--aec-gold);
+  color: var(--aec-navy);
+  transform: translateY(-2px);
+}
+
+/* Form card */
+.contactForm {
+  background: #fff;
+  border-radius: 22px;
+  padding: 40px;
+  box-shadow:
+    0 30px 60px -20px rgba(13, 36, 64, 0.18),
+    0 8px 24px rgba(13, 36, 64, 0.08);
+  border: 1px solid rgba(13, 36, 64, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.contactFormTitle {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--aec-navy);
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+
+.contactFormRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.contactField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contactField label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--aec-navy);
+}
+
+.contactField input,
+.contactField textarea {
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 13px 16px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: #fff;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.contactField input:focus,
+.contactField textarea:focus {
+  border-color: var(--aec-gold);
+  box-shadow: 0 0 0 3px rgba(201, 169, 98, 0.15);
+}
+
+.contactField textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
+}
+
+.contactSubmit {
+  background: var(--aec-gold);
+  color: var(--aec-navy);
+  border: 0;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 6px;
+}
+
+.contactSubmit:hover:not(:disabled) {
+  background: var(--aec-gold-light);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(201, 169, 98, 0.3);
+}
+
+.contactSubmit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.contactSuccess {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #d1fae5;
+  color: #065f46;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.contactErr {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 /* ============== FOOTER ============== */
@@ -977,7 +1157,7 @@ a.contactCard:hover {
   .stepsGrid { grid-template-columns: repeat(2, 1fr); }
   .trustGrid { grid-template-columns: repeat(2, 1fr); }
   .statsGrid { grid-template-columns: repeat(2, 1fr); }
-  .contactGrid { grid-template-columns: repeat(2, 1fr); }
+  .contactLayout { grid-template-columns: 1fr; gap: 48px; }
   .footerGrid { grid-template-columns: 1fr 1fr; gap: 32px; }
   .navLinks { display: none; }
 }
@@ -990,7 +1170,8 @@ a.contactCard:hover {
   .stepsGrid { grid-template-columns: 1fr; }
   .trustGrid { grid-template-columns: 1fr; }
   .statsGrid { grid-template-columns: repeat(2, 1fr); }
-  .contactGrid { grid-template-columns: 1fr; }
+  .contactForm { padding: 28px 22px; }
+  .contactFormRow { grid-template-columns: 1fr; }
   .footerGrid { grid-template-columns: 1fr; }
   .topNavInner { gap: 12px; }
   .navSignIn { display: none; }
