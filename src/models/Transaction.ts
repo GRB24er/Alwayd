@@ -28,6 +28,10 @@ export interface ITransaction extends Document {
   type: TxType;
   currency: Currency;
   amount: number;
+  // Authoritative amount in integer minor units, serialized as a decimal string
+  // ("100.50" => "10050" cents). When present, this is the source of truth and
+  // `amount` (legacy float) is kept in sync for backward-compat reads.
+  amountMinor?: string;
   date: Date;
   description?: string;
   status: TxStatus;
@@ -35,12 +39,17 @@ export interface ITransaction extends Document {
   reviewedAt?: Date | null;
   posted: boolean;
   postedAt?: Date | null;
+  // True once double-entry ledger rows exist for this transaction. Distinct from
+  // `posted` (legacy flag set by older posting helper).
+  ledgerPosted?: boolean;
   accountType: AccountType;
   reference?: string;
   category?: string;
   channel?: string;
   origin?: string;
   metadata?: any;
+  // Idempotency key supplied by the client when this transaction was created.
+  idempotencyKey?: string;
   approvedBy?: string;
   approvedAt?: Date;
   rejectedBy?: string;
@@ -78,10 +87,14 @@ const TransactionSchema: Schema<ITransaction> = new mongoose.Schema(
       required: true, 
       default: 'USD' 
     },
-    amount: { 
-      type: Number, 
+    amount: {
+      type: Number,
       required: true,
       min: 0
+    },
+    amountMinor: {
+      type: String,
+      index: true,
     },
     date: { 
       type: Date, 
@@ -106,14 +119,24 @@ const TransactionSchema: Schema<ITransaction> = new mongoose.Schema(
       type: Date, 
       default: null 
     },
-    posted: { 
-      type: Boolean, 
-      default: false, 
-      index: true 
+    posted: {
+      type: Boolean,
+      default: false,
+      index: true
     },
-    postedAt: { 
-      type: Date, 
-      default: null 
+    postedAt: {
+      type: Date,
+      default: null
+    },
+    ledgerPosted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    idempotencyKey: {
+      type: String,
+      index: true,
+      sparse: true,
     },
     accountType: { 
       type: String, 
