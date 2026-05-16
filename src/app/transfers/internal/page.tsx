@@ -185,9 +185,17 @@ export default function TransferPage() {
     return true;
   };
 
+  // Idempotency key prevents a double-click from creating two transfers; the
+  // server stores the (key, endpoint) pair and replays the original response.
+  function generateIdempotencyKey(): string {
+    const buf = new Uint8Array(16);
+    (typeof crypto !== "undefined" ? crypto : (globalThis as any).crypto).getRandomValues(buf);
+    return Array.from(buf, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
   const handleInternalTransfer = async () => {
     if (!validateAmount()) return;
-    
+
     setLoading(true);
     setError("");
     setSuccess("");
@@ -195,13 +203,16 @@ export default function TransferPage() {
     try {
       const response = await fetch("/api/transfers/internal", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": generateIdempotencyKey(),
+        },
         body: JSON.stringify({
           fromAccount: formData.fromAccount,
           toAccount: formData.toAccount,
-          amount: parseFloat(formData.amount),
-          description: formData.description || "Internal Transfer"
-        })
+          amount: String(formData.amount),
+          description: formData.description || "Internal Transfer",
+        }),
       });
 
       const data = await response.json();
@@ -226,7 +237,7 @@ export default function TransferPage() {
 
   const handleExternalTransfer = async () => {
     if (!validateAmount()) return;
-    
+
     setLoading(true);
     setError("");
     setSuccess("");
@@ -234,17 +245,20 @@ export default function TransferPage() {
     try {
       const response = await fetch("/api/transfers/external", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": generateIdempotencyKey(),
+        },
         body: JSON.stringify({
           fromAccount: formData.fromAccount,
           recipientName: formData.recipientName,
           recipientAccount: formData.recipientAccount,
           recipientBank: formData.recipientBank,
           recipientRoutingNumber: formData.recipientRoutingNumber,
-          amount: parseFloat(formData.amount),
+          amount: String(formData.amount),
           description: formData.description || `Transfer to ${formData.recipientName}`,
-          transferSpeed: formData.transferSpeed
-        })
+          transferSpeed: formData.transferSpeed,
+        }),
       });
 
       const data = await response.json();

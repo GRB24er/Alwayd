@@ -241,10 +241,26 @@ export default function WireTransferPage() {
 
   const handleSubmit = async () => {
     if (!validateStep(currentStep)) return;
-    
+
+    // Non-US destinations need the country-aware international flow which validates
+    // IBAN/SWIFT/IFSC/CLABE/etc. per the destination's rail. Redirect with a hint
+    // rather than silently posting fields the API will reject.
+    if (formData.recipientCountry && formData.recipientCountry !== 'US') {
+      setSubmitResponse({
+        success: false,
+        error: 'International destinations require the country-aware wire form.',
+        redirectTo: '/transfers/international',
+      });
+      return;
+    }
+
     setLoading(true);
     setSubmitResponse(null);
-    
+
+    // Generate a fresh idempotency key per submission so a double-click can't
+    // double-charge but a manual retry-after-edit produces a new key.
+    const idempotencyKey = generateIdempotencyKey();
+
     try {
       const wireTransferData = {
         fromAccount: formData.fromAccount,
@@ -254,17 +270,20 @@ export default function WireTransferPage() {
         recipientRoutingNumber: formData.routingNumber,
         recipientBankAddress: `${formData.bankName} Main Branch`,
         recipientAddress: `${formData.recipientAddress}, ${formData.recipientCity}${formData.recipientState ? ', ' + formData.recipientState : ''}${formData.recipientZip ? ' ' + formData.recipientZip : ''}, ${formData.recipientCountry}`,
-        amount: parseFloat(formData.amount),
+        amount: String(formData.amount),
         description: formData.reference || `Wire transfer to ${formData.recipientName}`,
-        wireType: formData.recipientCountry === 'US' ? 'domestic' : 'international',
+        wireType: 'domestic',
         purposeOfTransfer: formData.purpose,
-        urgentTransfer: formData.urgency === 'expedited'
+        urgentTransfer: formData.urgency === 'expedited',
       };
 
       const response = await fetch('/api/transfers/wire', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(wireTransferData)
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': idempotencyKey,
+        },
+        body: JSON.stringify(wireTransferData),
       });
 
       const data = await response.json();
@@ -284,6 +303,13 @@ export default function WireTransferPage() {
     
     setLoading(false);
   };
+
+  // Browser crypto.getRandomValues is universally available in modern Next.js runtimes.
+  function generateIdempotencyKey(): string {
+    const buf = new Uint8Array(16);
+    (typeof crypto !== 'undefined' ? crypto : (globalThis as any).crypto).getRandomValues(buf);
+    return Array.from(buf, (b) => b.toString(16).padStart(2, '0')).join('');
+  }
 
   const estimateFee = () => {
     const isInternational = formData.recipientCountry !== "US";
