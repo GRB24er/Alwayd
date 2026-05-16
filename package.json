@@ -12,7 +12,10 @@
     "seed": "tsx src/scripts/seedDatabase.ts",
     "seed:prod": "NODE_ENV=production tsx src/scripts/seedDatabase.ts",
     "fix-balances": "tsx src/scripts/fixBalances.ts",
-    "create-admin": "tsx src/scripts/createAdmin.ts"
+    "create-admin": "tsx src/scripts/createAdmin.ts",
+    "reconcile": "tsx src/scripts/reconcile.ts",
+    "reconcile:fix": "tsx src/scripts/reconcile.ts --fix-balances",
+    "test": "node --import tsx --test src/__tests__/*.test.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",

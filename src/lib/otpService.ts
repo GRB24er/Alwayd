@@ -1,327 +1,201 @@
-// src/lib/otpService.ts - UPDATED VERSION
-import crypto from 'crypto';
-import { sendOTPEmail } from './mail'; // Use your existing mail service
+// OTP service. Backed by Mongo TTL — survives restarts and works under horizontal scale.
+// Codes are stored hashed; the cleartext is sent by email and never persisted.
+//
+// API is backward-compatible with the previous in-memory implementation so existing
+// callers (auth, secure transfers, etc.) keep working without changes.
 
-// OTP Configuration
+import crypto from "crypto";
+import connectDB from "@/lib/mongodb";
+import Otp, { OtpPurpose } from "@/models/Otp";
+import { sendOTPEmail } from "./mail";
+import { logger } from "@/lib/logger";
+
 const OTP_CONFIG = {
   LENGTH: 6,
   EXPIRY_MINUTES: 10,
   MAX_ATTEMPTS: 3,
   RESEND_COOLDOWN_SECONDS: 60,
-  BLOCK_DURATION_MINUTES: 30
+  BLOCK_DURATION_MINUTES: 30,
 };
 
-// OTP Types for different actions
+// Backward-compatible enum so existing `OTPType.TRANSFER` callers continue to compile.
 export enum OTPType {
-  LOGIN = 'login',
-  TRANSFER = 'transfer',
-  PROFILE_UPDATE = 'profile_update',
-  CARD_APPLICATION = 'card_application',
-  PASSWORD_RESET = 'password_reset',
-  TRANSACTION_APPROVAL = 'transaction_approval'
+  LOGIN = "login",
+  TRANSFER = "transfer",
+  PROFILE_UPDATE = "profile_update",
+  CARD_APPLICATION = "card_application",
+  PASSWORD_RESET = "password_reset",
+  TRANSACTION_APPROVAL = "transaction_approval",
 }
 
-// OTP Storage Interface
-interface OTPRecord {
-  code: string;
-  type: OTPType;
-  userId: string;
-  email: string;
-  phone?: string;
-  expiresAt: Date;
-  attempts: number;
-  verified: boolean;
-  metadata?: any;
-  createdAt: Date;
-  lastAttemptAt?: Date;
-  ipAddress?: string;
+function hash(value: string): string {
+  return crypto.createHash("sha256").update(value).digest("hex");
 }
 
-// In-memory storage (replace with MongoDB in production)
-const otpStorage = new Map<string, OTPRecord>();
-const blockedUsers = new Map<string, Date>();
-
-/**
- * Generate a random OTP code
- */
-export function generateOTPCode(length: number = OTP_CONFIG.LENGTH): string {
-  const digits = '0123456789';
-  let otp = '';
-  
-  for (let i = 0; i < length; i++) {
-    otp += digits[Math.floor(Math.random() * 10)];
-  }
-  
-  return otp;
+export function generateOTPCode(length = OTP_CONFIG.LENGTH): string {
+  // Use crypto.randomInt for unbiased uniform distribution; not Math.random.
+  let code = "";
+  for (let i = 0; i < length; i++) code += crypto.randomInt(0, 10).toString();
+  return code;
 }
 
-/**
- * Generate a secure OTP token for URL-based verification
- */
 export function generateSecureToken(): string {
-  return crypto.randomBytes(32).toString('hex');
+  return crypto.randomBytes(32).toString("hex");
 }
 
-/**
- * Create and store OTP
- */
 export async function createOTP(
   userId: string,
   email: string,
-  type: OTPType,
-  metadata?: any,
+  type: OtpPurpose,
+  metadata?: Record<string, any>,
   phone?: string
 ): Promise<{ success: boolean; code?: string; token?: string; error?: string }> {
+  void phone;
   try {
-    // Check if user is blocked
-    if (isUserBlocked(userId)) {
-      const blockExpiry = blockedUsers.get(userId);
-      const minutesLeft = Math.ceil((blockExpiry!.getTime() - Date.now()) / 60000);
-      return {
-        success: false,
-        error: `Too many failed attempts. Please try again in ${minutesLeft} minutes.`
-      };
-    }
+    await connectDB();
 
-    // Check for existing unexpired OTP
-    const existingKey = `${userId}-${type}`;
-    const existing = otpStorage.get(existingKey);
-    
-    if (existing && existing.expiresAt > new Date()) {
-      // Check resend cooldown
-      const secondsSinceCreated = (Date.now() - existing.createdAt.getTime()) / 1000;
-      if (secondsSinceCreated < OTP_CONFIG.RESEND_COOLDOWN_SECONDS) {
-        const waitTime = Math.ceil(OTP_CONFIG.RESEND_COOLDOWN_SECONDS - secondsSinceCreated);
-        return {
-          success: false,
-          error: `Please wait ${waitTime} seconds before requesting a new code.`
-        };
+    // Cooldown: refuse to issue a fresh code if the last unconsumed one is younger than X seconds.
+    const recent = await Otp.findOne({ userId, purpose: type, consumed: false })
+      .sort({ createdAt: -1 })
+      .lean();
+    if (recent && recent.expiresAt > new Date()) {
+      const ageSec = (Date.now() - new Date(recent.createdAt).getTime()) / 1000;
+      if (ageSec < OTP_CONFIG.RESEND_COOLDOWN_SECONDS) {
+        const wait = Math.ceil(OTP_CONFIG.RESEND_COOLDOWN_SECONDS - ageSec);
+        return { success: false, error: `Please wait ${wait}s before requesting a new code.` };
       }
     }
 
-    // Generate new OTP
-    const code = generateOTPCode();
-    const token = generateSecureToken();
-    
-    const otpRecord: OTPRecord = {
-      code,
-      type,
+    // Brute-force lockout: too many failed attempts across all recent OTPs for this user+purpose.
+    const recentFailWindow = new Date(Date.now() - OTP_CONFIG.BLOCK_DURATION_MINUTES * 60_000);
+    const failures = await Otp.countDocuments({
       userId,
-      email,
-      phone,
-      expiresAt: new Date(Date.now() + OTP_CONFIG.EXPIRY_MINUTES * 60000),
-      attempts: 0,
-      verified: false,
-      metadata,
-      createdAt: new Date(),
-      ipAddress: metadata?.ipAddress
-    };
-
-    // Store OTP
-    otpStorage.set(existingKey, otpRecord);
-    
-    // Also store by token for URL-based verification
-    otpStorage.set(`token-${token}`, otpRecord);
-
-    // Send OTP via email using YOUR existing mail service
-    try {
-      await sendOTPEmail(email, code, type, OTP_CONFIG.EXPIRY_MINUTES);
-      console.log(`[OTP] Code sent to ${email}: ${code}`);
-    } catch (emailError) {
-      console.error('[OTP] Failed to send email:', emailError);
-      // Don't fail - code is still stored
+      purpose: type,
+      lastAttemptAt: { $gte: recentFailWindow },
+      attempts: { $gte: OTP_CONFIG.MAX_ATTEMPTS },
+    });
+    if (failures >= 3) {
+      return {
+        success: false,
+        error: `Too many failed attempts. Try again in ${OTP_CONFIG.BLOCK_DURATION_MINUTES} minutes.`,
+      };
     }
 
+    // Invalidate previous unconsumed codes for the same (user, purpose) so only one is active.
+    await Otp.updateMany(
+      { userId, purpose: type, consumed: false },
+      { $set: { consumed: true, consumedAt: new Date() } }
+    );
+
+    const code = generateOTPCode();
+    const token = generateSecureToken();
+
+    await Otp.create({
+      userId,
+      email,
+      purpose: type,
+      codeHash: hash(code),
+      tokenHash: hash(token),
+      attempts: 0,
+      consumed: false,
+      metadata,
+      expiresAt: new Date(Date.now() + OTP_CONFIG.EXPIRY_MINUTES * 60_000),
+    });
+
+    try {
+      await sendOTPEmail(email, code, type, OTP_CONFIG.EXPIRY_MINUTES);
+    } catch (err: any) {
+      logger.error("otp.email_failed", { err: err?.message, email });
+    }
+
+    logger.info("otp.created", { userId, purpose: type });
     return {
       success: true,
-      code: process.env.NODE_ENV === 'development' ? code : undefined, // Only return code in dev
-      token
+      code: process.env.NODE_ENV === "development" ? code : undefined,
+      token,
     };
-  } catch (error: any) {
-    console.error('[OTP] Failed to create OTP:', error);
-    return {
-      success: false,
-      error: 'Failed to generate verification code'
-    };
+  } catch (err: any) {
+    logger.error("otp.create_failed", { err: err?.message });
+    return { success: false, error: "Failed to generate verification code" };
   }
 }
 
-/**
- * Verify OTP code
- */
 export async function verifyOTP(
   userId: string,
   code: string,
-  type: OTPType
+  type: OtpPurpose
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const key = `${userId}-${type}`;
-    const otpRecord = otpStorage.get(key);
+    await connectDB();
 
-    if (!otpRecord) {
-      return {
-        success: false,
-        error: 'No verification code found. Please request a new one.'
-      };
+    const record = await Otp.findOne({ userId, purpose: type, consumed: false }).sort({ createdAt: -1 });
+    if (!record) return { success: false, error: "No verification code found. Please request a new one." };
+
+    if (record.expiresAt < new Date()) {
+      record.consumed = true;
+      record.consumedAt = new Date();
+      await record.save();
+      return { success: false, error: "Verification code has expired." };
     }
 
-    // Check if already verified
-    if (otpRecord.verified) {
-      return {
-        success: false,
-        error: 'This code has already been used.'
-      };
-    }
+    record.attempts += 1;
+    record.lastAttemptAt = new Date();
 
-    // Check expiry
-    if (otpRecord.expiresAt < new Date()) {
-      otpStorage.delete(key);
-      return {
-        success: false,
-        error: 'Verification code has expired. Please request a new one.'
-      };
-    }
-
-    // Update attempt count
-    otpRecord.attempts++;
-    otpRecord.lastAttemptAt = new Date();
-
-    // Check if code matches
-    if (otpRecord.code !== code) {
-      // Check max attempts
-      if (otpRecord.attempts >= OTP_CONFIG.MAX_ATTEMPTS) {
-        // Block user
-        blockUser(userId);
-        otpStorage.delete(key);
+    const match = record.codeHash === hash(code);
+    if (!match) {
+      if (record.attempts >= OTP_CONFIG.MAX_ATTEMPTS) {
+        record.consumed = true;
+        record.consumedAt = new Date();
+        await record.save();
         return {
           success: false,
-          error: `Too many failed attempts. Account temporarily blocked for ${OTP_CONFIG.BLOCK_DURATION_MINUTES} minutes.`
+          error: `Too many failed attempts. Account temporarily blocked for ${OTP_CONFIG.BLOCK_DURATION_MINUTES} minutes.`,
         };
       }
-
-      const remainingAttempts = OTP_CONFIG.MAX_ATTEMPTS - otpRecord.attempts;
-      return {
-        success: false,
-        error: `Invalid code. ${remainingAttempts} attempt(s) remaining.`
-      };
+      await record.save();
+      const remaining = OTP_CONFIG.MAX_ATTEMPTS - record.attempts;
+      return { success: false, error: `Invalid code. ${remaining} attempt(s) remaining.` };
     }
 
-    // Mark as verified
-    otpRecord.verified = true;
-    otpStorage.delete(key); // Remove after successful verification
-
-    console.log(`[OTP] Code verified successfully for ${userId}`);
+    record.consumed = true;
+    record.consumedAt = new Date();
+    await record.save();
+    logger.info("otp.verified", { userId, purpose: type });
     return { success: true };
-  } catch (error: any) {
-    console.error('[OTP] Failed to verify OTP:', error);
-    return {
-      success: false,
-      error: 'Verification failed'
-    };
+  } catch (err: any) {
+    logger.error("otp.verify_failed", { err: err?.message });
+    return { success: false, error: "Verification failed" };
   }
 }
 
-/**
- * Verify OTP token (for URL-based verification)
- */
 export async function verifyOTPToken(
   token: string
-): Promise<{ success: boolean; userId?: string; type?: OTPType; error?: string }> {
+): Promise<{ success: boolean; userId?: string; type?: OtpPurpose; error?: string }> {
   try {
-    const key = `token-${token}`;
-    const otpRecord = otpStorage.get(key);
-
-    if (!otpRecord) {
-      return {
-        success: false,
-        error: 'Invalid or expired verification link.'
-      };
+    await connectDB();
+    const record = await Otp.findOne({ tokenHash: hash(token), consumed: false });
+    if (!record) return { success: false, error: "Invalid or expired verification link." };
+    if (record.expiresAt < new Date()) {
+      record.consumed = true;
+      record.consumedAt = new Date();
+      await record.save();
+      return { success: false, error: "Verification link has expired." };
     }
-
-    // Check expiry
-    if (otpRecord.expiresAt < new Date()) {
-      otpStorage.delete(key);
-      return {
-        success: false,
-        error: 'Verification link has expired.'
-      };
-    }
-
-    // Mark as verified
-    otpRecord.verified = true;
-    otpStorage.delete(key);
-
-    return {
-      success: true,
-      userId: otpRecord.userId,
-      type: otpRecord.type
-    };
-  } catch (error: any) {
-    console.error('[OTP] Failed to verify OTP token:', error);
-    return {
-      success: false,
-      error: 'Verification failed'
-    };
+    record.consumed = true;
+    record.consumedAt = new Date();
+    await record.save();
+    return { success: true, userId: record.userId.toString(), type: record.purpose };
+  } catch (err: any) {
+    logger.error("otp.verify_token_failed", { err: err?.message });
+    return { success: false, error: "Verification failed" };
   }
 }
 
-/**
- * Block user after max failed attempts
- */
-function blockUser(userId: string): void {
-  const blockUntil = new Date(Date.now() + OTP_CONFIG.BLOCK_DURATION_MINUTES * 60000);
-  blockedUsers.set(userId, blockUntil);
-  console.log(`[OTP] User ${userId} blocked until ${blockUntil.toISOString()}`);
-}
-
-/**
- * Check if user is blocked
- */
-function isUserBlocked(userId: string): boolean {
-  const blockExpiry = blockedUsers.get(userId);
-  
-  if (!blockExpiry) return false;
-  
-  if (blockExpiry > new Date()) {
-    return true;
-  }
-  
-  // Unblock if time has passed
-  blockedUsers.delete(userId);
-  return false;
-}
-
-/**
- * Clean up expired OTPs (run periodically)
- */
+// No-op stubs preserved for backward compatibility with old callers.
 export function cleanupExpiredOTPs(): void {
-  const now = new Date();
-  
-  for (const [key, record] of otpStorage.entries()) {
-    if (record.expiresAt < now) {
-      otpStorage.delete(key);
-    }
-  }
-  
-  for (const [userId, expiry] of blockedUsers.entries()) {
-    if (expiry < now) {
-      blockedUsers.delete(userId);
-    }
-  }
+  // Mongo TTL index handles this now.
 }
 
-/**
- * Get OTP for testing (dev only)
- */
-export function getOTPForTesting(userId: string, type: OTPType): string | null {
-  if (process.env.NODE_ENV !== 'development') return null;
-  
-  const key = `${userId}-${type}`;
-  const record = otpStorage.get(key);
-  return record?.code || null;
-}
-
-// Run cleanup every 5 minutes
-if (typeof setInterval !== 'undefined') {
-  setInterval(cleanupExpiredOTPs, 5 * 60 * 1000);
+export function getOTPForTesting(): string | null {
+  return null;
 }

@@ -1,6 +1,11 @@
-// src/app/api/transfers/wire/route.ts
-// ALL TRANSFERS REQUIRE ADMIN APPROVAL
-// Creates PENDING transactions - balances update ONLY when admin approves
+// Wire transfer initiation. All wire transfers are funds-out and irrevocable once cleared,
+// so the controls here are stricter than internal transfers:
+//   - Idempotency-Key required
+//   - Per-user rate limit on initiation
+//   - Server-side transaction-limit enforcement
+//   - OFAC / sanctions screening on beneficiary + country
+//   - Real routing number checksum validation (ABA) for domestic wires
+//   - IBAN + BIC validation for international wires
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
@@ -9,383 +14,363 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import { sendTransactionEmail } from "@/lib/mail";
+import { runIdempotent } from "@/lib/idempotency";
+import { check as rateLimitCheck, POLICIES } from "@/lib/rateLimit";
+import { v, validate } from "@/lib/validators";
+import { enforceLimit } from "@/lib/limits";
+import { screenOrBlock } from "@/lib/sanctions";
+import { audit } from "@/lib/audit";
+import { toMinor, fromMinor, toNumber, gte, add } from "@/lib/decimal";
+import { logger } from "@/lib/logger";
+import crypto from "crypto";
 
-interface WireTransferRequest {
-  fromAccount: 'checking' | 'savings' | 'investment';
+const ACCOUNT_VALUES = ["checking", "savings", "investment"] as const;
+type AccountType = (typeof ACCOUNT_VALUES)[number];
+
+const WIRE_TYPE_VALUES = ["domestic", "international"] as const;
+type WireType = (typeof WIRE_TYPE_VALUES)[number];
+
+const MIN_WIRE = 100; // USD
+const MAX_WIRE = 250_000; // USD; above this routes to manual review
+const DOMESTIC_FEE = 30;
+const INTERNATIONAL_FEE = 45;
+const URGENT_FEE = 25;
+
+interface ParsedBody {
+  fromAccount: AccountType;
+  wireType: WireType;
   recipientName: string;
   recipientAccount: string;
   recipientBank: string;
-  recipientRoutingNumber: string;
   recipientBankAddress: string;
-  amount: number | string;
+  recipientAddress: string;
+  amount: string;
+  purposeOfTransfer: string;
   description?: string;
-  wireType: 'domestic' | 'international';
-  recipientAddress?: string;
-  purposeOfTransfer?: string;
   urgentTransfer?: boolean;
+  recipientRoutingNumber?: string;
+  recipientSwiftBic?: string;
+  recipientCountry?: string;
 }
+
+const balanceFieldOf = (a: AccountType) =>
+  a === "savings" ? "savingsBalance" : a === "investment" ? "investmentBalance" : "checkingBalance";
 
 export async function POST(request: NextRequest) {
+  const log = logger.child({ route: "transfers/wire" });
+
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: any;
   try {
-    console.log('🏦 Wire transfer initiated');
-    
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized - Please login" },
-        { status: 401 }
-      );
-    }
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });
+  }
 
-    const body: WireTransferRequest = await request.json();
-    console.log('📥 Wire transfer request:', {
-      fromAccount: body.fromAccount,
-      recipientName: body.recipientName,
-      amount: body.amount,
-      wireType: body.wireType,
-      urgentTransfer: body.urgentTransfer,
-      userEmail: session.user.email
-    });
-    
-    const { 
-      fromAccount,
-      recipientName,
-      recipientAccount,
-      recipientBank,
-      recipientRoutingNumber,
-      recipientBankAddress,
-      recipientAddress,
-      amount,
-      description,
-      wireType,
-      purposeOfTransfer,
-      urgentTransfer = false
-    } = body;
+  const parsed = validate<ParsedBody>(body, {
+    fromAccount: v.enum(ACCOUNT_VALUES),
+    wireType: v.enum(WIRE_TYPE_VALUES),
+    recipientName: v.string({ min: 2, max: 200 }),
+    recipientAccount: v.string({ min: 4, max: 34 }),
+    recipientBank: v.string({ min: 2, max: 200 }),
+    recipientBankAddress: v.string({ min: 4, max: 500 }),
+    recipientAddress: v.string({ min: 4, max: 500 }),
+    amount: v.amountString(),
+    purposeOfTransfer: v.string({ min: 3, max: 200 }),
+    description: v.optional(v.string({ max: 500 })),
+    urgentTransfer: v.optional(v.bool()),
+    recipientRoutingNumber: v.optional(v.string({ max: 9 })),
+    recipientSwiftBic: v.optional(v.swiftBic()),
+    recipientCountry: v.optional(v.countryCode()),
+  });
+  if (!parsed.ok) {
+    return NextResponse.json({ success: false, errors: parsed.errors }, { status: 400 });
+  }
 
-    // Validation
-    const missingFields = [];
-    if (!fromAccount) missingFields.push('fromAccount');
-    if (!recipientName?.trim()) missingFields.push('recipientName');
-    if (!recipientAccount?.trim()) missingFields.push('recipientAccount');
-    if (!recipientBank?.trim()) missingFields.push('recipientBank');
-    if (!recipientRoutingNumber?.trim()) missingFields.push('recipientRoutingNumber');
-    if (!recipientBankAddress?.trim()) missingFields.push('recipientBankAddress');
-    if (!amount) missingFields.push('amount');
-    if (!recipientAddress?.trim()) missingFields.push('recipientAddress');
-    if (!purposeOfTransfer?.trim()) missingFields.push('purposeOfTransfer');
-
-    if (missingFields.length > 0) {
-      return NextResponse.json(
-        { 
-          success: false,
-          error: `Missing required fields: ${missingFields.join(', ')}`,
-          missingFields 
-        },
-        { status: 400 }
-      );
-    }
-
-    const transferAmount = Math.abs(
-      typeof amount === 'string' 
-        ? parseFloat(amount.replace(/[^0-9.-]/g, '')) 
-        : Number(amount)
+  // Wire-type-specific routing details. Domestic wants ABA; international wants SWIFT + country.
+  if (parsed.value.wireType === "domestic") {
+    const checked = validate<{ recipientRoutingNumber: string }>(
+      { recipientRoutingNumber: parsed.value.recipientRoutingNumber },
+      { recipientRoutingNumber: v.routingNumber() }
     );
-
-    if (isNaN(transferAmount) || transferAmount <= 0) {
+    if (!checked.ok) {
+      return NextResponse.json({ success: false, errors: checked.errors }, { status: 400 });
+    }
+  } else {
+    if (!parsed.value.recipientSwiftBic) {
       return NextResponse.json(
-        { success: false, error: "Invalid amount" },
+        { success: false, errors: { recipientSwiftBic: "International wires require a SWIFT/BIC code" } },
         { status: 400 }
       );
     }
-
-    // Wire transfer limits
-    if (transferAmount < 100) {
+    if (!parsed.value.recipientCountry) {
       return NextResponse.json(
-        { success: false, error: "Minimum wire transfer amount is $100.00" },
+        { success: false, errors: { recipientCountry: "International wires require an ISO country code" } },
         { status: 400 }
       );
     }
+  }
 
-    if (transferAmount > 250000) {
-      return NextResponse.json(
-        { success: false, error: "Wire transfers over $250,000 require additional approval. Please contact support." },
-        { status: 400 }
-      );
-    }
+  const amountMinor = toMinor(parsed.value.amount);
+  const amountNumber = toNumber(amountMinor);
 
-    // Calculate fees
-    let wireFee = wireType === 'international' ? 45 : 30;
-    if (urgentTransfer) wireFee += 25;
-
-    const totalAmount = transferAmount + wireFee;
-    const estimatedCompletion = urgentTransfer ? 'Same business day (urgent)' : 'Same business day';
-
-    console.log('💸 Wire transfer details:', {
-      transferAmount,
-      wireFee,
-      totalAmount,
-      wireType,
-      urgentTransfer,
-      estimatedCompletion
-    });
-
-    await connectDB();
-    console.log('🗄️ Database connected');
-
-    const user = await User.findOne({ email: session.user.email });
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: "User account not found" },
-        { status: 404 }
-      );
-    }
-
-    console.log('👤 User found:', user._id);
-
-    const balanceFieldMap: { [key: string]: string } = {
-      'checking': 'checkingBalance',
-      'savings': 'savingsBalance',
-      'investment': 'investmentBalance'
-    };
-
-    const fromBalanceField = balanceFieldMap[fromAccount];
-    const currentBalance = Number((user as any)[fromBalanceField] || 0);
-    
-    console.log('💰 Current balance check:', {
-      account: fromAccount,
-      currentBalance,
-      requiredAmount: totalAmount,
-      hasSufficientFunds: currentBalance >= totalAmount
-    });
-    
-    // Check sufficient funds (validation only - NOT deducting)
-    if (totalAmount > currentBalance) {
-      return NextResponse.json(
-        { 
-          success: false,
-          error: "Insufficient funds for wire transfer",
-          details: {
-            available: currentBalance,
-            transferAmount,
-            wireFee,
-            totalRequired: totalAmount,
-            shortfall: totalAmount - currentBalance
-          }
-        },
-        { status: 400 }
-      );
-    }
-
-    // Generate reference
-    const timestamp = Date.now().toString().slice(-6);
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const wireRef = `WIRE-${timestamp}-${random}`;
-    
-    console.log('🔖 Generated wire reference:', wireRef);
-
-    // =====================================================
-    // CREATE PENDING TRANSACTION - NO BALANCE CHANGE YET
-    // Admin will approve, then balance updates
-    // =====================================================
-
-    const wireTransaction = await Transaction.create({
-      userId: user._id,
-      type: 'transfer-out',
-      currency: 'USD',
-      amount: transferAmount,
-      description: description?.trim() || `${wireType === 'international' ? 'International' : 'Domestic'} wire transfer to ${recipientName}`,
-      status: 'pending', // PENDING - awaits admin approval
-      accountType: fromAccount,
-      posted: false, // NOT posted
-      postedAt: null,
-      reference: wireRef,
-      channel: 'online',
-      origin: 'wire_transfer',
-      date: new Date(),
-      metadata: {
-        wireType,
-        recipientName,
-        recipientAccount: recipientAccount.slice(-4),
-        recipientBank,
-        recipientRoutingNumber: recipientRoutingNumber.slice(-4),
-        recipientBankAddress,
-        recipientAddress,
-        purposeOfTransfer,
-        urgentTransfer,
-        wireFee,
-        totalAmount,
-        estimatedCompletion
-      }
-    });
-
-    console.log('💾 Wire transaction saved:', wireTransaction._id);
-
-    // Create fee transaction (also pending)
-    if (wireFee > 0) {
-      await Transaction.create({
-        userId: user._id,
-        type: 'fee',
-        currency: 'USD',
-        amount: wireFee,
-        description: `Wire transfer fee${urgentTransfer ? ' (urgent)' : ''}`,
-        status: 'pending', // PENDING
-        accountType: fromAccount,
-        posted: false,
-        postedAt: null,
-        reference: `${wireRef}-FEE`,
-        channel: 'online',
-        origin: 'wire_transfer',
-        date: new Date(),
-        metadata: {
-          linkedReference: wireRef,
-          wireType,
-          urgentTransfer
-        }
-      });
-      console.log('💾 Fee transaction saved');
-    }
-
-    // =====================================================
-    // DO NOT UPDATE BALANCE - Admin approval will do that
-    // =====================================================
-
-    console.log('✅ Wire transfer created (pending approval):', {
-      reference: wireRef,
-      status: 'pending',
-      currentBalance // Balance unchanged
-    });
-
-    // Send notification email
-    try {
-      await sendTransactionEmail(user.email, {
-        name: user.name || 'Customer',
-        transaction: wireTransaction,
-        subject: 'Wire Transfer Initiated - Pending Approval'
-      });
-      console.log('📧 Notification email sent');
-    } catch (emailError) {
-      console.error('❌ Email failed:', emailError);
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: `${wireType === 'international' ? 'International' : 'Domestic'} wire transfer initiated. Awaiting admin approval.`,
-      wireReference: wireRef,
-      transfer: {
-        type: 'wire',
-        wireType,
-        from: fromAccount,
-        to: {
-          name: recipientName,
-          account: `****${recipientAccount.slice(-4)}`,
-          bank: recipientBank,
-          routingNumber: `****${recipientRoutingNumber.slice(-4)}`,
-          address: recipientBankAddress
-        },
-        recipient: {
-          name: recipientName,
-          address: recipientAddress
-        },
-        amount: transferAmount,
-        fee: wireFee,
-        total: totalAmount,
-        description: description || `${wireType === 'international' ? 'International' : 'Domestic'} Wire Transfer`,
-        reference: wireRef,
-        status: 'pending',
-        estimatedCompletion,
-        urgentTransfer,
-        purposeOfTransfer,
-        date: new Date().toISOString()
-      },
-      // Balance NOT changed yet
-      currentBalance
-    }, { status: 200 });
-
-  } catch (error: any) {
-    console.error('💥 Wire transfer error:', error);
+  if (amountNumber < MIN_WIRE) {
     return NextResponse.json(
-      { 
-        success: false,
-        error: "An unexpected error occurred with wire transfer. Please try again.",
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      },
-      { status: 500 }
+      { success: false, error: `Minimum wire transfer is $${MIN_WIRE}` },
+      { status: 422 }
     );
   }
+  if (amountNumber > MAX_WIRE) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: `Wires above $${MAX_WIRE.toLocaleString()} require manual review. Contact support.`,
+      },
+      { status: 422 }
+    );
+  }
+
+  await connectDB();
+  const user = await User.findOne({ email: session.user.email });
+  if (!user) return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+
+  const rl = await rateLimitCheck(`wire:${user._id}`, POLICIES.transferInitiate);
+  if (!rl.allowed) {
+    await audit({
+      action: "rate_limit.exceeded",
+      actorId: user._id.toString(),
+      actorEmail: user.email,
+      outcome: "blocked",
+      request,
+      details: { policy: "transferInitiate", channel: "wire" },
+    });
+    return NextResponse.json(
+      { success: false, error: "Too many wire transfer attempts" },
+      { status: 429, headers: { "retry-after": String(rl.retryAfterSeconds) } }
+    );
+  }
+
+  return runIdempotent({
+    request,
+    endpoint: "transfers/wire",
+    userId: user._id.toString(),
+    body,
+    handler: async () => {
+      const sanctions = await screenOrBlock({
+        input: {
+          fullName: parsed.value.recipientName,
+          bankName: parsed.value.recipientBank,
+          countryCode: parsed.value.recipientCountry,
+        },
+        actorId: user._id.toString(),
+        actorEmail: user.email,
+        request,
+      });
+      if (!sanctions.ok) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Transfer blocked by compliance screening. Contact support.",
+          },
+          { status: 451 }
+        );
+      }
+
+      const wireFee = parsed.value.wireType === "international" ? INTERNATIONAL_FEE : DOMESTIC_FEE;
+      const totalFee = wireFee + (parsed.value.urgentTransfer ? URGENT_FEE : 0);
+      const totalMinor = add(amountMinor, toMinor(totalFee.toString()));
+      const totalNumber = toNumber(totalMinor);
+
+      const limit = await enforceLimit({
+        userId: user._id.toString(),
+        amount: totalNumber,
+        kind: "transfer",
+        accountType: parsed.value.fromAccount,
+        actorEmail: user.email,
+        request,
+      });
+      if (!limit.allowed) {
+        return NextResponse.json(
+          { success: false, error: limit.message, reason: limit.reason },
+          { status: 422 }
+        );
+      }
+
+      const currentMinor = toMinor(String((user as any)[balanceFieldOf(parsed.value.fromAccount)] || 0));
+      if (!gte(currentMinor, totalMinor)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Insufficient funds for wire transfer (including fees)",
+            details: {
+              available: toNumber(currentMinor),
+              transferAmount: amountNumber,
+              wireFee: totalFee,
+              totalRequired: totalNumber,
+              shortfall: toNumber(totalMinor - currentMinor),
+            },
+          },
+          { status: 422 }
+        );
+      }
+
+      const wireRef = `WIRE-${Date.now().toString(36)}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+
+      const wireTx = await Transaction.create({
+        userId: user._id,
+        type: "transfer-out",
+        currency: "USD",
+        amount: amountNumber,
+        amountMinor: fromMinor(amountMinor),
+        description:
+          parsed.value.description?.trim() ||
+          `${parsed.value.wireType === "international" ? "International" : "Domestic"} wire to ${parsed.value.recipientName}`,
+        status: "pending",
+        accountType: parsed.value.fromAccount,
+        posted: false,
+        ledgerPosted: false,
+        reference: wireRef,
+        channel: "online",
+        origin: "wire_transfer",
+        metadata: {
+          wireType: parsed.value.wireType,
+          recipientName: parsed.value.recipientName,
+          recipientAccountLast4: parsed.value.recipientAccount.slice(-4),
+          recipientBank: parsed.value.recipientBank,
+          recipientBankAddress: parsed.value.recipientBankAddress,
+          recipientAddress: parsed.value.recipientAddress,
+          recipientCountry: parsed.value.recipientCountry,
+          recipientRoutingLast4: parsed.value.recipientRoutingNumber?.slice(-4),
+          recipientSwiftBic: parsed.value.recipientSwiftBic,
+          purposeOfTransfer: parsed.value.purposeOfTransfer,
+          urgentTransfer: !!parsed.value.urgentTransfer,
+          wireFee: totalFee,
+          totalAmount: totalNumber,
+          sanctionsScreened: true,
+        },
+      });
+
+      if (totalFee > 0) {
+        await Transaction.create({
+          userId: user._id,
+          type: "fee",
+          currency: "USD",
+          amount: totalFee,
+          amountMinor: fromMinor(toMinor(totalFee.toString())),
+          description: `Wire transfer fee${parsed.value.urgentTransfer ? " (urgent)" : ""}`,
+          status: "pending",
+          accountType: parsed.value.fromAccount,
+          posted: false,
+          ledgerPosted: false,
+          reference: `${wireRef}-FEE`,
+          channel: "online",
+          origin: "wire_transfer",
+          metadata: { linkedReference: wireRef, wireType: parsed.value.wireType },
+        });
+      }
+
+      await audit({
+        action: "transfer.wire.initiated",
+        actorId: user._id.toString(),
+        actorEmail: user.email,
+        outcome: "success",
+        request,
+        resourceId: wireRef,
+        details: {
+          wireType: parsed.value.wireType,
+          amount: amountNumber,
+          fee: totalFee,
+          country: parsed.value.recipientCountry,
+          bank: parsed.value.recipientBank,
+        },
+      });
+
+      try {
+        await sendTransactionEmail(user.email, {
+          name: user.name || "Customer",
+          transaction: wireTx,
+          subject: "Wire Transfer Initiated - Pending Approval",
+        });
+      } catch (err: any) {
+        log.warn("wire.email_failed", { err: err?.message });
+      }
+
+      return NextResponse.json(
+        {
+          success: true,
+          message: `${parsed.value.wireType === "international" ? "International" : "Domestic"} wire initiated. Awaiting approval.`,
+          wireReference: wireRef,
+          transfer: {
+            type: "wire",
+            wireType: parsed.value.wireType,
+            from: parsed.value.fromAccount,
+            to: {
+              name: parsed.value.recipientName,
+              account: `****${parsed.value.recipientAccount.slice(-4)}`,
+              bank: parsed.value.recipientBank,
+              country: parsed.value.recipientCountry,
+            },
+            amount: amountNumber,
+            fee: totalFee,
+            total: totalNumber,
+            reference: wireRef,
+            status: "pending",
+            urgentTransfer: !!parsed.value.urgentTransfer,
+            purposeOfTransfer: parsed.value.purposeOfTransfer,
+            date: new Date().toISOString(),
+          },
+        },
+        { status: 200 }
+      );
+    },
+  });
 }
 
-// GET - Fetch wire transfer history
 export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
-    }
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
 
-    await connectDB();
+  await connectDB();
+  const user = await User.findOne({ email: session.user.email });
+  if (!user) return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
 
-    const user = await User.findOne({ email: session.user.email });
-    if (!user) {
-      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
-    }
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(200, parseInt(searchParams.get("limit") || "50", 10));
+  const wireType = searchParams.get("wireType");
 
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const wireType = searchParams.get('wireType');
+  const query: any = { userId: user._id, type: "transfer-out", origin: "wire_transfer" };
+  if (wireType) query["metadata.wireType"] = wireType;
 
-    const query: any = {
-      userId: user._id,
-      type: 'transfer-out',
-      origin: 'wire_transfer'
-    };
+  const rows = await Transaction.find(query).sort({ createdAt: -1 }).limit(limit).lean();
 
-    if (wireType) {
-      query['metadata.wireType'] = wireType;
-    }
-
-    const wireTransfers = await Transaction.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
-
-    const wireHistory = wireTransfers.map((tx: any) => ({
+  return NextResponse.json({
+    success: true,
+    wireTransfers: rows.map((tx: any) => ({
       id: tx._id.toString(),
       reference: tx.reference,
       date: tx.date || tx.createdAt,
       amount: tx.amount,
       fee: tx.metadata?.wireFee || 0,
-      total: tx.amount + (tx.metadata?.wireFee || 0),
+      total: (tx.amount || 0) + (tx.metadata?.wireFee || 0),
       fromAccount: tx.accountType,
-      wireType: tx.metadata?.wireType || 'domestic',
+      wireType: tx.metadata?.wireType || "domestic",
       recipient: {
-        name: tx.metadata?.recipientName || 'Unknown',
-        account: `****${tx.metadata?.recipientAccount || '****'}`,
-        bank: tx.metadata?.recipientBank || 'Unknown Bank'
+        name: tx.metadata?.recipientName || "Unknown",
+        account: `****${tx.metadata?.recipientAccountLast4 || "****"}`,
+        bank: tx.metadata?.recipientBank || "Unknown Bank",
+        country: tx.metadata?.recipientCountry,
       },
       status: tx.status,
+      ledgerPosted: !!tx.ledgerPosted,
       urgentTransfer: tx.metadata?.urgentTransfer || false,
       description: tx.description,
-      posted: tx.posted
-    }));
-
-    return NextResponse.json({
-      success: true,
-      wireTransfers: wireHistory,
-      total: wireHistory.length,
-      currentBalances: {
-        checking: user.checkingBalance || 0,
-        savings: user.savingsBalance || 0,
-        investment: user.investmentBalance || 0
-      }
-    });
-
-  } catch (error: any) {
-    console.error('Get wire transfers error:', error);
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch wire transfer history" },
-      { status: 500 }
-    );
-  }
+    })),
+    total: rows.length,
+  });
 }
