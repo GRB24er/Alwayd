@@ -1633,3 +1633,267 @@
     border: 1px solid #ccc;
   }
 }
+
+/* ─── Country-aware international wire form (v2) ──────────────────── */
+
+.page {
+  max-width: 880px;
+  margin: 40px auto;
+  padding: 0 24px 80px;
+  color: #1a1f2e;
+}
+
+.head {
+  margin-bottom: 32px;
+}
+.head h1 {
+  font-size: 28px;
+  margin: 0 0 8px;
+  color: #1a1f2e;
+  font-weight: 600;
+}
+
+.muted {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+}
+
+.loading {
+  text-align: center;
+  padding: 80px 20px;
+  color: #6b7280;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 0;
+}
+.section legend {
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #c9a962;
+  padding: 0 8px;
+}
+
+.field {
+  display: block;
+  margin-top: 16px;
+}
+.field span {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+.field input,
+.field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #ffffff;
+}
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: #c9a962;
+  box-shadow: 0 0 0 3px rgba(201, 169, 98, 0.15);
+}
+
+.help {
+  display: block;
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 12px;
+}
+.fieldError {
+  display: block;
+  margin-top: 4px;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 500;
+}
+.required {
+  color: #c9a962;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 600px) {
+  .row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.countryMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #374151;
+}
+.warningPill {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.danger {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.advanced {
+  margin-top: 18px;
+  border-top: 1px dashed #e5e7eb;
+  padding-top: 14px;
+}
+.advanced summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.checkbox {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 18px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #374151;
+}
+.checkbox input {
+  margin-top: 3px;
+}
+
+.submitRow {
+  display: flex;
+  justify-content: flex-end;
+}
+.primary {
+  background: #1a1f2e;
+  color: #c9a962;
+  border: none;
+  padding: 14px 32px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.primary:not(:disabled):hover {
+  background: #252b3d;
+}
+
+.error {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #991b1b;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.successCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 700px;
+  margin: 60px auto;
+}
+.successCard h2 {
+  color: #047857;
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+.summary {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px 24px;
+  margin: 24px 0;
+}
+.summary > div {
+  display: contents;
+}
+.summary dt {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #6b7280;
+  letter-spacing: 0.04em;
+}
+.summary dd {
+  margin: 0;
+  font-weight: 500;
+  color: #1a1f2e;
+}
+.warning {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 13px;
+}
+.warning ul {
+  margin: 6px 0 0 18px;
+  padding: 0;
+}
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+.actions button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+}
+.actions button:first-child {
+  background: #1a1f2e;
+  color: #c9a962;
+  border-color: #1a1f2e;
+}

@@ -1,7 +1,17 @@
-// src/app/api/transfers/international/route.ts
-// ALL TRANSFERS REQUIRE ADMIN APPROVAL
-// Creates PENDING transactions - balances update ONLY when admin approves
+// International wire transfer. The previous handler:
+//   - Hard-coded a regex for SWIFT and nothing else
+//   - Took recipientCountry as free text (no validation)
+//   - Skipped IBAN mod-97, length-per-country, sanctions screening
+//   - Used JS floats for the amount and fees
+//   - Had no idempotency, rate-limit, KYC gating, or limit enforcement
+//
+// This rewrite validates fields per the destination country's actual rail
+// (IBAN for SEPA, SWIFT+IBAN for most, IFSC for India, BSB for Australia,
+// CLABE for Mexico, etc.), screens for sanctions, requires KYC tier_3 for
+// international wires, enforces server-side daily limits, supports a real
+// Idempotency-Key, and audit-logs every state change.
 
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
@@ -9,400 +19,464 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import { sendTransactionEmail } from "@/lib/mail";
+import { runIdempotent } from "@/lib/idempotency";
+import { check as rateLimitCheck, POLICIES } from "@/lib/rateLimit";
+import { v, validate } from "@/lib/validators";
+import type { ValidationResult } from "@/lib/validators";
+import { enforceLimit } from "@/lib/limits";
+import { screenOrBlock } from "@/lib/sanctions";
+import { audit } from "@/lib/audit";
+import { toMinor, fromMinor, toNumber, gte, add } from "@/lib/decimal";
+import { logger } from "@/lib/logger";
+import { lookupCountry, isEmbargoedCountry } from "@/lib/countries";
+import { bankingProfileFor } from "@/lib/bankingCodes";
+import { canPerformAction } from "@/lib/kyc";
 
-interface InternationalTransferRequest {
-  fromAccount: 'checking' | 'savings' | 'investment';
+const ACCOUNT_VALUES = ["checking", "savings", "investment"] as const;
+type AccountType = (typeof ACCOUNT_VALUES)[number];
+
+const SPEED_VALUES = ["standard", "express", "instant"] as const;
+type Speed = (typeof SPEED_VALUES)[number];
+
+const SPEED_BASE_FEE: Record<Speed, number> = {
+  standard: 25,
+  express: 45,
+  instant: 75,
+};
+const EDD_SURCHARGE = 15;
+
+const MIN_AMOUNT = 50;
+const MAX_AMOUNT = 250_000;
+
+interface BaseBody {
+  fromAccount: AccountType;
   recipientName: string;
-  recipientAccount: string;
-  recipientBank: string;
-  swiftCode: string;
-  iban?: string;
-  recipientCountry: string;
   recipientAddress: string;
-  recipientBankAddress: string;
-  amount: number | string;
-  currency?: string;
-  description?: string;
-  purposeOfTransfer: string;
-  transferSpeed?: 'standard' | 'express';
+  recipientCity?: string;
+  recipientPostalCode?: string;
+  recipientCountry: string;
+  recipientPhone?: string;
+  recipientEmail?: string;
+  bankName: string;
+  bankAddress: string;
+  bankCity?: string;
+  amount: string;
+  sourceCurrency?: string;
+  targetCurrency?: string;
+  purpose: string;
+  sourceOfFunds: string;
+  relationship: string;
+  reference?: string;
+  transferSpeed?: Speed;
+  intermediaryBank?: string;
+  intermediarySwift?: string;
+  complianceAccepted?: boolean;
+  iban?: string;
+  swiftBic?: string;
+  accountNumber?: string;
+  sortCodeUk?: string;
+  bsbAu?: string;
+  ifscIn?: string;
+  clabeMx?: string;
+  transitCa?: string;
+  bankCodeGeneric?: string;
+  branchCodeGeneric?: string;
+  taxId?: string;
+  purposeCodeRbi?: string;
 }
 
 export async function POST(request: NextRequest) {
+  const log = logger.child({ route: "transfers/international" });
+
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  let body: any;
   try {
-    console.log('🌍 International transfer initiated');
-    
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized - Please login" },
-        { status: 401 }
-      );
-    }
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ success: false, error: "Invalid JSON" }, { status: 400 });
+  }
 
-    const body: InternationalTransferRequest = await request.json();
-    console.log('📥 International transfer request:', {
-      fromAccount: body.fromAccount,
-      recipientName: body.recipientName,
-      recipientCountry: body.recipientCountry,
-      amount: body.amount,
-      currency: body.currency,
-      userEmail: session.user.email
-    });
-    
-    const { 
-      fromAccount,
-      recipientName,
-      recipientAccount,
-      recipientBank,
-      swiftCode,
-      iban,
-      recipientCountry,
-      recipientAddress,
-      recipientBankAddress,
-      amount,
-      currency = 'USD',
-      description,
-      purposeOfTransfer,
-      transferSpeed = 'standard'
-    } = body;
+  const base = validate<BaseBody>(body, {
+    fromAccount: v.enum(ACCOUNT_VALUES),
+    recipientName: v.string({ min: 2, max: 200 }),
+    recipientAddress: v.string({ min: 4, max: 500 }),
+    recipientCity: v.optional(v.string({ max: 200 })),
+    recipientPostalCode: v.optional(v.string({ max: 30 })),
+    recipientCountry: v.countryCode(),
+    recipientPhone: v.optional(v.string({ max: 30 })),
+    recipientEmail: v.optional(v.email()),
+    bankName: v.string({ min: 2, max: 200 }),
+    bankAddress: v.string({ min: 4, max: 500 }),
+    bankCity: v.optional(v.string({ max: 200 })),
+    amount: v.amountString(),
+    sourceCurrency: v.optional(v.string({ pattern: /^[A-Z]{3}$/ })),
+    targetCurrency: v.optional(v.string({ pattern: /^[A-Z]{3}$/ })),
+    purpose: v.string({ min: 3, max: 300 }),
+    sourceOfFunds: v.string({ min: 3, max: 200 }),
+    relationship: v.string({ min: 1, max: 100 }),
+    reference: v.optional(v.string({ max: 100 })),
+    transferSpeed: v.optional(v.enum(SPEED_VALUES)),
+    intermediaryBank: v.optional(v.string({ max: 200 })),
+    intermediarySwift: v.optional(v.swiftBic()),
+    complianceAccepted: v.optional(v.bool()),
+    iban: v.optional(v.string({ max: 34 })),
+    swiftBic: v.optional(v.string({ max: 11 })),
+    accountNumber: v.optional(v.string({ max: 34 })),
+    sortCodeUk: v.optional(v.string({ max: 8 })),
+    bsbAu: v.optional(v.string({ max: 7 })),
+    ifscIn: v.optional(v.string({ max: 11 })),
+    clabeMx: v.optional(v.string({ max: 18 })),
+    transitCa: v.optional(v.string({ max: 9 })),
+    bankCodeGeneric: v.optional(v.string({ max: 20 })),
+    branchCodeGeneric: v.optional(v.string({ max: 20 })),
+    taxId: v.optional(v.string({ max: 20 })),
+    purposeCodeRbi: v.optional(v.string({ max: 10 })),
+  });
+  if (!base.ok) {
+    return NextResponse.json({ success: false, errors: base.errors }, { status: 400 });
+  }
 
-    // Validation
-    const missingFields = [];
-    if (!fromAccount) missingFields.push('fromAccount');
-    if (!recipientName?.trim()) missingFields.push('recipientName');
-    if (!recipientAccount?.trim()) missingFields.push('recipientAccount');
-    if (!recipientBank?.trim()) missingFields.push('recipientBank');
-    if (!swiftCode?.trim()) missingFields.push('swiftCode');
-    if (!recipientCountry?.trim()) missingFields.push('recipientCountry');
-    if (!recipientAddress?.trim()) missingFields.push('recipientAddress');
-    if (!recipientBankAddress?.trim()) missingFields.push('recipientBankAddress');
-    if (!amount) missingFields.push('amount');
-    if (!purposeOfTransfer?.trim()) missingFields.push('purposeOfTransfer');
-
-    if (missingFields.length > 0) {
-      return NextResponse.json(
-        { 
-          success: false,
-          error: `Missing required fields: ${missingFields.join(', ')}`,
-          missingFields 
-        },
-        { status: 400 }
-      );
-    }
-
-    // Validate SWIFT code format
-    if (!/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/i.test(swiftCode)) {
-      return NextResponse.json(
-        { success: false, error: "Invalid SWIFT/BIC code format" },
-        { status: 400 }
-      );
-    }
-
-    const transferAmount = Math.abs(
-      typeof amount === 'string' 
-        ? parseFloat(amount.replace(/[^0-9.-]/g, '')) 
-        : Number(amount)
-    );
-
-    if (isNaN(transferAmount) || transferAmount <= 0) {
-      return NextResponse.json(
-        { success: false, error: "Invalid amount" },
-        { status: 400 }
-      );
-    }
-
-    // International transfer limits
-    if (transferAmount < 50) {
-      return NextResponse.json(
-        { success: false, error: "Minimum international transfer amount is $50.00" },
-        { status: 400 }
-      );
-    }
-
-    if (transferAmount > 100000) {
-      return NextResponse.json(
-        { success: false, error: "International transfers over $100,000 require additional approval. Please contact support." },
-        { status: 400 }
-      );
-    }
-
-    // Calculate fees
-    let transferFee = 45; // Base international fee
-    let exchangeFee = 0;
-    if (currency !== 'USD') {
-      exchangeFee = Math.max(10, transferAmount * 0.01); // 1% exchange fee, min $10
-    }
-    if (transferSpeed === 'express') {
-      transferFee += 30;
-    }
-
-    const totalFees = transferFee + exchangeFee;
-    const totalAmount = transferAmount + totalFees;
-    const estimatedDays = transferSpeed === 'express' ? '1-2 business days' : '3-5 business days';
-
-    console.log('💸 International transfer details:', {
-      transferAmount,
-      transferFee,
-      exchangeFee,
-      totalFees,
-      totalAmount,
-      currency,
-      estimatedDays
-    });
-
-    await connectDB();
-    console.log('🗄️ Database connected');
-
-    const user = await User.findOne({ email: session.user.email });
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: "User account not found" },
-        { status: 404 }
-      );
-    }
-
-    console.log('👤 User found:', user._id);
-
-    const balanceFieldMap: { [key: string]: string } = {
-      'checking': 'checkingBalance',
-      'savings': 'savingsBalance',
-      'investment': 'investmentBalance'
-    };
-
-    const fromBalanceField = balanceFieldMap[fromAccount];
-    const currentBalance = Number((user as any)[fromBalanceField] || 0);
-    
-    console.log('💰 Current balance check:', {
-      account: fromAccount,
-      currentBalance,
-      requiredAmount: totalAmount,
-      hasSufficientFunds: currentBalance >= totalAmount
-    });
-    
-    // Check sufficient funds (validation only - NOT deducting)
-    if (totalAmount > currentBalance) {
-      return NextResponse.json(
-        { 
-          success: false,
-          error: "Insufficient funds for international transfer",
-          details: {
-            available: currentBalance,
-            transferAmount,
-            fees: totalFees,
-            totalRequired: totalAmount,
-            shortfall: totalAmount - currentBalance
-          }
-        },
-        { status: 400 }
-      );
-    }
-
-    // Generate reference
-    const timestamp = Date.now().toString().slice(-6);
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const intlRef = `INTL-${timestamp}-${random}`;
-    
-    console.log('🔖 Generated reference:', intlRef);
-
-    // =====================================================
-    // CREATE PENDING TRANSACTION - NO BALANCE CHANGE YET
-    // Admin will approve, then balance updates
-    // =====================================================
-
-    const intlTransaction = await Transaction.create({
-      userId: user._id,
-      type: 'transfer-out',
-      currency: 'USD',
-      amount: transferAmount,
-      description: description?.trim() || `International transfer to ${recipientName} (${recipientCountry})`,
-      status: 'pending', // PENDING - awaits admin approval
-      accountType: fromAccount,
-      posted: false, // NOT posted
-      postedAt: null,
-      reference: intlRef,
-      channel: 'online',
-      origin: 'international_transfer',
-      date: new Date(),
-      metadata: {
-        recipientName,
-        recipientAccount: recipientAccount.slice(-4),
-        recipientBank,
-        swiftCode,
-        iban: iban?.slice(-4),
-        recipientCountry,
-        recipientAddress,
-        recipientBankAddress,
-        targetCurrency: currency,
-        purposeOfTransfer,
-        transferSpeed,
-        transferFee,
-        exchangeFee,
-        totalFees,
-        totalAmount,
-        estimatedDays
-      }
-    });
-
-    console.log('💾 International transaction saved:', intlTransaction._id);
-
-    // Create fee transaction (also pending)
-    if (totalFees > 0) {
-      await Transaction.create({
-        userId: user._id,
-        type: 'fee',
-        currency: 'USD',
-        amount: totalFees,
-        description: `International transfer fees${exchangeFee > 0 ? ' (incl. exchange)' : ''}`,
-        status: 'pending', // PENDING
-        accountType: fromAccount,
-        posted: false,
-        postedAt: null,
-        reference: `${intlRef}-FEE`,
-        channel: 'online',
-        origin: 'international_transfer',
-        date: new Date(),
-        metadata: {
-          linkedReference: intlRef,
-          transferFee,
-          exchangeFee,
-          targetCurrency: currency
-        }
-      });
-      console.log('💾 Fee transaction saved');
-    }
-
-    // =====================================================
-    // DO NOT UPDATE BALANCE - Admin approval will do that
-    // =====================================================
-
-    console.log('✅ International transfer created (pending approval):', {
-      reference: intlRef,
-      status: 'pending',
-      currentBalance // Balance unchanged
-    });
-
-    // Send notification email
-    try {
-      await sendTransactionEmail(user.email, {
-        name: user.name || 'Customer',
-        transaction: intlTransaction,
-        subject: 'International Transfer Initiated - Pending Approval'
-      });
-      console.log('📧 Notification email sent');
-    } catch (emailError) {
-      console.error('❌ Email failed:', emailError);
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: "International transfer initiated. Awaiting admin approval.",
-      transferReference: intlRef,
-      transfer: {
-        type: 'international',
-        from: fromAccount,
-        to: {
-          name: recipientName,
-          account: `****${recipientAccount.slice(-4)}`,
-          bank: recipientBank,
-          swiftCode,
-          country: recipientCountry
-        },
-        amount: transferAmount,
-        currency,
-        fees: {
-          transfer: transferFee,
-          exchange: exchangeFee,
-          total: totalFees
-        },
-        total: totalAmount,
-        description: description || 'International Transfer',
-        reference: intlRef,
-        status: 'pending',
-        estimatedCompletion: estimatedDays,
-        purposeOfTransfer,
-        date: new Date().toISOString()
-      },
-      // Balance NOT changed yet
-      currentBalance
-    }, { status: 200 });
-
-  } catch (error: any) {
-    console.error('💥 International transfer error:', error);
+  const country = lookupCountry(base.value.recipientCountry);
+  if (!country) {
+    return NextResponse.json({ success: false, error: "Unknown destination country" }, { status: 400 });
+  }
+  if (isEmbargoedCountry(base.value.recipientCountry)) {
     return NextResponse.json(
-      { 
-        success: false,
-        error: "An unexpected error occurred. Please try again.",
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      },
-      { status: 500 }
+      { success: false, error: `Transfers to ${country.name} are prohibited under sanctions` },
+      { status: 451 }
     );
   }
+
+  const profile = bankingProfileFor(base.value.recipientCountry);
+  const railCheck = validateRailFields(base.value, profile.fields, country.iso2);
+  if (!railCheck.ok) {
+    return NextResponse.json({ success: false, errors: railCheck.errors }, { status: 400 });
+  }
+
+  const amountMinor = toMinor(base.value.amount);
+  const amountNumber = toNumber(amountMinor);
+  if (amountNumber < MIN_AMOUNT) {
+    return NextResponse.json({ success: false, error: `Minimum international wire is $${MIN_AMOUNT}` }, { status: 422 });
+  }
+  if (amountNumber > MAX_AMOUNT) {
+    return NextResponse.json(
+      { success: false, error: `International wires above $${MAX_AMOUNT.toLocaleString()} require manual review` },
+      { status: 422 }
+    );
+  }
+
+  await connectDB();
+  const user = await User.findOne({ email: session.user.email });
+  if (!user) return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+
+  const gate = await canPerformAction(user._id.toString(), "international_wire");
+  if (!gate.allowed) {
+    await audit({
+      action: "transfer.wire.initiated",
+      actorId: user._id.toString(),
+      actorEmail: user.email,
+      outcome: "blocked",
+      severity: "warning",
+      request,
+      details: { reason: "kyc_insufficient", required: gate.required, current: gate.current },
+    });
+    return NextResponse.json(
+      { success: false, error: gate.reason, requiredKycLevel: gate.required, currentKycLevel: gate.current },
+      { status: 403 }
+    );
+  }
+
+  const rl = await rateLimitCheck(`intl:${user._id}`, POLICIES.transferInitiate);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { success: false, error: "Too many international transfer attempts" },
+      { status: 429, headers: { "retry-after": String(rl.retryAfterSeconds) } }
+    );
+  }
+
+  return runIdempotent({
+    request,
+    endpoint: "transfers/international",
+    userId: user._id.toString(),
+    body,
+    handler: async () => {
+      const screening = await screenOrBlock({
+        input: {
+          fullName: base.value.recipientName,
+          bankName: base.value.bankName,
+          countryCode: base.value.recipientCountry,
+          beneficiaryAddress: base.value.recipientAddress,
+        },
+        actorId: user._id.toString(),
+        actorEmail: user.email,
+        request,
+      });
+      if (!screening.ok) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Transfer blocked by compliance screening. Contact support.",
+            sanctionsMatches: screening.matches,
+          },
+          { status: 451 }
+        );
+      }
+
+      const speed: Speed = base.value.transferSpeed || "standard";
+      let fee = SPEED_BASE_FEE[speed];
+      if (country.sanctions === "enhanced_due_diligence") fee += EDD_SURCHARGE;
+
+      const feeMinor = toMinor(fee.toString());
+      const totalMinor = add(amountMinor, feeMinor);
+      const totalNumber = toNumber(totalMinor);
+
+      const balanceField =
+        base.value.fromAccount === "savings"
+          ? "savingsBalance"
+          : base.value.fromAccount === "investment"
+          ? "investmentBalance"
+          : "checkingBalance";
+      const currentMinor = toMinor(String((user as any)[balanceField] || 0));
+      if (!gte(currentMinor, totalMinor)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Insufficient funds (including fees)",
+            details: {
+              available: toNumber(currentMinor),
+              transferAmount: amountNumber,
+              fee,
+              totalRequired: totalNumber,
+              shortfall: toNumber(totalMinor - currentMinor),
+            },
+          },
+          { status: 422 }
+        );
+      }
+
+      const limit = await enforceLimit({
+        userId: user._id.toString(),
+        amount: totalNumber,
+        kind: "transfer",
+        accountType: base.value.fromAccount,
+        actorEmail: user.email,
+        request,
+      });
+      if (!limit.allowed) {
+        return NextResponse.json(
+          { success: false, error: limit.message, reason: limit.reason },
+          { status: 422 }
+        );
+      }
+
+      const ref = `IWR-${Date.now().toString(36)}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+
+      const wireTx = await Transaction.create({
+        userId: user._id,
+        type: "transfer-out",
+        currency: "USD",
+        amount: amountNumber,
+        amountMinor: fromMinor(amountMinor),
+        description: `International wire to ${base.value.recipientName} (${country.name})`,
+        status: "pending",
+        accountType: base.value.fromAccount,
+        posted: false,
+        ledgerPosted: false,
+        reference: ref,
+        channel: "online",
+        origin: "wire_transfer",
+        metadata: {
+          wireType: "international",
+          rail: profile.primaryRail,
+          targetCurrency: base.value.targetCurrency || country.currency,
+          recipientName: base.value.recipientName,
+          recipientAddress: base.value.recipientAddress,
+          recipientCity: base.value.recipientCity,
+          recipientPostalCode: base.value.recipientPostalCode,
+          recipientCountry: country.iso2,
+          recipientCountryName: country.name,
+          recipientPhone: base.value.recipientPhone,
+          recipientEmail: base.value.recipientEmail,
+          bankName: base.value.bankName,
+          bankAddress: base.value.bankAddress,
+          bankCity: base.value.bankCity,
+          railFields: railCheck.value,
+          intermediaryBank: base.value.intermediaryBank,
+          intermediarySwift: base.value.intermediarySwift,
+          purposeOfTransfer: base.value.purpose,
+          sourceOfFunds: base.value.sourceOfFunds,
+          relationship: base.value.relationship,
+          transferSpeed: speed,
+          fee,
+          totalAmount: totalNumber,
+          sanctionsScreened: true,
+          sanctionsWarnings: screening.warnings,
+        },
+      });
+
+      if (fee > 0) {
+        await Transaction.create({
+          userId: user._id,
+          type: "fee",
+          currency: "USD",
+          amount: fee,
+          amountMinor: fromMinor(feeMinor),
+          description: `International wire fee (${speed})`,
+          status: "pending",
+          accountType: base.value.fromAccount,
+          posted: false,
+          ledgerPosted: false,
+          reference: `${ref}-FEE`,
+          channel: "online",
+          origin: "wire_transfer",
+          metadata: { linkedReference: ref, wireType: "international" },
+        });
+      }
+
+      await audit({
+        action: "transfer.wire.initiated",
+        actorId: user._id.toString(),
+        actorEmail: user.email,
+        outcome: "success",
+        request,
+        resourceId: ref,
+        details: {
+          rail: profile.primaryRail,
+          country: country.iso2,
+          amount: amountNumber,
+          fee,
+          speed,
+        },
+      });
+
+      try {
+        await sendTransactionEmail(user.email, {
+          name: user.name || "Customer",
+          transaction: wireTx,
+          subject: "International Wire Initiated - Pending Approval",
+        });
+      } catch (err: any) {
+        log.warn("intl.email_failed", { err: err?.message });
+      }
+
+      return NextResponse.json(
+        {
+          success: true,
+          message: `International wire to ${country.name} initiated. Awaiting approval.`,
+          wireReference: ref,
+          transfer: {
+            type: "international",
+            rail: profile.primaryRail,
+            from: base.value.fromAccount,
+            to: {
+              name: base.value.recipientName,
+              bank: base.value.bankName,
+              country: country.iso2,
+              countryName: country.name,
+            },
+            amount: amountNumber,
+            fee,
+            total: totalNumber,
+            sourceCurrency: base.value.sourceCurrency || "USD",
+            targetCurrency: base.value.targetCurrency || country.currency,
+            reference: ref,
+            status: "pending",
+            transferSpeed: speed,
+            estimatedDelivery: estimatedDelivery(speed),
+            sanctionsWarnings: screening.warnings,
+            date: new Date().toISOString(),
+          },
+        },
+        { status: 200 }
+      );
+    },
+  });
 }
 
-// GET - Fetch international transfer history
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+function estimatedDelivery(speed: Speed): string {
+  if (speed === "instant") return "Within minutes (eligible corridors)";
+  if (speed === "express") return "1-2 business days";
+  return "3-5 business days";
+}
+
+function validateRailFields(
+  body: BaseBody,
+  fields: { kind: string; required: boolean; label: string }[],
+  country: string
+): ValidationResult<Record<string, string>> {
+  const schema: Record<string, any> = {};
+  const inputAlias: Record<string, any> = {};
+
+  for (const f of fields) {
+    switch (f.kind) {
+      case "iban":
+        schema.iban = f.required ? v.iban({ country }) : v.optional(v.iban({ country }));
+        inputAlias.iban = body.iban;
+        break;
+      case "swift_bic":
+        schema.swiftBic = f.required ? v.swiftBic() : v.optional(v.swiftBic());
+        inputAlias.swiftBic = body.swiftBic;
+        break;
+      case "account_number":
+        schema.accountNumber = f.required ? v.accountNumber() : v.optional(v.accountNumber());
+        inputAlias.accountNumber = body.accountNumber;
+        break;
+      case "routing_number_aba":
+        schema.routingNumberAba = f.required ? v.routingNumber() : v.optional(v.routingNumber());
+        inputAlias.routingNumberAba = (body as any).routingNumberAba ?? (body as any).routingNumber;
+        break;
+      case "sort_code_uk":
+        schema.sortCodeUk = f.required ? v.sortCodeUk() : v.optional(v.sortCodeUk());
+        inputAlias.sortCodeUk = body.sortCodeUk;
+        break;
+      case "bsb_au":
+        schema.bsbAu = f.required ? v.bsbAu() : v.optional(v.bsbAu());
+        inputAlias.bsbAu = body.bsbAu;
+        break;
+      case "ifsc_in":
+        schema.ifscIn = f.required ? v.ifscIn() : v.optional(v.ifscIn());
+        inputAlias.ifscIn = body.ifscIn;
+        break;
+      case "clabe_mx":
+        schema.clabeMx = f.required ? v.clabeMx() : v.optional(v.clabeMx());
+        inputAlias.clabeMx = body.clabeMx;
+        break;
+      case "transit_ca":
+        schema.transitCa = f.required ? v.transitCa() : v.optional(v.transitCa());
+        inputAlias.transitCa = body.transitCa;
+        break;
+      case "bank_code_generic":
+        schema.bankCodeGeneric = f.required
+          ? v.string({ min: 1, max: 20 })
+          : v.optional(v.string({ max: 20 }));
+        inputAlias.bankCodeGeneric = body.bankCodeGeneric;
+        break;
+      case "branch_code_generic":
+        schema.branchCodeGeneric = f.required
+          ? v.string({ min: 1, max: 20 })
+          : v.optional(v.string({ max: 20 }));
+        inputAlias.branchCodeGeneric = body.branchCodeGeneric;
+        break;
+      case "tax_id":
+        if (country === "BR") {
+          schema.taxId = f.required ? v.brTaxId() : v.optional(v.brTaxId());
+        } else {
+          schema.taxId = f.required
+            ? v.string({ min: 3, max: 30 })
+            : v.optional(v.string({ max: 30 }));
+        }
+        inputAlias.taxId = body.taxId;
+        break;
+      case "purpose_code":
+        schema.purposeCodeRbi = f.required ? v.rbiPurposeCode() : v.optional(v.rbiPurposeCode());
+        inputAlias.purposeCodeRbi = body.purposeCodeRbi;
+        break;
     }
-
-    await connectDB();
-
-    const user = await User.findOne({ email: session.user.email });
-    if (!user) {
-      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
-    }
-
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '50');
-
-    const intlTransfers = await Transaction.find({
-      userId: user._id,
-      origin: 'international_transfer',
-      type: 'transfer-out'
-    })
-      .sort({ createdAt: -1 })
-      .limit(limit)
-      .lean();
-
-    const transferHistory = intlTransfers.map((tx: any) => ({
-      id: tx._id.toString(),
-      reference: tx.reference,
-      date: tx.date || tx.createdAt,
-      amount: tx.amount,
-      fees: tx.metadata?.totalFees || 0,
-      total: tx.amount + (tx.metadata?.totalFees || 0),
-      fromAccount: tx.accountType,
-      currency: tx.metadata?.targetCurrency || 'USD',
-      recipient: {
-        name: tx.metadata?.recipientName || 'Unknown',
-        country: tx.metadata?.recipientCountry || 'Unknown',
-        bank: tx.metadata?.recipientBank || 'Unknown Bank'
-      },
-      status: tx.status,
-      description: tx.description,
-      posted: tx.posted
-    }));
-
-    return NextResponse.json({
-      success: true,
-      transfers: transferHistory,
-      total: transferHistory.length,
-      currentBalances: {
-        checking: user.checkingBalance || 0,
-        savings: user.savingsBalance || 0,
-        investment: user.investmentBalance || 0
-      }
-    });
-
-  } catch (error: any) {
-    console.error('Get international transfers error:', error);
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch transfer history" },
-      { status: 500 }
-    );
   }
+
+  return validate<Record<string, string>>(inputAlias, schema);
 }

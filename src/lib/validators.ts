@@ -1,6 +1,8 @@
 // Lightweight schema validators for API inputs. No external deps.
 // Each validator returns { ok: true, value } or { ok: false, errors }.
 
+import { IBAN_LENGTHS } from "./bankingCodes";
+
 export type ValidationResult<T> =
   | { ok: true; value: T }
   | { ok: false; errors: Record<string, string> };
@@ -112,8 +114,8 @@ export const v = {
     return v.string({ pattern: /^[A-Z0-9]{4,34}$/, trim: true, max: 34 });
   },
 
-  iban(): FieldRule<string> {
-    // mod-97 check
+  iban(opts?: { country?: string }): FieldRule<string> {
+    // mod-97 check + length-per-country from ISO 13616 registry.
     return (raw, errors, key) => {
       if (typeof raw !== "string") {
         errors[key] = `${key} is required`;
@@ -124,12 +126,21 @@ export const v = {
         errors[key] = `${key} is not a valid IBAN format`;
         return;
       }
+      const countryFromIban = clean.slice(0, 2);
+      const expectedLen = IBAN_LENGTHS[countryFromIban];
+      if (expectedLen && clean.length !== expectedLen) {
+        errors[key] = `${key} length ${clean.length} doesn't match ${expectedLen} expected for ${countryFromIban}`;
+        return;
+      }
+      if (opts?.country && countryFromIban !== opts.country.toUpperCase()) {
+        errors[key] = `${key} country prefix ${countryFromIban} doesn't match selected country ${opts.country}`;
+        return;
+      }
       const rearranged = clean.slice(4) + clean.slice(0, 4);
       const expanded = rearranged
         .split("")
         .map((ch) => (/[A-Z]/.test(ch) ? (ch.charCodeAt(0) - 55).toString() : ch))
         .join("");
-      // mod 97 on long string by chunked reduction
       let remainder = 0;
       for (let i = 0; i < expanded.length; i += 7) {
         remainder = Number(String(remainder) + expanded.slice(i, i + 7)) % 97;
@@ -149,6 +160,117 @@ export const v = {
   countryCode(): FieldRule<string> {
     return v.string({ pattern: /^[A-Z]{2}$/, trim: true });
   },
+
+  // UK sort code: 6 digits, optionally formatted "12-34-56".
+  sortCodeUk(): FieldRule<string> {
+    return (raw, errors, key) => {
+      if (typeof raw !== "string") {
+        errors[key] = `${key} is required`;
+        return;
+      }
+      const clean = raw.replace(/[-\s]/g, "");
+      if (!/^\d{6}$/.test(clean)) {
+        errors[key] = `${key} must be 6 digits (e.g. 12-34-56)`;
+        return;
+      }
+      return `${clean.slice(0, 2)}-${clean.slice(2, 4)}-${clean.slice(4, 6)}`;
+    };
+  },
+
+  // UK domestic account number: 8 digits.
+  ukAccountNumber(): FieldRule<string> {
+    return v.string({ pattern: /^\d{8}$/, trim: true });
+  },
+
+  // Australian BSB: 6 digits.
+  bsbAu(): FieldRule<string> {
+    return (raw, errors, key) => {
+      if (typeof raw !== "string") {
+        errors[key] = `${key} is required`;
+        return;
+      }
+      const clean = raw.replace(/[-\s]/g, "");
+      if (!/^\d{6}$/.test(clean)) {
+        errors[key] = `${key} must be 6 digits`;
+        return;
+      }
+      return `${clean.slice(0, 3)}-${clean.slice(3, 6)}`;
+    };
+  },
+
+  // Indian IFSC: 4 letters + '0' + 6 alphanumeric.
+  ifscIn(): FieldRule<string> {
+    return v.string({ pattern: /^[A-Z]{4}0[A-Z0-9]{6}$/, max: 11, trim: true });
+  },
+
+  // Mexican CLABE: 18 digits with mod-97 check digit per Banxico spec.
+  clabeMx(): FieldRule<string> {
+    return (raw, errors, key) => {
+      if (typeof raw !== "string" || !/^\d{18}$/.test(raw)) {
+        errors[key] = `${key} must be 18 digits`;
+        return;
+      }
+      const weights = [3, 7, 1, 3, 7, 1, 3, 7, 1, 3, 7, 1, 3, 7, 1, 3, 7];
+      let sum = 0;
+      for (let i = 0; i < 17; i++) {
+        sum += (Number(raw[i]) * weights[i]) % 10;
+      }
+      const checkDigit = (10 - (sum % 10)) % 10;
+      if (checkDigit !== Number(raw[17])) {
+        errors[key] = `${key} failed CLABE checksum`;
+        return;
+      }
+      return raw;
+    };
+  },
+
+  // Canadian transit + institution: 5 digits + '-' + 3 digits.
+  transitCa(): FieldRule<string> {
+    return (raw, errors, key) => {
+      if (typeof raw !== "string") {
+        errors[key] = `${key} is required`;
+        return;
+      }
+      const clean = raw.replace(/\s/g, "");
+      if (!/^\d{5}-\d{3}$/.test(clean) && !/^\d{8}$/.test(clean)) {
+        errors[key] = `${key} must be 5-digit transit and 3-digit institution (e.g. 12345-001)`;
+        return;
+      }
+      return clean.length === 8 ? `${clean.slice(0, 5)}-${clean.slice(5, 8)}` : clean;
+    };
+  },
+
+  // Brazilian CPF (11 digits) or CNPJ (14 digits) with checksum.
+  brTaxId(): FieldRule<string> {
+    return (raw, errors, key) => {
+      if (typeof raw !== "string") {
+        errors[key] = `${key} is required`;
+        return;
+      }
+      const clean = raw.replace(/[.\-\/]/g, "");
+      if (clean.length === 11) {
+        if (!isValidCpf(clean)) {
+          errors[key] = `${key} failed CPF checksum`;
+          return;
+        }
+        return clean;
+      }
+      if (clean.length === 14) {
+        if (!isValidCnpj(clean)) {
+          errors[key] = `${key} failed CNPJ checksum`;
+          return;
+        }
+        return clean;
+      }
+      errors[key] = `${key} must be 11 digits (CPF) or 14 digits (CNPJ)`;
+      return;
+    };
+  },
+
+  // RBI Purpose Code: alphanumeric P0XXX format.
+  rbiPurposeCode(): FieldRule<string> {
+    return v.string({ pattern: /^P\d{4}$/, trim: true });
+  },
 } as const;
 
 export function validate<T extends Record<string, any>>(
@@ -165,4 +287,30 @@ export function validate<T extends Record<string, any>>(
   }
   if (Object.keys(errors).length > 0) return { ok: false, errors };
   return { ok: true, value: out as T };
+}
+
+// ── helpers for tax-id checksums ────────────────────────────────────────────
+
+function isValidCpf(cpf: string): boolean {
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+  const calc = (slice: number) => {
+    let sum = 0;
+    for (let i = 0; i < slice; i++) sum += Number(cpf[i]) * (slice + 1 - i);
+    const rem = (sum * 10) % 11;
+    return rem === 10 ? 0 : rem;
+  };
+  return calc(9) === Number(cpf[9]) && calc(10) === Number(cpf[10]);
+}
+
+function isValidCnpj(cnpj: string): boolean {
+  if (/^(\d)\1{13}$/.test(cnpj)) return false;
+  const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const calc = (slice: number, weights: number[]) => {
+    let sum = 0;
+    for (let i = 0; i < slice; i++) sum += Number(cnpj[i]) * weights[i];
+    const rem = sum % 11;
+    return rem < 2 ? 0 : 11 - rem;
+  };
+  return calc(12, weights1) === Number(cnpj[12]) && calc(13, weights2) === Number(cnpj[13]);
 }
