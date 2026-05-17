@@ -22,6 +22,7 @@ import { screenOrBlock } from "@/lib/sanctions";
 import { audit } from "@/lib/audit";
 import { toMinor, fromMinor, toNumber, gte, add } from "@/lib/decimal";
 import { logger } from "@/lib/logger";
+import { assertAccountActive } from "@/lib/accountStatus";
 import crypto from "crypto";
 
 const ACCOUNT_VALUES = ["checking", "savings", "investment"] as const;
@@ -160,6 +161,20 @@ export async function POST(request: NextRequest) {
     userId: user._id.toString(),
     body,
     handler: async () => {
+      const status = await assertAccountActive(user._id.toString(), parsed.value.fromAccount);
+      if (!status.ok) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Account ${status.status}: ${status.reasonNote}`,
+            accountStatus: status.status,
+            restrictionReference: status.referenceNumber,
+            documentUrl: status.documentUrl,
+          },
+          { status: 423 }
+        );
+      }
+
       const sanctions = await screenOrBlock({
         input: {
           fullName: parsed.value.recipientName,

@@ -20,6 +20,14 @@ export interface IUser extends Document {
   accountNumber?: string;
   routingNumber?: string;
 
+  // Current effective restriction state. Updated by accountStatus.ts helpers
+  // whenever a restriction is issued or lifted. Source of truth is the
+  // AccountRestriction collection; this is the denormalized fast-read field.
+  accountStatus?: 'active' | 'frozen' | 'blocked' | 'closed';
+  accountStatusReason?: string;
+  accountStatusSetAt?: Date;
+  accountStatusRestrictionRef?: string;
+
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -68,14 +76,23 @@ const UserSchema = new Schema<IUser>({
   },
 
   // Account details
-  accountNumber: { 
-    type: String, 
-    required: false 
+  accountNumber: {
+    type: String,
+    required: false
   },
-  routingNumber: { 
-    type: String, 
-    required: false 
-  }
+  routingNumber: {
+    type: String,
+    required: false
+  },
+  accountStatus: {
+    type: String,
+    enum: ['active', 'frozen', 'blocked', 'closed'],
+    default: 'active',
+    index: true,
+  },
+  accountStatusReason: { type: String },
+  accountStatusSetAt: { type: Date },
+  accountStatusRestrictionRef: { type: String },
 }, {
   timestamps: true,
   toJSON: {

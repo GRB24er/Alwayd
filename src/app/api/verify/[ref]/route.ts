@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Loan from '@/models/Loan';
 import User from '@/models/User';
+import AccountRestriction, { ACTION_LABELS, REASON_LABELS } from '@/models/AccountRestriction';
 
 export const runtime = 'nodejs';
 
@@ -41,6 +42,35 @@ export async function GET(
     }
 
     await connectDB();
+
+    // Account restriction notices have references like FRZ-/BLK-/CLS-… so try
+    // them first; restriction lookups are O(1) on an indexed field.
+    if (/^(FRZ|BLK|CLS)-/.test(ref)) {
+      const restriction = await AccountRestriction.findOne({ referenceNumber: ref }).lean();
+      if (restriction) {
+        const r = restriction as any;
+        const user = await User.findById(r.userId).select('name').lean();
+        return NextResponse.json({
+          verified: true,
+          issuer: 'Aldwych European Capital',
+          issuerEstablished: '1897',
+          referenceNumber: r.referenceNumber,
+          documentType: ACTION_LABELS[r.action as keyof typeof ACTION_LABELS] + ' Notice',
+          status: r.status,
+          customer: user ? maskName((user as any).name) : 'Verified Holder',
+          reasonCategory: REASON_LABELS[r.reasonCategory as keyof typeof REASON_LABELS],
+          action: r.action,
+          effectiveFrom: r.effectiveFrom,
+          effectiveUntil: r.effectiveUntil,
+          liftedAt: r.liftedAt,
+          issuedBy: r.issuedByName,
+          issuedByTitle: r.issuedByTitle,
+          verifiedAt: new Date().toISOString(),
+        });
+      }
+      // Fall through to loan lookup in case the prefix is unrelated.
+    }
+
     const loan = await Loan.findOne({ referenceNumber: ref }).lean();
     if (!loan) {
       return NextResponse.json(
