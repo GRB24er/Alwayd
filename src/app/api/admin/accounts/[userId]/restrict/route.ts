@@ -80,7 +80,7 @@ export async function POST(
     reasonCategory: v.enum(REASON_VALUES),
     reasonNote: v.string({ min: 10, max: 4000 }),
     legalBasis: v.optional(v.string({ max: 1000 })),
-    affectedAccounts: v.optional(v.string({ max: 100 })) as any, // validated below
+    // affectedAccounts is an array, validated manually below.
     effectiveUntil: v.optional(v.string({ max: 30 })),
     internalOnly: v.optional(v.bool()),
     issuerTitle: v.optional(v.string({ max: 100 })),
@@ -90,14 +90,33 @@ export async function POST(
     return NextResponse.json({ errors: parsed.errors }, { status: 400 });
   }
 
-  // Custom array validation for affectedAccounts
+  // Manual validation for the affectedAccounts array. The string validator can't
+  // accept arrays, and we want a clear per-value error if someone sends garbage.
   const affectedRaw = body.affectedAccounts;
   let affected: AffectedAccount[] = ["all"];
-  if (Array.isArray(affectedRaw) && affectedRaw.length > 0) {
-    const ok = affectedRaw.every((a: string) => (AFFECTED_VALUES as readonly string[]).includes(a));
-    if (!ok) {
+  if (affectedRaw !== undefined && affectedRaw !== null && affectedRaw !== "") {
+    if (!Array.isArray(affectedRaw)) {
       return NextResponse.json(
-        { error: "affectedAccounts must be one or more of: checking, savings, investment, all" },
+        { errors: { affectedAccounts: "affectedAccounts must be an array of account names" } },
+        { status: 400 }
+      );
+    }
+    if (affectedRaw.length === 0) {
+      return NextResponse.json(
+        { errors: { affectedAccounts: "Select at least one account" } },
+        { status: 400 }
+      );
+    }
+    const bad = affectedRaw.filter(
+      (a: any) => typeof a !== "string" || !(AFFECTED_VALUES as readonly string[]).includes(a)
+    );
+    if (bad.length > 0) {
+      return NextResponse.json(
+        {
+          errors: {
+            affectedAccounts: `affectedAccounts must be one or more of: ${AFFECTED_VALUES.join(", ")}`,
+          },
+        },
         { status: 400 }
       );
     }
