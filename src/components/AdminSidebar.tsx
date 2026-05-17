@@ -46,10 +46,15 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
     href: "/dashboard/admin/transactions", 
     icon: "💸"
   },
-  { 
-    label: "KYC Verification", 
-    href: "/dashboard/admin/kyc", 
+  {
+    label: "KYC Verification",
+    href: "/dashboard/admin/kyc",
     icon: "✅"
+  },
+  {
+    label: "Account Restrictions",
+    href: "/dashboard/admin/restrictions",
+    icon: "🔒"
   },
   { 
     label: "Reports", 

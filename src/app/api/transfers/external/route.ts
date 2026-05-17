@@ -29,6 +29,7 @@ import { audit } from "@/lib/audit";
 import { toMinor, fromMinor, toNumber, gte, add } from "@/lib/decimal";
 import { logger } from "@/lib/logger";
 import { canPerformAction } from "@/lib/kyc";
+import { assertAccountActive } from "@/lib/accountStatus";
 
 const ACCOUNT_VALUES = ["checking", "savings", "investment"] as const;
 const SPEED_VALUES = ["standard", "express", "wire"] as const;
@@ -164,6 +165,20 @@ export async function POST(request: NextRequest) {
     userId: user._id.toString(),
     body,
     handler: async () => {
+      const status = await assertAccountActive(user._id.toString(), parsed.value.fromAccount);
+      if (!status.ok) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Account ${status.status}: ${status.reasonNote}`,
+            accountStatus: status.status,
+            restrictionReference: status.referenceNumber,
+            documentUrl: status.documentUrl,
+          },
+          { status: 423 }
+        );
+      }
+
       const screening = await screenOrBlock({
         input: {
           fullName: parsed.value.recipientName,

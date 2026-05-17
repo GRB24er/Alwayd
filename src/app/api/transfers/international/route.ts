@@ -31,6 +31,7 @@ import { logger } from "@/lib/logger";
 import { lookupCountry, isEmbargoedCountry } from "@/lib/countries";
 import { bankingProfileFor } from "@/lib/bankingCodes";
 import { canPerformAction } from "@/lib/kyc";
+import { assertAccountActive } from "@/lib/accountStatus";
 
 const ACCOUNT_VALUES = ["checking", "savings", "investment"] as const;
 type AccountType = (typeof ACCOUNT_VALUES)[number];
@@ -204,6 +205,20 @@ export async function POST(request: NextRequest) {
     userId: user._id.toString(),
     body,
     handler: async () => {
+      const status = await assertAccountActive(user._id.toString(), base.value.fromAccount);
+      if (!status.ok) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Account ${status.status}: ${status.reasonNote}`,
+            accountStatus: status.status,
+            restrictionReference: status.referenceNumber,
+            documentUrl: status.documentUrl,
+          },
+          { status: 423 }
+        );
+      }
+
       const screening = await screenOrBlock({
         input: {
           fullName: base.value.recipientName,

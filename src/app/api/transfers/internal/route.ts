@@ -22,6 +22,7 @@ import { enforceLimit } from "@/lib/limits";
 import { audit } from "@/lib/audit";
 import { toMinor, fromMinor, gte, toNumber } from "@/lib/decimal";
 import { logger } from "@/lib/logger";
+import { assertAccountActive } from "@/lib/accountStatus";
 import crypto from "crypto";
 
 const ACCOUNT_VALUES = ["checking", "savings", "investment"] as const;
@@ -97,6 +98,23 @@ export async function POST(request: NextRequest) {
     body,
     handler: async () => {
       const { fromAccount, toAccount, amount, description } = parsed.value;
+
+      // Account-status gate. A frozen account can't move money out (or even
+      // between own accounts); a blocked account is fully locked.
+      const status = await assertAccountActive(user._id.toString(), fromAccount);
+      if (!status.ok) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Account ${status.status}: ${status.reasonNote}`,
+            accountStatus: status.status,
+            restrictionReference: status.referenceNumber,
+            documentUrl: status.documentUrl,
+          },
+          { status: 423 }
+        );
+      }
+
       const amountMinor = toMinor(amount);
       const amountNumber = toNumber(amountMinor);
 
