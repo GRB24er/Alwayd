@@ -20,10 +20,12 @@ export type AuditAction =
   | "transaction.approved"
   | "transaction.rejected"
   | "transaction.posted"
+  | "transaction.reversed"
   | "limits.exceeded"
   | "sanctions.blocked"
   | "admin.balance_adjustment"
   | "admin.user_verified"
+  | "admin.email_sent"
   | "rate_limit.exceeded"
   | "idempotency.replay";
 
