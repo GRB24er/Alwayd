@@ -43,6 +43,35 @@ export async function GET(
 
     await connectDB();
 
+    // Adjustment receipts (ADJ-) and reversal notices (REV-) are stored on the
+    // Transaction collection and lookups are O(1) on an indexed reference.
+    if (/^(ADJ|REV)-/.test(ref)) {
+      const tx = await (await import("@/models/Transaction")).default.findOne({ referenceNumber: ref } as any).lean();
+      // referenceNumber on Transaction is stored under `reference` — adjust the query.
+      const txByRef = tx || await (await import("@/models/Transaction")).default.findOne({ reference: ref }).lean();
+      if (txByRef) {
+        const t = txByRef as any;
+        const user = await User.findById(t.userId).select("name").lean();
+        const isReversal = ref.startsWith("REV-");
+        return NextResponse.json({
+          verified: true,
+          issuer: "Aldwych European Capital",
+          issuerEstablished: "1897",
+          referenceNumber: t.reference,
+          documentType: isReversal ? "Transaction Reversal Notice" : "Account Adjustment Receipt",
+          status: t.status,
+          customer: user ? maskName((user as any).name) : "Verified Holder",
+          action: isReversal ? "reversal" : t.type,
+          amount: t.amount,
+          currency: t.currency || "USD",
+          accountType: t.accountType,
+          issuedAt: t.postedAt || t.createdAt,
+          reversedReference: t.metadata?.originalReference,
+          verifiedAt: new Date().toISOString(),
+        });
+      }
+    }
+
     // Account restriction notices have references like FRZ-/BLK-/CLS-… so try
     // them first; restriction lookups are O(1) on an indexed field.
     if (/^(FRZ|BLK|CLS)-/.test(ref)) {

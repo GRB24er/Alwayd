@@ -56,6 +56,16 @@ export interface ITransaction extends Document {
   rejectedAt?: Date;
   rejectionReason?: string;
   adminNotes?: string;
+
+  // Reversal trail. When a posted transaction is reversed, we post a contra-entry
+  // rather than mutate or delete the original. `reversedAt` / `reversedBy` /
+  // `reversedByReference` get set on the ORIGINAL; `reversalOf` gets set on the
+  // NEW contra entry pointing back to the original.
+  reversedAt?: Date;
+  reversedBy?: string;
+  reversedByReference?: string;
+  reversalReason?: string;
+  reversalOf?: mongoose.Types.ObjectId | string | null;
 }
 
 const TransactionSchema: Schema<ITransaction> = new mongoose.Schema(
@@ -167,7 +177,13 @@ const TransactionSchema: Schema<ITransaction> = new mongoose.Schema(
     rejectedBy: { type: String },
     rejectedAt: { type: Date },
     rejectionReason: { type: String },
-    adminNotes: { type: String }
+    adminNotes: { type: String },
+
+    reversedAt: { type: Date, index: true },
+    reversedBy: { type: String },
+    reversedByReference: { type: String },
+    reversalReason: { type: String },
+    reversalOf: { type: Schema.Types.ObjectId, ref: 'Transaction', default: null, index: true },
   },
   { timestamps: true }
 );

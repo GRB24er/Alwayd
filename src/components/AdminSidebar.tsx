@@ -56,6 +56,16 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
     href: "/dashboard/admin/restrictions",
     icon: "🔒"
   },
+  {
+    label: "Adjustments & Reversals",
+    href: "/dashboard/admin/adjustments",
+    icon: "⚖️"
+  },
+  {
+    label: "Email Center",
+    href: "/dashboard/admin/email",
+    icon: "✉️"
+  },
   { 
     label: "Reports", 
     href: "/dashboard/admin/reports", 
