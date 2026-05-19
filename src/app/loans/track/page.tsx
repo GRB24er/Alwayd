@@ -21,6 +21,17 @@ interface LoanDoc {
   uploadedAt: string;
 }
 
+interface LoanScheduleRow {
+  period: number;
+  dueDate: string;
+  payment: number;
+  interest: number;
+  principal: number;
+  balance: number;
+  paid: boolean;
+  paidAt?: string;
+}
+
 interface Loan {
   _id: string;
   referenceNumber: string;
@@ -41,8 +52,10 @@ interface Loan {
   offerExpiry?: string;
   adminNotes?: string;
   businessName?: string;
+  underwriterName?: string;
   messages?: LoanMessage[];
   documents?: LoanDoc[];
+  schedule?: LoanScheduleRow[];
 }
 
 const STATUS_STEPS = [
@@ -432,6 +445,81 @@ export default function LoanTrackPage() {
                                 </a>
                               )}
                             </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Active Loan Panel — amortization schedule, balance, next due */}
+                      {(selectedLoan.status === "disbursed" || selectedLoan.status === "active") && selectedLoan.schedule && selectedLoan.schedule.length > 0 && (
+                        <div className={styles.activeLoanPanel}>
+                          <div className={styles.activeLoanHeader}>
+                            <div>
+                              <div className={styles.activeLoanEyebrow}>Active Facility</div>
+                              <h4 className={styles.activeLoanTitle}>Repayment Schedule</h4>
+                            </div>
+                            {selectedLoan.underwriterName && (
+                              <div className={styles.underwriterBadge}>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#c9a962" strokeWidth="1.8" style={{ width: 14, height: 14 }}>
+                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                  <circle cx="12" cy="7" r="4" />
+                                </svg>
+                                Underwriter: {selectedLoan.underwriterName}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className={styles.activeLoanStats}>
+                            <div className={styles.activeStat}>
+                              <span>Outstanding Balance</span>
+                              <strong>{fmt(selectedLoan.remainingBalance ?? selectedLoan.amount)}</strong>
+                            </div>
+                            <div className={styles.activeStat}>
+                              <span>Monthly Payment</span>
+                              <strong>{selectedLoan.monthlyPayment ? fmt(selectedLoan.monthlyPayment) : "—"}</strong>
+                            </div>
+                            <div className={styles.activeStat}>
+                              <span>Next Payment Due</span>
+                              <strong>{selectedLoan.nextPaymentDate ? new Date(selectedLoan.nextPaymentDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}</strong>
+                            </div>
+                            <div className={styles.activeStat}>
+                              <span>Payments Remaining</span>
+                              <strong>{selectedLoan.schedule.filter(s => !s.paid).length} / {selectedLoan.schedule.length}</strong>
+                            </div>
+                          </div>
+
+                          <div className={styles.scheduleTableWrap}>
+                            <table className={styles.scheduleTable}>
+                              <thead>
+                                <tr>
+                                  <th>#</th>
+                                  <th>Due Date</th>
+                                  <th>Payment</th>
+                                  <th>Interest</th>
+                                  <th>Principal</th>
+                                  <th>Balance</th>
+                                  <th>Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {selectedLoan.schedule.map((row) => (
+                                  <tr key={row.period} className={row.paid ? styles.schedulePaidRow : ""}>
+                                    <td>{row.period}</td>
+                                    <td>{new Date(row.dueDate).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</td>
+                                    <td>{fmt(row.payment)}</td>
+                                    <td>{fmt(row.interest)}</td>
+                                    <td>{fmt(row.principal)}</td>
+                                    <td>{fmt(row.balance)}</td>
+                                    <td>
+                                      {row.paid ? (
+                                        <span className={styles.schedulePaid}>Paid</span>
+                                      ) : (
+                                        <span className={styles.scheduleDue}>Scheduled</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
                         </div>
                       )}

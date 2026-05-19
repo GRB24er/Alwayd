@@ -5,6 +5,8 @@ import connectDB from '@/lib/mongodb';
 import Loan from '@/models/Loan';
 import User from '@/models/User';
 import { sendSimpleEmail } from '@/lib/mail';
+import { generateLoanReference } from '@/lib/loanReference';
+import { writeAudit } from '@/lib/audit';
 
 export const runtime = 'nodejs';
 
@@ -19,12 +21,6 @@ const VALID_TYPES = [
   'trade',
   'equipment',
 ] as const;
-
-function generateReference(): string {
-  const ts = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `AEC-${ts}-${rand}`;
-}
 
 // GET - list current user's loan applications
 export async function GET() {
@@ -94,7 +90,7 @@ export async function POST(req: NextRequest) {
 
     const loan = await Loan.create({
       userId: session.user.id,
-      referenceNumber: generateReference(),
+      referenceNumber: generateLoanReference(),
       type,
       amount: amt,
       purpose: String(purpose).trim(),
@@ -113,6 +109,19 @@ export async function POST(req: NextRequest) {
       annualIncome: annualIncome ? Number(annualIncome) : undefined,
       creditScore,
       kycData,
+    });
+
+    // Audit
+    await writeAudit({
+      event: 'loan.application.submitted',
+      actorId: String(session.user.id),
+      actorRole: 'user',
+      actorEmail: applicant.email,
+      subjectId: String(loan._id),
+      subjectType: 'loan',
+      reference: loan.referenceNumber,
+      payload: { type, amount: amt, term: months },
+      request: req,
     });
 
     // Fire-and-forget confirmation email

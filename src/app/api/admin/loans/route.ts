@@ -5,6 +5,7 @@ import connectDB from '@/lib/mongodb';
 import Loan from '@/models/Loan';
 import User from '@/models/User';
 import { sendSimpleEmail } from '@/lib/mail';
+import { writeAudit } from '@/lib/audit';
 
 export const runtime = 'nodejs';
 
@@ -78,12 +79,27 @@ export async function PATCH(req: NextRequest) {
       loan.totalRepayable = Math.round(total * 100) / 100;
       loan.remainingBalance = amount;
       loan.offerExpiry = offerExpiry;
+      // Capture the underwriter (the admin reviewing this application).
+      loan.underwriterId = user._id;
+      loan.underwriterName = user.name;
       if (adminNotes) loan.adminNotes = adminNotes;
       if (adminMessage) {
         if (!loan.messages) loan.messages = [];
         loan.messages.push({ from: 'admin', message: adminMessage, sentAt: new Date(), read: false });
       }
       await loan.save();
+
+      await writeAudit({
+        event: 'loan.application.approved',
+        actorId: String(user._id),
+        actorRole: 'admin',
+        actorEmail: user.email,
+        subjectId: String(loan._id),
+        subjectType: 'loan',
+        reference: loan.referenceNumber,
+        payload: { interestRate: rate, approvedAmount: amount, termMonths: months },
+        request: req,
+      });
 
       // Email applicant
       await sendSimpleEmail(
@@ -115,12 +131,26 @@ export async function PATCH(req: NextRequest) {
     } else if (action === 'reject') {
       loan.status = 'rejected';
       loan.reviewedAt = new Date();
+      loan.underwriterId = user._id;
+      loan.underwriterName = user.name;
       if (adminNotes) loan.adminNotes = adminNotes;
       if (adminMessage) {
         if (!loan.messages) loan.messages = [];
         loan.messages.push({ from: 'admin', message: adminMessage, sentAt: new Date(), read: false });
       }
       await loan.save();
+
+      await writeAudit({
+        event: 'loan.application.rejected',
+        actorId: String(user._id),
+        actorRole: 'admin',
+        actorEmail: user.email,
+        subjectId: String(loan._id),
+        subjectType: 'loan',
+        reference: loan.referenceNumber,
+        payload: { reason: adminNotes || null },
+        request: req,
+      });
 
       await sendSimpleEmail(
         applicant.email,
@@ -143,13 +173,37 @@ export async function PATCH(req: NextRequest) {
     } else if (action === 'under_review') {
       loan.status = 'under_review';
       loan.reviewedAt = new Date();
+      loan.underwriterId = user._id;
+      loan.underwriterName = user.name;
       if (adminNotes) loan.adminNotes = adminNotes;
       await loan.save();
+
+      await writeAudit({
+        event: 'loan.application.under_review',
+        actorId: String(user._id),
+        actorRole: 'admin',
+        actorEmail: user.email,
+        subjectId: String(loan._id),
+        subjectType: 'loan',
+        reference: loan.referenceNumber,
+        request: req,
+      });
     } else if (action === 'message') {
       if (!adminMessage) return NextResponse.json({ error: 'Message is required.' }, { status: 400 });
       if (!loan.messages) loan.messages = [];
       loan.messages.push({ from: 'admin', message: adminMessage, sentAt: new Date(), read: false });
       await loan.save();
+
+      await writeAudit({
+        event: 'loan.message.sent',
+        actorId: String(user._id),
+        actorRole: 'admin',
+        actorEmail: user.email,
+        subjectId: String(loan._id),
+        subjectType: 'loan',
+        reference: loan.referenceNumber,
+        request: req,
+      });
     } else {
       return NextResponse.json({ error: 'Invalid action.' }, { status: 400 });
     }

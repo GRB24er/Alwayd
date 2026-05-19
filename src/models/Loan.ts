@@ -38,6 +38,17 @@ export interface ILoanDocument {
   uploadedAt: Date;
 }
 
+export interface ILoanScheduleEntry {
+  period: number;
+  dueDate: Date;
+  payment: number;
+  interest: number;
+  principal: number;
+  balance: number;
+  paid: boolean;
+  paidAt?: Date;
+}
+
 export interface ILoan extends Document {
   userId: Types.ObjectId;
   referenceNumber: string;
@@ -62,6 +73,13 @@ export interface ILoan extends Document {
 
   // KYC
   kycData?: Record<string, unknown>;
+  kycVerifiedAt?: Date;
+  kycVerifiedBy?: Types.ObjectId;
+
+  // Underwriting
+  underwriterId?: Types.ObjectId;
+  underwriterName?: string;
+  riskBand?: 'low' | 'medium' | 'high';
 
   // Approval / offer fields
   interestRate?: number;
@@ -72,6 +90,15 @@ export interface ILoan extends Document {
   offerExpiry?: Date;
   agreementSignedAt?: Date;
   agreementSignature?: string;
+  agreementIp?: string;
+
+  // Amortization
+  schedule?: ILoanScheduleEntry[];
+
+  // Disbursement
+  disbursementBank?: string;
+  disbursementAccount?: string;
+  disbursementReference?: string;
 
   // Workflow timestamps
   applicationDate: Date;
@@ -110,6 +137,20 @@ const LoanDocumentSchema = new Schema<ILoanDocument>(
   { _id: false }
 );
 
+const LoanScheduleEntrySchema = new Schema<ILoanScheduleEntry>(
+  {
+    period: { type: Number, required: true },
+    dueDate: { type: Date, required: true },
+    payment: { type: Number, required: true },
+    interest: { type: Number, required: true },
+    principal: { type: Number, required: true },
+    balance: { type: Number, required: true },
+    paid: { type: Boolean, default: false },
+    paidAt: { type: Date },
+  },
+  { _id: false }
+);
+
 const LoanSchema = new Schema<ILoan>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
@@ -142,6 +183,12 @@ const LoanSchema = new Schema<ILoan>(
     creditScore: { type: String },
 
     kycData: { type: Schema.Types.Mixed },
+    kycVerifiedAt: { type: Date },
+    kycVerifiedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+
+    underwriterId: { type: Schema.Types.ObjectId, ref: 'User' },
+    underwriterName: { type: String },
+    riskBand: { type: String, enum: ['low', 'medium', 'high'] },
 
     interestRate: { type: Number },
     monthlyPayment: { type: Number },
@@ -151,6 +198,13 @@ const LoanSchema = new Schema<ILoan>(
     offerExpiry: { type: Date },
     agreementSignedAt: { type: Date },
     agreementSignature: { type: String },
+    agreementIp: { type: String },
+
+    schedule: { type: [LoanScheduleEntrySchema], default: undefined },
+
+    disbursementBank: { type: String },
+    disbursementAccount: { type: String },
+    disbursementReference: { type: String },
 
     applicationDate: { type: Date, default: Date.now },
     reviewedAt: { type: Date },

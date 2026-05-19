@@ -234,6 +234,33 @@ export default function ApplyPage() {
         setError("Please accept the agreement and provide your signature.");
         return;
       }
+      // Persist the signature against the loan if we have a reference.
+      if (applicationRef) {
+        setLoading(true);
+        try {
+          // Look up the loan id from the applicant's loans (the API returns
+          // them sorted newest-first). Find by referenceNumber.
+          const listRes = await fetch("/api/loans");
+          const listData = await listRes.json();
+          const target = (listData.loans || []).find((l: { referenceNumber: string }) => l.referenceNumber === applicationRef);
+          if (target?._id) {
+            const res = await fetch(`/api/loans/${target._id}/sign`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ signature: signatureName }),
+            });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              // Don't block the wizard from advancing — surface a soft warning.
+              console.warn("[apply] Sign endpoint returned non-OK:", data?.error);
+            }
+          }
+        } catch (err) {
+          console.warn("[apply] Sign request failed:", err);
+        } finally {
+          setLoading(false);
+        }
+      }
     }
     setCurrentStep(prev => Math.min(prev + 1, 8));
   };
