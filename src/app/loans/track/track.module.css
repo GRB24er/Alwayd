@@ -332,6 +332,13 @@
   letter-spacing: -0.01em;
 }
 
+.activeLoanActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .underwriterBadge {
   display: inline-flex;
   align-items: center;
@@ -343,6 +350,26 @@
   border-radius: 99px;
   border: 1px solid #e2e8f0;
   font-weight: 500;
+}
+
+.statementBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #c9a962;
+  color: #0d2440;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid #c9a962;
+  transition: all 0.2s ease;
+}
+
+.statementBtn:hover {
+  background: #d4b978;
+  box-shadow: 0 6px 18px rgba(201, 169, 98, 0.3);
 }
 
 .activeLoanStats {

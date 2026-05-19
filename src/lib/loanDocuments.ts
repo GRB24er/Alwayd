@@ -7,7 +7,35 @@ import QRCode from 'qrcode';
 import fs from 'fs/promises';
 import path from 'path';
 
-export type LoanDocumentType = 'offer' | 'agreement' | 'disbursement';
+export type LoanDocumentType = 'offer' | 'agreement' | 'disbursement' | 'statement';
+
+export interface LoanStatementPayment {
+  period: number;
+  paidAt: Date;
+  amount: number;
+  reference?: string;
+}
+
+export interface LoanStatementUpcoming {
+  period: number;
+  dueDate: Date;
+  payment: number;
+  balance: number;
+}
+
+export interface LoanStatementData {
+  periodLabel: string; // e.g. "May 2026"
+  periodStart: Date;
+  periodEnd: Date;
+  openingBalance: number;
+  closingBalance: number;
+  paymentsReceived: LoanStatementPayment[];
+  interestAccrued: number;
+  principalRepaid: number;
+  nextPaymentDue?: Date;
+  nextPaymentAmount?: number;
+  upcoming: LoanStatementUpcoming[];
+}
 
 export interface LoanDocumentData {
   referenceNumber: string;
@@ -25,6 +53,8 @@ export interface LoanDocumentData {
   offerExpiry?: Date;
   agreementSignedAt?: Date;
   agreementSignature?: string;
+  /** Statement-only payload */
+  statement?: LoanStatementData;
   /** Public verification URL used in the QR code */
   verificationUrl: string;
 }
@@ -57,6 +87,7 @@ const DOC_TITLES: Record<LoanDocumentType, string> = {
   offer: 'LOAN FACILITY OFFER',
   agreement: 'LOAN FACILITY AGREEMENT',
   disbursement: 'DISBURSEMENT CONFIRMATION',
+  statement: 'STATEMENT OF ACCOUNT',
 };
 
 const fmtEUR = (n: number) =>
@@ -491,6 +522,8 @@ function drawTitleBlockCtx(ctx: RenderCtx): void {
       ? 'Binding agreement between Aldwych European Capital and the borrower'
       : ctx.data.documentType === 'offer'
       ? 'Conditional offer of finance — valid for 14 days from issuance'
+      : ctx.data.documentType === 'statement'
+      ? `Account activity for ${ctx.data.statement?.periodLabel ?? 'the period'}`
       : 'Confirmation of disbursement of approved loan facility';
   ctx.page.drawText(subtitle, {
     x: MARGIN,
@@ -632,6 +665,165 @@ function drawTermsCtx(ctx: RenderCtx): void {
   }
 }
 
+function drawStatementBodyCtx(ctx: RenderCtx): void {
+  const s = ctx.data.statement;
+  if (!s) return;
+
+  // Period summary box
+  ensureSpace(ctx, 130);
+  const summaryRows: Array<[string, string]> = [
+    ['Statement Period', s.periodLabel],
+    ['Period Start', fmtDate(s.periodStart)],
+    ['Period End', fmtDate(s.periodEnd)],
+    ['Opening Balance', fmtEUR(s.openingBalance)],
+    ['Closing Balance', fmtEUR(s.closingBalance)],
+    ['Interest Accrued', fmtEUR(s.interestAccrued)],
+    ['Principal Repaid', fmtEUR(s.principalRepaid)],
+  ];
+  if (s.nextPaymentDue) summaryRows.push(['Next Payment Due', fmtDate(s.nextPaymentDue)]);
+  if (s.nextPaymentAmount !== undefined) summaryRows.push(['Next Payment Amount', fmtEUR(s.nextPaymentAmount)]);
+
+  const rowH = 20;
+  const boxH = summaryRows.length * rowH + 28;
+  ensureSpace(ctx, boxH + 16);
+
+  ctx.page.drawRectangle({
+    x: MARGIN - 4,
+    y: ctx.y - boxH,
+    width: PAGE_W - 2 * MARGIN + 8,
+    height: boxH,
+    borderColor: SOFT_BORDER,
+    borderWidth: 0.6,
+    color: rgb(0.984, 0.984, 0.973),
+    opacity: 0.6,
+  });
+  ctx.page.drawText('PERIOD SUMMARY', {
+    x: MARGIN + 4,
+    y: ctx.y - 18,
+    size: 9,
+    font: ctx.boldFont,
+    color: GOLD_DARK,
+  });
+
+  let y = ctx.y - 36;
+  for (const [label, value] of summaryRows) {
+    ctx.page.drawText(label, { x: MARGIN + 4, y, size: 10, font: ctx.font, color: TEXT });
+    ctx.page.drawText(value, { x: MARGIN + 200, y, size: 10.5, font: ctx.boldFont, color: NAVY });
+    y -= rowH;
+  }
+  ctx.y -= boxH + 16;
+
+  // Payments received table
+  ensureSpace(ctx, 30);
+  ctx.page.drawText('PAYMENTS RECEIVED IN PERIOD', {
+    x: MARGIN,
+    y: ctx.y,
+    size: 9,
+    font: ctx.boldFont,
+    color: GOLD_DARK,
+  });
+  ctx.y -= 14;
+
+  if (s.paymentsReceived.length === 0) {
+    ensureSpace(ctx, 16);
+    ctx.page.drawText('No payments received in this period.', {
+      x: MARGIN,
+      y: ctx.y,
+      size: 9.5,
+      font: ctx.font,
+      color: TEXT,
+    });
+    ctx.y -= 18;
+  } else {
+    // Table header
+    ensureSpace(ctx, 18);
+    const headerY = ctx.y;
+    ctx.page.drawRectangle({
+      x: MARGIN - 2,
+      y: headerY - 12,
+      width: PAGE_W - 2 * MARGIN + 4,
+      height: 16,
+      color: NAVY,
+    });
+    ctx.page.drawText('Period', { x: MARGIN + 2, y: headerY - 8, size: 8.5, font: ctx.boldFont, color: GOLD });
+    ctx.page.drawText('Date Posted', { x: MARGIN + 80, y: headerY - 8, size: 8.5, font: ctx.boldFont, color: GOLD });
+    ctx.page.drawText('Reference', { x: MARGIN + 200, y: headerY - 8, size: 8.5, font: ctx.boldFont, color: GOLD });
+    ctx.page.drawText('Amount', { x: PAGE_W - MARGIN - 70, y: headerY - 8, size: 8.5, font: ctx.boldFont, color: GOLD });
+    ctx.y -= 20;
+
+    for (const p of s.paymentsReceived) {
+      ensureSpace(ctx, 14);
+      ctx.page.drawText(`#${p.period}`, { x: MARGIN + 2, y: ctx.y, size: 9.5, font: ctx.font, color: TEXT });
+      ctx.page.drawText(fmtDate(p.paidAt), { x: MARGIN + 80, y: ctx.y, size: 9.5, font: ctx.font, color: TEXT });
+      ctx.page.drawText(p.reference || '—', { x: MARGIN + 200, y: ctx.y, size: 9.5, font: ctx.font, color: TEXT });
+      const amt = fmtEUR(p.amount);
+      const amtW = ctx.boldFont.widthOfTextAtSize(amt, 9.5);
+      ctx.page.drawText(amt, { x: PAGE_W - MARGIN - amtW - 6, y: ctx.y, size: 9.5, font: ctx.boldFont, color: NAVY });
+      // Thin separator
+      ctx.page.drawLine({
+        start: { x: MARGIN, y: ctx.y - 4 },
+        end: { x: PAGE_W - MARGIN, y: ctx.y - 4 },
+        thickness: 0.3,
+        color: SOFT_BORDER,
+      });
+      ctx.y -= 14;
+    }
+    ctx.y -= 6;
+  }
+
+  // Upcoming payments
+  if (s.upcoming.length > 0) {
+    ensureSpace(ctx, 30);
+    ctx.page.drawText('UPCOMING PAYMENTS', {
+      x: MARGIN,
+      y: ctx.y,
+      size: 9,
+      font: ctx.boldFont,
+      color: GOLD_DARK,
+    });
+    ctx.y -= 14;
+
+    const headerY = ctx.y;
+    ctx.page.drawRectangle({
+      x: MARGIN - 2,
+      y: headerY - 12,
+      width: PAGE_W - 2 * MARGIN + 4,
+      height: 16,
+      color: NAVY,
+    });
+    ctx.page.drawText('Period', { x: MARGIN + 2, y: headerY - 8, size: 8.5, font: ctx.boldFont, color: GOLD });
+    ctx.page.drawText('Due Date', { x: MARGIN + 80, y: headerY - 8, size: 8.5, font: ctx.boldFont, color: GOLD });
+    ctx.page.drawText('Balance After', { x: MARGIN + 200, y: headerY - 8, size: 8.5, font: ctx.boldFont, color: GOLD });
+    ctx.page.drawText('Payment', { x: PAGE_W - MARGIN - 70, y: headerY - 8, size: 8.5, font: ctx.boldFont, color: GOLD });
+    ctx.y -= 20;
+
+    for (const u of s.upcoming) {
+      ensureSpace(ctx, 14);
+      ctx.page.drawText(`#${u.period}`, { x: MARGIN + 2, y: ctx.y, size: 9.5, font: ctx.font, color: TEXT });
+      ctx.page.drawText(fmtDate(u.dueDate), { x: MARGIN + 80, y: ctx.y, size: 9.5, font: ctx.font, color: TEXT });
+      ctx.page.drawText(fmtEUR(u.balance), { x: MARGIN + 200, y: ctx.y, size: 9.5, font: ctx.font, color: TEXT });
+      const amt = fmtEUR(u.payment);
+      const amtW = ctx.boldFont.widthOfTextAtSize(amt, 9.5);
+      ctx.page.drawText(amt, { x: PAGE_W - MARGIN - amtW - 6, y: ctx.y, size: 9.5, font: ctx.boldFont, color: NAVY });
+      ctx.page.drawLine({
+        start: { x: MARGIN, y: ctx.y - 4 },
+        end: { x: PAGE_W - MARGIN, y: ctx.y - 4 },
+        thickness: 0.3,
+        color: SOFT_BORDER,
+      });
+      ctx.y -= 14;
+    }
+  }
+
+  // Trailer
+  ensureSpace(ctx, 30);
+  ctx.y -= 10;
+  ctx.page.drawText(
+    'This statement is issued for information only. For queries please reply via your secure messages, or contact support@aldwycheuropeancapital.com.',
+    { x: MARGIN, y: ctx.y, size: 8, font: ctx.font, color: MUTED }
+  );
+}
+
 function drawPageNumbers(ctx: RenderCtx): void {
   if (ctx.pages.length < 2) return; // only number multi-page documents
   ctx.pages.forEach((p, i) => {
@@ -665,12 +857,15 @@ function drawFooter(
   font: PDFFont,
   boldFont: PDFFont,
   qrImage: any,
-  data: LoanDocumentData
+  data: LoanDocumentData,
+  options: { withSignatures?: boolean } = {}
 ) {
+  const withSignatures = options.withSignatures !== false;
   // Signature row label at the top of the footer area.
   const sigY = 210;
   const sigLineY = sigY - 36;
 
+  if (withSignatures) {
   page.drawText('SIGNATURE & EXECUTION', {
     x: MARGIN,
     y: sigY,
@@ -741,6 +936,7 @@ function drawFooter(
     font,
     color: TEXT,
   });
+  } // end withSignatures
 
   // Seal centered horizontally, positioned below the signature block in
   // its own dedicated band so it reads as a final executed stamp.
@@ -778,7 +974,7 @@ function drawFooter(
   });
 
   // Reference + issuance label bottom-left, mirroring the QR block on the right
-  page.drawText('SEALED & EXECUTED', {
+  page.drawText(withSignatures ? 'SEALED & EXECUTED' : 'ISSUED & SEALED', {
     x: MARGIN,
     y: 96,
     size: 8,
@@ -876,15 +1072,23 @@ export async function generateLoanDocument(data: LoanDocumentData): Promise<Uint
     pages: [firstPage],
   };
 
-  // Paginated body
+  // Paginated body — branch on document type
   drawTitleBlockCtx(ctx);
-  drawTermsTableCtx(ctx);
-  drawPurposeCtx(ctx);
-  drawTermsCtx(ctx);
+  if (data.documentType === 'statement') {
+    drawTermsTableCtx(ctx);
+    drawStatementBodyCtx(ctx);
+  } else {
+    drawTermsTableCtx(ctx);
+    drawPurposeCtx(ctx);
+    drawTermsCtx(ctx);
+  }
 
-  // Footer (signatures, seal, QR) only on the FINAL page
+  // Footer (signatures, seal, QR) only on the FINAL page. Statements
+  // skip the signature block since they're informational, not executed.
   const qrImage = await embedQR(pdfDoc, data.verificationUrl);
-  drawFooter(ctx.page, font, boldFont, qrImage, data);
+  drawFooter(ctx.page, font, boldFont, qrImage, data, {
+    withSignatures: data.documentType !== 'statement',
+  });
 
   // Add page numbers across all pages if multi-page
   drawPageNumbers(ctx);

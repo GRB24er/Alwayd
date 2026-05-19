@@ -19,6 +19,7 @@ interface LoanDoc {
   name: string;
   size: string;
   uploadedAt: string;
+  url?: string;
 }
 
 interface LoanScheduleRow {
@@ -157,23 +158,57 @@ export default function LoanTrackPage() {
     }
   };
 
-  const handleFileUpload = (file: File) => {
+  const handleFileUpload = async (file: File) => {
+    if (!selectedLoan) return;
     const key = uploadDocType + "_" + Date.now();
-    setUploadProgress(prev => ({ ...prev, [key]: 0 }));
-    const interval = setInterval(() => {
+
+    // Optimistic progress tracking — moves to ~85% then jumps to 100% on success.
+    setUploadProgress(prev => ({ ...prev, [key]: 5 }));
+    const tick = setInterval(() => {
       setUploadProgress(prev => {
         const current = prev[key] || 0;
-        if (current >= 100) {
-          clearInterval(interval);
-          setUploadedDocs(prev2 => ({
-            ...prev2,
-            [key]: { name: file.name, size: (file.size / 1024 / 1024).toFixed(2) + " MB" }
-          }));
-          return prev;
-        }
-        return { ...prev, [key]: current + 25 };
+        if (current >= 85) return prev;
+        return { ...prev, [key]: Math.min(85, current + 10) };
       });
     }, 200);
+
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("key", uploadDocType);
+      const res = await fetch(`/api/loans/${selectedLoan._id}/documents`, {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json().catch(() => ({}));
+      clearInterval(tick);
+
+      if (!res.ok) {
+        setUploadProgress(prev => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+        alert(data?.error || "Upload failed");
+        return;
+      }
+
+      setUploadProgress(prev => ({ ...prev, [key]: 100 }));
+      setUploadedDocs(prev => ({
+        ...prev,
+        [key]: { name: data.file?.name || file.name, size: data.file?.sizeHuman || (file.size / 1024 / 1024).toFixed(2) + " MB" }
+      }));
+      // Refresh the loan so the documents list on the server is reflected.
+      await fetchLoans();
+    } catch (err) {
+      clearInterval(tick);
+      setUploadProgress(prev => {
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      alert("Upload failed: " + (err instanceof Error ? err.message : "unknown error"));
+    }
   };
 
   const getStepStatus = (loan: Loan, stepKey: string) => {
@@ -457,15 +492,31 @@ export default function LoanTrackPage() {
                               <div className={styles.activeLoanEyebrow}>Active Facility</div>
                               <h4 className={styles.activeLoanTitle}>Repayment Schedule</h4>
                             </div>
-                            {selectedLoan.underwriterName && (
-                              <div className={styles.underwriterBadge}>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="#c9a962" strokeWidth="1.8" style={{ width: 14, height: 14 }}>
-                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                  <circle cx="12" cy="7" r="4" />
+                            <div className={styles.activeLoanActions}>
+                              {selectedLoan.underwriterName && (
+                                <div className={styles.underwriterBadge}>
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="#c9a962" strokeWidth="1.8" style={{ width: 14, height: 14 }}>
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                  </svg>
+                                  Underwriter: {selectedLoan.underwriterName}
+                                </div>
+                              )}
+                              <a
+                                href={`/api/loans/${selectedLoan._id}/statement`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.statementBtn}
+                                title="Download a PDF statement for the current month"
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 14, height: 14 }}>
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="7 10 12 15 17 10" />
+                                  <line x1="12" y1="15" x2="12" y2="3" />
                                 </svg>
-                                Underwriter: {selectedLoan.underwriterName}
-                              </div>
-                            )}
+                                Statement (PDF)
+                              </a>
+                            </div>
                           </div>
 
                           <div className={styles.activeLoanStats}>
@@ -570,7 +621,11 @@ export default function LoanTrackPage() {
                                   </svg>
                                 </div>
                                 <div className={styles.docItemInfo}>
-                                  <div className={styles.docItemName}>{doc.name}</div>
+                                  <div className={styles.docItemName}>
+                                    {doc.url ? (
+                                      <a href={doc.url} target="_blank" rel="noopener noreferrer">{doc.name}</a>
+                                    ) : doc.name}
+                                  </div>
                                   <div className={styles.docItemMeta}>{doc.key.replace(/_/g, " ")} · {doc.size}</div>
                                 </div>
                                 <div className={styles.docItemStatus}>

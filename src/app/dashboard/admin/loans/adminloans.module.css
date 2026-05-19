@@ -155,4 +155,58 @@
   .statsRow { grid-template-columns: repeat(2, 1fr); }
   .overviewGrid { grid-template-columns: 1fr; }
   .approveFields { grid-template-columns: 1fr; }
+  .paymentGrid { grid-template-columns: 1fr; }
+}
+
+/* ─── PAYMENT POSTING ─── */
+.paymentBlock {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
+}
+
+.paymentTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0d2440;
+  letter-spacing: -0.01em;
+  margin: 0 0 4px;
+}
+
+.paymentSubtitle {
+  font-size: 13px;
+  color: #475569;
+  margin: 0 0 14px;
+}
+
+.paymentGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.paymentSubmitBtn {
+  background: #0d2440;
+  color: #fff;
+  border: 0;
+  padding: 11px 22px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.paymentSubmitBtn:hover:not(:disabled) {
+  background: #081830;
+  box-shadow: 0 6px 18px rgba(13, 36, 64, 0.2);
+}
+
+.paymentSubmitBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }

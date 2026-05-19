@@ -26,6 +26,17 @@ interface LoanUser {
   country?: string;
 }
 
+interface LoanScheduleRow {
+  period: number;
+  dueDate: string;
+  payment: number;
+  interest: number;
+  principal: number;
+  balance: number;
+  paid: boolean;
+  paidAt?: string;
+}
+
 interface Loan {
   _id: string;
   referenceNumber: string;
@@ -41,6 +52,7 @@ interface Loan {
   monthlyPayment?: number;
   totalRepayable?: number;
   remainingBalance?: number;
+  nextPaymentDate?: string;
   offerExpiry?: string;
   adminNotes?: string;
   businessName?: string;
@@ -50,9 +62,11 @@ interface Loan {
   creditScore?: string;
   employmentStatus?: string;
   annualIncome?: number;
+  underwriterName?: string;
   kycData?: Record<string, unknown>;
   messages?: LoanMessage[];
   documents?: LoanDoc[];
+  schedule?: LoanScheduleRow[];
   userId: LoanUser | string;
 }
 
@@ -74,6 +88,118 @@ const LOAN_TYPE_LABELS: Record<string, string> = {
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-EU", { style: "currency", currency: "EUR", minimumFractionDigits: 2 }).format(n);
+
+function PaymentPostingBlock({ loan, onPosted }: { loan: Loan; onPosted: () => Promise<void> | void }) {
+  const next = loan.schedule?.find(r => !r.paid);
+  const defaultAmount = next ? next.payment.toFixed(2) : "";
+
+  const [amount, setAmount] = useState(defaultAmount);
+  const [paidAt, setPaidAt] = useState(new Date().toISOString().slice(0, 10));
+  const [reference, setReference] = useState("");
+  const [note, setNote] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [err, setErr] = useState("");
+  const [ok, setOk] = useState("");
+
+  const handlePost = async () => {
+    setErr("");
+    setOk("");
+    if (!amount || Number(amount) <= 0) {
+      setErr("Enter a positive payment amount.");
+      return;
+    }
+    setPosting(true);
+    try {
+      const res = await fetch(`/api/admin/loans/${loan._id}/payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: Number(amount), paidAt, reference: reference || undefined, note: note || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to post payment");
+      setOk(`Payment posted for period #${data.loan?.period}. Outstanding balance: ${data.loan?.remainingBalance != null ? fmt(data.loan.remainingBalance) : "—"}.`);
+      setReference("");
+      setNote("");
+      await onPosted();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Failed to post payment");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  return (
+    <div className={styles.paymentBlock}>
+      <h4 className={styles.paymentTitle}>Post Payment</h4>
+      {next ? (
+        <p className={styles.paymentSubtitle}>
+          Next due: <strong>{fmt(next.payment)}</strong> on{" "}
+          <strong>{new Date(next.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</strong> · Period #{next.period}
+        </p>
+      ) : (
+        <p className={styles.paymentSubtitle}>No outstanding payments remain.</p>
+      )}
+
+      {ok && <div className={styles.successBanner}>{ok}</div>}
+      {err && <div className={styles.errorBanner}>{err}</div>}
+
+      <div className={styles.paymentGrid}>
+        <div className={styles.fieldGroup}>
+          <label>Amount Received (€)</label>
+          <input
+            type="number"
+            step="0.01"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            className={styles.fieldInput}
+            placeholder={defaultAmount}
+            disabled={!next}
+          />
+        </div>
+        <div className={styles.fieldGroup}>
+          <label>Date Received</label>
+          <input
+            type="date"
+            value={paidAt}
+            onChange={e => setPaidAt(e.target.value)}
+            className={styles.fieldInput}
+            disabled={!next}
+          />
+        </div>
+        <div className={styles.fieldGroup}>
+          <label>External Reference (optional)</label>
+          <input
+            type="text"
+            value={reference}
+            onChange={e => setReference(e.target.value)}
+            className={styles.fieldInput}
+            placeholder="e.g. SEPA ref / wire ID"
+            disabled={!next}
+          />
+        </div>
+        <div className={styles.fieldGroup}>
+          <label>Internal Note (optional)</label>
+          <input
+            type="text"
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            className={styles.fieldInput}
+            placeholder="e.g. Late by 2 days, waived fee"
+            disabled={!next}
+          />
+        </div>
+      </div>
+
+      <button
+        className={styles.paymentSubmitBtn}
+        disabled={posting || !next}
+        onClick={handlePost}
+      >
+        {posting ? "Posting..." : "Post Payment"}
+      </button>
+    </div>
+  );
+}
 
 export default function AdminLoansPage() {
   const { data: session, status } = useSession();
@@ -561,6 +687,11 @@ export default function AdminLoansPage() {
                     )}
                   </button>
                 </div>
+
+                {/* Payment posting — only for disbursed / active loans */}
+                {(selectedLoan.status === "disbursed" || selectedLoan.status === "active") && (
+                  <PaymentPostingBlock loan={selectedLoan} onPosted={fetchLoans} />
+                )}
               </div>
             )}
           </div>
