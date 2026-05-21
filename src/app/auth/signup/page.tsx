@@ -638,7 +638,7 @@ export default function SignUpPage() {
                   value={form.phone}
                   onChange={handleChange}
                   required
-                  placeholder="+44 7700 900000"
+                  placeholder="e.g. +353 1 234 5678"
                   autoComplete="tel"
                   className={styles.input}
                 />

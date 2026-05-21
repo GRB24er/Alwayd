@@ -1013,7 +1013,7 @@ function drawFooter(
     color: SOFT_BORDER,
   });
 
-  const footerLine = `Aldwych European Capital · 85 Aldwych, London WC2B 4HP · support@aldwycheuropeancapital.com · +44 20 3917 8200`;
+  const footerLine = `Aldwych European Capital · 85 Aldwych, London WC2B 4HP · support@aldwycheuropeancapital.com`;
   page.drawText(footerLine, {
     x: MARGIN,
     y: 12,

@@ -528,19 +528,6 @@ export default function LandingPage() {
               </p>
 
               <div className={styles.contactList}>
-                <a className={styles.contactRow} href="tel:+442039178200">
-                  <div className={styles.contactRowIcon}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: 22, height: 22 }}>
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                    </svg>
-                  </div>
-                  <div className={styles.contactRowBody}>
-                    <div className={styles.contactRowLabel}>Phone</div>
-                    <div className={styles.contactRowValue}>+44 20 3917 8200</div>
-                    <div className={styles.contactRowSub}>Mon–Fri 08:00–18:00 GMT</div>
-                  </div>
-                </a>
-
                 <a className={styles.contactRow} href="mailto:support@aldwycheuropeancapital.com">
                   <div className={styles.contactRowIcon}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: 22, height: 22 }}>
@@ -752,10 +739,6 @@ export default function LandingPage() {
               <div className={styles.footerContactItem}>
                 <strong>Head Office</strong>
                 <span>85 Aldwych, London WC2B 4HP<br />United Kingdom</span>
-              </div>
-              <div className={styles.footerContactItem}>
-                <strong>Phone</strong>
-                <a href="tel:+442039178200">+44 20 3917 8200</a>
               </div>
               <div className={styles.footerContactItem}>
                 <strong>Email</strong>

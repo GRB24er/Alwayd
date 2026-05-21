@@ -406,7 +406,7 @@ export default function InternationalTransferPage() {
           {currentStep < 5 && (
             <div className={styles.infoSidebar}>
               <div className={styles.exchangeRateCard}><h3>Live Exchange Rates</h3>{isRateLoading ? <div className={styles.rateLoading}><span className={styles.spinner}></span></div> : <div className={styles.ratesList}>{exchangeRates.slice(0, 6).map((rate) => (<div key={`${rate.from}-${rate.to}`} className={styles.rateItem}><span>{rate.from} → {rate.to}</span><div className={styles.rateValue}><strong>{rate.rate.toFixed(4)}</strong>{rate.trend && <span className={`${styles.rateTrend} ${styles[rate.trend]}`}>{rate.trend === 'up' ? '↑' : rate.trend === 'down' ? '↓' : '→'}</span>}</div></div>))}</div>}</div>
-              <div className={styles.supportCard}><h3>Need Help?</h3><p>Our specialists are available 24/7</p><button className={styles.supportButton}>{Icons.chat} Live Chat</button><div className={styles.supportContact}><span>Call:</span><strong>+44 20 7946 0958</strong></div></div>
+              <div className={styles.supportCard}><h3>Need Help?</h3><p>Our specialists are available 24/7</p><button className={styles.supportButton}>{Icons.chat} Live Chat</button><div className={styles.supportContact}><span>Email:</span><strong>support@aldwycheuropeancapital.com</strong></div></div>
               <div className={styles.limitsSection}><h3>Transfer Limits</h3><div className={styles.limitsList}><div className={styles.limitItem}><span>Minimum:</span><strong>$50</strong></div><div className={styles.limitItem}><span>Per Transaction:</span><strong>$25,000</strong></div><div className={styles.limitItem}><span>Daily Limit:</span><strong>$50,000</strong></div></div></div>
             </div>
           )}

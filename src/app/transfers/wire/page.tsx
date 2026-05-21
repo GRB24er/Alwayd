@@ -980,8 +980,8 @@ export default function WireTransferPage() {
                   <div className={styles.helpItem}>
                     <span className={styles.helpIcon}>{Icons.phone}</span>
                     <div>
-                      <strong>Call Us</strong>
-                      <p>+44 20 7946 0958</p>
+                      <strong>Email Us</strong>
+                      <p>support@aldwycheuropeancapital.com</p>
                     </div>
                   </div>
                   <div className={styles.helpItem}>

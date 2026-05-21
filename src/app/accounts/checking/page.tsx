@@ -281,7 +281,7 @@ export default function CheckingAccountPage() {
               <button className={styles.secondaryButton}>Schedule Appointment</button>
             </div>
             <p className={styles.ctaNote}>
-              Or call us at +44 20 3917 8200 (+44 20 3917 8200)
+              Or email us at support@aldwycheuropeancapital.com
             </p>
           </div>
         </section>
