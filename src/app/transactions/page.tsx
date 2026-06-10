@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { downloadTransferReceipt } from "@/lib/receiptDownload";
 import styles from "./transactions.module.css";
 
 // Types
@@ -52,6 +53,7 @@ export default function TransactionsPage() {
   const [exporting, setExporting] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportFormat, setExportFormat] = useState<'csv' | 'pdf' | 'excel'>('csv');
+  const [downloadingReceiptId, setDownloadingReceiptId] = useState<string | null>(null);
   
   // Data states
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -448,6 +450,27 @@ useEffect(() => {
     ].includes(transaction.type) && !transaction.type.includes('outgoing');
     
     return isCredit ? styles.credit : styles.debit;
+  };
+
+  // Official receipts exist for funds transfers that were accepted by the
+  // bank — rejected/failed instructions never produce one.
+  const hasReceipt = (transaction: Transaction): boolean => {
+    return (
+      ['transfer-in', 'transfer-out'].includes(transaction.type) &&
+      !['rejected', 'failed'].includes(transaction.status)
+    );
+  };
+
+  const handleDownloadReceipt = async (transaction: Transaction) => {
+    if (downloadingReceiptId) return;
+    setDownloadingReceiptId(transaction._id);
+    try {
+      await downloadTransferReceipt({ id: transaction._id, reference: transaction.reference });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to download receipt. Please try again.');
+    } finally {
+      setDownloadingReceiptId(null);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -948,6 +971,19 @@ useEffect(() => {
                                 minimumFractionDigits: 2
                               }).format(transaction.balanceAfter)}
                             </div>
+                          )}
+                          {hasReceipt(transaction) && (
+                            <button
+                              className={styles.receiptBtn}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownloadReceipt(transaction);
+                              }}
+                              disabled={downloadingReceiptId === transaction._id}
+                              title="Download official PDF receipt"
+                            >
+                              {downloadingReceiptId === transaction._id ? 'Preparing…' : '🧾 Receipt'}
+                            </button>
                           )}
                         </div>
                       </div>

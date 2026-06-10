@@ -9,6 +9,7 @@ import styles from "./wire.module.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
+import { downloadTransferReceipt } from "@/lib/receiptDownload";
 
 // SVG Icons
 const Icons = {
@@ -83,6 +84,13 @@ const Icons = {
       <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
       <rect x="6" y="14" width="12" height="8"/>
     </svg>
+  ),
+  download: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{width:'16px',height:'16px'}}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
   )
 };
 
@@ -121,6 +129,7 @@ export default function WireTransferPage() {
   const [loading, setLoading] = useState(false);
   const [fetchingBalance, setFetchingBalance] = useState(true);
   const [submitResponse, setSubmitResponse] = useState<any>(null);
+  const [downloadingReceipt, setDownloadingReceipt] = useState(false);
   
   const [userBalances, setUserBalances] = useState<UserBalances>({
     checking: 0,
@@ -295,6 +304,18 @@ export default function WireTransferPage() {
 
   const estimateArrival = () => {
     return formData.urgency === "expedited" ? "Same business day (urgent)" : "Same business day";
+  };
+
+  const handleDownloadReceipt = async () => {
+    if (!submitResponse?.wireReference || downloadingReceipt) return;
+    setDownloadingReceipt(true);
+    try {
+      await downloadTransferReceipt({ reference: submitResponse.wireReference });
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to download receipt. Please try again.");
+    } finally {
+      setDownloadingReceipt(false);
+    }
   };
 
   if (fetchingBalance) {
@@ -954,13 +975,22 @@ export default function WireTransferPage() {
                 )}
 
                 <div className={styles.successActions}>
-                  <button 
+                  {submitResponse?.success && (
+                    <button
+                      className={styles.btnSecondary}
+                      onClick={handleDownloadReceipt}
+                      disabled={downloadingReceipt}
+                    >
+                      {Icons.download} {downloadingReceipt ? 'Preparing Receipt…' : 'Download Receipt (PDF)'}
+                    </button>
+                  )}
+                  <button
                     className={styles.btnSecondary}
                     onClick={() => window.print()}
                   >
                     {Icons.print} Print Confirmation
                   </button>
-                  <button 
+                  <button
                     className={styles.btnPrimary}
                     onClick={() => router.push('/dashboard')}
                   >

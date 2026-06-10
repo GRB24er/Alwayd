@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { downloadTransferReceipt } from "@/lib/receiptDownload";
 import styles from "./sendMoney.module.css";
 
 interface UserBalances {
@@ -37,6 +38,7 @@ export default function SendMoneyPage() {
   const [transferReference, setTransferReference] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'ready' | 'verifying' | 'complete'>('pending');
+  const [downloadingReceipt, setDownloadingReceipt] = useState(false);
 
   const [formData, setFormData] = useState({
     fromAccount: "checking",
@@ -292,6 +294,18 @@ export default function SendMoneyPage() {
       setVerificationStatus('ready');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadReceipt = async () => {
+    if (!transferReference || downloadingReceipt) return;
+    setDownloadingReceipt(true);
+    try {
+      await downloadTransferReceipt({ reference: transferReference });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to download receipt. Please try again.");
+    } finally {
+      setDownloadingReceipt(false);
     }
   };
 
@@ -867,9 +881,17 @@ export default function SendMoneyPage() {
                   </div>
 
                   {success && <div className={styles.successMessage}>{success}</div>}
+                  {error && <div className={styles.errorMessage}>{error}</div>}
 
                   <div className={styles.completeActions}>
-                    <button 
+                    <button
+                      className={styles.primaryBtn}
+                      onClick={handleDownloadReceipt}
+                      disabled={downloadingReceipt}
+                    >
+                      {downloadingReceipt ? 'Preparing Receipt…' : '🧾 Download Receipt (PDF)'}
+                    </button>
+                    <button
                       className={styles.primaryBtn}
                       onClick={() => router.push('/dashboard')}
                     >
