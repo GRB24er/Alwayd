@@ -16,7 +16,7 @@ import Transaction from "@/models/Transaction";
 import { sendTransactionEmail } from "@/lib/mail";
 import { runIdempotent } from "@/lib/idempotency";
 import { check as rateLimitCheck, POLICIES } from "@/lib/rateLimit";
-import { v, validate } from "@/lib/validators";
+import { v, validate, firstValidationError } from "@/lib/validators";
 import { enforceLimit } from "@/lib/limits";
 import { screenOrBlock } from "@/lib/sanctions";
 import { audit } from "@/lib/audit";
@@ -89,7 +89,10 @@ export async function POST(request: NextRequest) {
     recipientCountry: v.optional(v.countryCode()),
   });
   if (!parsed.ok) {
-    return NextResponse.json({ success: false, errors: parsed.errors }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: firstValidationError(parsed.errors), errors: parsed.errors },
+      { status: 400 }
+    );
   }
 
   // Wire-type-specific routing details. Domestic wants ABA; international wants SWIFT + country.
@@ -99,18 +102,29 @@ export async function POST(request: NextRequest) {
       { recipientRoutingNumber: v.routingNumber() }
     );
     if (!checked.ok) {
-      return NextResponse.json({ success: false, errors: checked.errors }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: firstValidationError(checked.errors), errors: checked.errors },
+        { status: 400 }
+      );
     }
   } else {
     if (!parsed.value.recipientSwiftBic) {
       return NextResponse.json(
-        { success: false, errors: { recipientSwiftBic: "International wires require a SWIFT/BIC code" } },
+        {
+          success: false,
+          error: "International wires require a SWIFT/BIC code",
+          errors: { recipientSwiftBic: "International wires require a SWIFT/BIC code" },
+        },
         { status: 400 }
       );
     }
     if (!parsed.value.recipientCountry) {
       return NextResponse.json(
-        { success: false, errors: { recipientCountry: "International wires require an ISO country code" } },
+        {
+          success: false,
+          error: "International wires require an ISO country code",
+          errors: { recipientCountry: "International wires require an ISO country code" },
+        },
         { status: 400 }
       );
     }

@@ -7,6 +7,7 @@ import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { downloadTransferReceipt } from "@/lib/receiptDownload";
+import { apiErrorMessage, newIdempotencyKey } from "@/lib/apiClient";
 import styles from "./sendMoney.module.css";
 
 interface UserBalances {
@@ -213,15 +214,19 @@ export default function SendMoneyPage() {
     try {
       const response = await fetch("/api/transfers/external", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          // Required by the API; prevents a double-click from sending twice.
+          "Idempotency-Key": newIdempotencyKey()
+        },
         body: JSON.stringify({
           fromAccount: formData.fromAccount,
           recipientName: formData.recipientName,
-          recipientAccount: formData.recipientAccount,
+          recipientAccount: formData.recipientAccount.replace(/\s+/g, ""),
           recipientBank: formData.recipientBank,
-          recipientRoutingNumber: formData.recipientRoutingNumber,
+          recipientRoutingNumber: formData.recipientRoutingNumber.replace(/\s+/g, ""),
           recipientAddress: formData.recipientAddress,
-          amount: parseFloat(formData.amount),
+          amount: String(formData.amount),
           description: formData.description || `Transfer to ${formData.recipientName}`,
           transferSpeed: formData.transferSpeed
         })
@@ -230,7 +235,7 @@ export default function SendMoneyPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Transfer failed");
+        throw new Error(apiErrorMessage(data, "Transfer failed. Please review the details and try again."));
       }
 
       setTransferReference(data.transferReference || data.reference);

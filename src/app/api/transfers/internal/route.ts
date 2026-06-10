@@ -17,7 +17,7 @@ import Transaction from "@/models/Transaction";
 import { sendTransactionEmail } from "@/lib/mail";
 import { runIdempotent } from "@/lib/idempotency";
 import { check as rateLimitCheck, ipFromHeaders, POLICIES } from "@/lib/rateLimit";
-import { v, validate } from "@/lib/validators";
+import { v, validate, firstValidationError } from "@/lib/validators";
 import { enforceLimit } from "@/lib/limits";
 import { audit } from "@/lib/audit";
 import { toMinor, fromMinor, gte, toNumber } from "@/lib/decimal";
@@ -60,7 +60,10 @@ export async function POST(request: NextRequest) {
     description: v.optional(v.string({ max: 500 })),
   });
   if (!parsed.ok) {
-    return NextResponse.json({ success: false, errors: parsed.errors }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: firstValidationError(parsed.errors), errors: parsed.errors },
+      { status: 400 }
+    );
   }
   if (parsed.value.fromAccount === parsed.value.toAccount) {
     return NextResponse.json(

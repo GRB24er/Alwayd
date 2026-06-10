@@ -2,7 +2,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { v, validate } from "../lib/validators";
+import { v, validate, firstValidationError } from "../lib/validators";
 
 test("ABA routing checksum accepts a valid number", () => {
   // 021000021 — JPMorgan Chase (real, well-known ABA)
@@ -126,4 +126,19 @@ test("RBI purpose code requires P+4 digits", () => {
   const b = validate({ p: "P102" }, { p: v.rbiPurposeCode() });
   assert.equal(a.ok, true);
   assert.equal(b.ok, false);
+});
+
+test("firstValidationError surfaces the first field message", () => {
+  const r = validate(
+    { routing: "123456789" },
+    { routing: v.routingNumber(), amount: v.amountString() }
+  );
+  assert.equal(r.ok, false);
+  if (!r.ok) {
+    const msg = firstValidationError(r.errors);
+    assert.equal(typeof msg, "string");
+    assert.ok(msg.length > 0);
+    assert.notEqual(msg, "Validation failed");
+  }
+  assert.equal(firstValidationError({}), "Validation failed");
 });

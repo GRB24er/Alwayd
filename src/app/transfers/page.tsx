@@ -10,6 +10,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
 import { downloadTransferReceipt } from "@/lib/receiptDownload";
+import { apiErrorMessage, newIdempotencyKey } from "@/lib/apiClient";
 
 // SVG Icons
 const Icons = {
@@ -219,7 +220,14 @@ export default function WireTransferPage() {
         break;
       case 2:
         if (!formData.bankName) newErrors.bankName = "Required";
-        if (!formData.routingNumber) newErrors.routingNumber = "Required";
+        if (formData.recipientCountry === "US") {
+          // Domestic wires settle over Fedwire and need a valid 9-digit ABA number.
+          if (!formData.routingNumber) {
+            newErrors.routingNumber = "Required";
+          } else if (!/^\d{9}$/.test(formData.routingNumber)) {
+            newErrors.routingNumber = "Routing number must be exactly 9 digits";
+          }
+        }
         if (!formData.accountNumber) newErrors.accountNumber = "Required";
         if (formData.recipientCountry !== "US" && !formData.swiftCode) {
           newErrors.swiftCode = "Required for international transfers";
@@ -255,33 +263,48 @@ export default function WireTransferPage() {
     setSubmitResponse(null);
     
     try {
+      const isDomestic = formData.recipientCountry === 'US';
       const wireTransferData = {
         fromAccount: formData.fromAccount,
         recipientName: formData.recipientName,
         recipientAccount: formData.accountNumber,
         recipientBank: formData.bankName,
-        recipientRoutingNumber: formData.routingNumber,
+        ...(isDomestic && { recipientRoutingNumber: formData.routingNumber }),
         recipientBankAddress: `${formData.bankName} Main Branch`,
         recipientAddress: `${formData.recipientAddress}, ${formData.recipientCity}${formData.recipientState ? ', ' + formData.recipientState : ''}${formData.recipientZip ? ' ' + formData.recipientZip : ''}, ${formData.recipientCountry}`,
-        amount: parseFloat(formData.amount),
+        amount: String(formData.amount),
         description: formData.reference || `Wire transfer to ${formData.recipientName}`,
-        wireType: formData.recipientCountry === 'US' ? 'domestic' : 'international',
+        wireType: isDomestic ? 'domestic' : 'international',
         purposeOfTransfer: formData.purpose,
-        urgentTransfer: formData.urgency === 'expedited'
+        urgentTransfer: formData.urgency === 'expedited',
+        // International wires must carry SWIFT/BIC and destination country.
+        ...(!isDomestic && {
+          recipientSwiftBic: formData.swiftCode?.toUpperCase(),
+          recipientCountry: formData.recipientCountry
+        })
       };
 
       const response = await fetch('/api/transfers/wire', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          // Required by the API; prevents a double-click from wiring twice.
+          'Idempotency-Key': newIdempotencyKey()
+        },
         body: JSON.stringify(wireTransferData)
       });
 
       const data = await response.json();
-      setSubmitResponse(data);
 
       if (data.success) {
+        setSubmitResponse(data);
         await fetchUserData();
         setCurrentStep(5);
+      } else {
+        setSubmitResponse({
+          ...data,
+          error: apiErrorMessage(data, 'Wire transfer could not be processed. Please review the details and try again.')
+        });
       }
     } catch (error) {
       console.error('Wire transfer request failed:', error);

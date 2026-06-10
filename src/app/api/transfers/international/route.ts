@@ -21,7 +21,7 @@ import Transaction from "@/models/Transaction";
 import { sendTransactionEmail } from "@/lib/mail";
 import { runIdempotent } from "@/lib/idempotency";
 import { check as rateLimitCheck, POLICIES } from "@/lib/rateLimit";
-import { v, validate } from "@/lib/validators";
+import { v, validate, firstValidationError } from "@/lib/validators";
 import type { ValidationResult } from "@/lib/validators";
 import { enforceLimit } from "@/lib/limits";
 import { screenOrBlock } from "@/lib/sanctions";
@@ -138,7 +138,10 @@ export async function POST(request: NextRequest) {
     purposeCodeRbi: v.optional(v.string({ max: 10 })),
   });
   if (!base.ok) {
-    return NextResponse.json({ success: false, errors: base.errors }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: firstValidationError(base.errors), errors: base.errors },
+      { status: 400 }
+    );
   }
 
   const country = lookupCountry(base.value.recipientCountry);
@@ -155,7 +158,10 @@ export async function POST(request: NextRequest) {
   const profile = bankingProfileFor(base.value.recipientCountry);
   const railCheck = validateRailFields(base.value, profile.fields, country.iso2);
   if (!railCheck.ok) {
-    return NextResponse.json({ success: false, errors: railCheck.errors }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: firstValidationError(railCheck.errors), errors: railCheck.errors },
+      { status: 400 }
+    );
   }
 
   const amountMinor = toMinor(base.value.amount);
