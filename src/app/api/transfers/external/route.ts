@@ -22,7 +22,7 @@ import Transaction from "@/models/Transaction";
 import { sendTransactionEmail } from "@/lib/mail";
 import { runIdempotent } from "@/lib/idempotency";
 import { check as rateLimitCheck, POLICIES } from "@/lib/rateLimit";
-import { v, validate } from "@/lib/validators";
+import { v, validate, firstValidationError } from "@/lib/validators";
 import { enforceLimit } from "@/lib/limits";
 import { screenOrBlock } from "@/lib/sanctions";
 import { audit } from "@/lib/audit";
@@ -96,7 +96,10 @@ export async function POST(request: NextRequest) {
     transferSpeed: v.optional(v.enum(SPEED_VALUES)),
   });
   if (!parsed.ok) {
-    return NextResponse.json({ success: false, errors: parsed.errors }, { status: 400 });
+    return NextResponse.json(
+      { success: false, error: firstValidationError(parsed.errors), errors: parsed.errors },
+      { status: 400 }
+    );
   }
 
   const speed: Speed = parsed.value.transferSpeed || "standard";

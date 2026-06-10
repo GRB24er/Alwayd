@@ -273,6 +273,13 @@ export const v = {
   },
 } as const;
 
+// Human-readable summary of a validation failure for clients that surface a
+// single `error` string rather than the per-field `errors` map.
+export function firstValidationError(errors: Record<string, string>): string {
+  const key = Object.keys(errors)[0];
+  return key ? errors[key] : "Validation failed";
+}
+
 export function validate<T extends Record<string, any>>(
   input: any,
   schema: Record<string, FieldRule<any>>

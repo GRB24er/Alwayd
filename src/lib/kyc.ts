@@ -3,6 +3,7 @@
 
 import connectDB from "./mongodb";
 import KycCase, { KycLevel, KycStatus } from "@/models/KycCase";
+import User from "@/models/User";
 import { audit } from "./audit";
 import { encrypt, searchHash } from "./crypto";
 import { logger } from "./logger";
@@ -64,12 +65,25 @@ export async function getOrCreateCase(userId: string) {
 export async function canPerformAction(userId: string, action: GatedAction): Promise<{ allowed: boolean; required: KycLevel; current: KycLevel; reason?: string }> {
   const kyc = await getOrCreateCase(userId);
   const required = ACTION_MIN_LEVEL[action];
-  const allowed = LEVEL_RANK[kyc.level] >= LEVEL_RANK[required];
+
+  // The admin "verify account" toggle is the bank's operational identity check
+  // and the only approval lever wired to a UI today (KYC cases can be submitted
+  // but there is no admin approval surface yet). Treat a verified account
+  // holder as fully KYC'd so gated rails remain usable; an explicit KYC case
+  // level still takes precedence when it is higher.
+  const user: { verified?: boolean } | null = await User.findById(userId).select("verified").lean();
+  const verifiedLevel: KycLevel = user?.verified ? "tier_3" : "tier_0";
+  const effective: KycLevel =
+    LEVEL_RANK[kyc.level] >= LEVEL_RANK[verifiedLevel] ? kyc.level : verifiedLevel;
+
+  const allowed = LEVEL_RANK[effective] >= LEVEL_RANK[required];
   return {
     allowed,
     required,
-    current: kyc.level,
-    reason: allowed ? undefined : `Action requires KYC ${required}; current level is ${kyc.level} (status: ${kyc.status})`,
+    current: effective,
+    reason: allowed
+      ? undefined
+      : `This transfer requires identity verification (KYC ${required}; your level is ${effective}). Complete verification on the KYC page or contact support to have your account verified.`,
   };
 }
 

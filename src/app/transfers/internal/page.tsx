@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { apiErrorMessage } from "@/lib/apiClient";
 import styles from "./sendMoney.module.css";
 
 interface UserBalances {
@@ -218,7 +219,7 @@ export default function TransferPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Transfer failed");
+        throw new Error(apiErrorMessage(data, "Transfer failed. Please review the details and try again."));
       }
 
       setSuccess("Transfer completed successfully!");
@@ -264,7 +265,7 @@ export default function TransferPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Transfer failed");
+        throw new Error(apiErrorMessage(data, "Transfer failed. Please review the details and try again."));
       }
 
       setSuccess("Transfer initiated! Pending approval. You will receive a confirmation email.");
