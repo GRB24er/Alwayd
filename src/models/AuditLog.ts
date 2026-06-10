@@ -17,6 +17,7 @@ export type AuditAction =
   | "transfer.internal.posted"
   | "transfer.wire.initiated"
   | "transfer.wire.posted"
+  | "transfer.receipt.generated"
   | "transaction.approved"
   | "transaction.rejected"
   | "transaction.posted"

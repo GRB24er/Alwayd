@@ -72,6 +72,40 @@ export async function GET(
       }
     }
 
+    // Funds transfer receipts carry the underlying transfer reference
+    // (WIRE-/EXT-/INT-/TXN-…). Report enough to authenticate the document
+    // without disclosing beneficiary details to whoever scanned it.
+    if (/^(WIRE|EXT|INT|TXN)-/i.test(ref)) {
+      const TransactionModel = (await import("@/models/Transaction")).default;
+      const tx = await TransactionModel.findOne({
+        reference: { $in: [ref, `${ref}-OUT`] },
+        type: { $in: ["transfer-in", "transfer-out"] },
+      }).lean();
+      if (tx) {
+        const t = tx as any;
+        const user = await User.findById(t.userId).select("name").lean();
+        const settled = t.status === "completed" || t.status === "approved";
+        return NextResponse.json({
+          verified: true,
+          issuer: "Aldwych European Capital",
+          issuerEstablished: "1897",
+          referenceNumber: t.reference,
+          receiptNumber: `RCP-${t.reference}`,
+          documentType: "Funds Transfer Receipt",
+          status: settled ? "completed" : t.status,
+          customer: user ? maskName((user as any).name) : "Verified Holder",
+          action: t.type,
+          amount: t.amount,
+          currency: t.currency || "USD",
+          accountType: t.accountType,
+          initiatedAt: t.date || t.createdAt,
+          settledAt: settled ? t.postedAt || t.approvedAt || null : null,
+          verifiedAt: new Date().toISOString(),
+        });
+      }
+      // Fall through — the prefix may belong to another registry.
+    }
+
     // Account restriction notices have references like FRZ-/BLK-/CLS-… so try
     // them first; restriction lookups are O(1) on an indexed field.
     if (/^(FRZ|BLK|CLS)-/.test(ref)) {
