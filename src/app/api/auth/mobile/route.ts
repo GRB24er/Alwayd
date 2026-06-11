@@ -8,16 +8,18 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import { AUTH_SECRET } from '@/lib/authSecret';
+import { check as rateCheck, ipFromHeaders, POLICIES } from '@/lib/rateLimit';
+import { audit } from '@/lib/audit';
 
 export async function POST(request: NextRequest) {
   console.log('[Mobile Auth] POST - Login attempt');
-  
+
   try {
     await dbConnect();
-    
+
     const body = await request.json();
     const { email, password } = body;
-    
+
     if (!email || !password) {
       return NextResponse.json(
         { success: false, error: 'Email and password required' },
@@ -25,10 +27,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
-    
+    const normalizedEmail = email.toLowerCase().trim();
+    const ip = ipFromHeaders(request.headers);
+
+    // Brute-force protection: limit attempts per IP and per account.
+    const [ipLimit, emailLimit] = await Promise.all([
+      rateCheck(`login:ip:${ip}`, POLICIES.authLogin),
+      rateCheck(`login:email:${normalizedEmail}`, POLICIES.authLogin),
+    ]);
+
+    if (!ipLimit.allowed || !emailLimit.allowed) {
+      const retryAfter = Math.max(ipLimit.retryAfterSeconds, emailLimit.retryAfterSeconds);
+      await audit({
+        action: 'auth.login_failed',
+        actorEmail: normalizedEmail,
+        outcome: 'blocked',
+        severity: 'warning',
+        details: { channel: 'mobile', reason: 'rate_limited', ip },
+        request,
+      });
+      return NextResponse.json(
+        { success: false, error: 'Too many sign-in attempts. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(retryAfter) } }
+      );
+    }
+
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
+
     if (!user) {
       console.log('[Mobile Auth] User not found:', email);
+      await audit({
+        action: 'auth.login_failed',
+        actorEmail: normalizedEmail,
+        outcome: 'failure',
+        details: { channel: 'mobile', reason: 'unknown_user' },
+        request,
+      });
       return NextResponse.json(
         { success: false, error: 'Invalid credentials' },
         { status: 401 }
@@ -36,9 +70,17 @@ export async function POST(request: NextRequest) {
     }
 
     const isValid = await bcrypt.compare(password.trim(), user.password);
-    
+
     if (!isValid) {
       console.log('[Mobile Auth] Invalid password');
+      await audit({
+        action: 'auth.login_failed',
+        actorId: user._id.toString(),
+        actorEmail: normalizedEmail,
+        outcome: 'failure',
+        details: { channel: 'mobile', reason: 'bad_password' },
+        request,
+      });
       return NextResponse.json(
         { success: false, error: 'Invalid credentials' },
         { status: 401 }
@@ -59,6 +101,16 @@ export async function POST(request: NextRequest) {
     const nameParts = (user.name || '').split(' ');
 
     console.log('[Mobile Auth] Login successful:', email);
+
+    await audit({
+      action: 'auth.login',
+      actorId: user._id.toString(),
+      actorEmail: user.email,
+      actorRole: user.role || 'user',
+      outcome: 'success',
+      details: { channel: 'mobile' },
+      request,
+    });
 
     return NextResponse.json({
       success: true,

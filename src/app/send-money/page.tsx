@@ -69,7 +69,7 @@ export default function SendMoneyPage() {
 
   // Poll for verification code availability
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     
     if (currentStep === 'processing' && transferReference) {
       interval = setInterval(async () => {

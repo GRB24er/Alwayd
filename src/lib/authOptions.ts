@@ -5,6 +5,8 @@ import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import { AUTH_SECRET } from '@/lib/authSecret';
+import { check as rateCheck, POLICIES } from '@/lib/rateLimit';
+import { audit } from '@/lib/audit';
 
 declare module 'next-auth/jwt' {
   interface JWT {
@@ -46,7 +48,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         try {
           if (!credentials?.email || !credentials?.password) {
             console.log('❌ Missing credentials');
@@ -59,12 +61,38 @@ export const authOptions: NextAuthOptions = {
           const email = credentials.email.toLowerCase().trim();
           const password = credentials.password.trim();
 
+          const fwd = (req?.headers?.['x-forwarded-for'] as string) || '';
+          const ip = fwd.split(',')[0].trim() || 'unknown';
+
+          // Brute-force protection: limit attempts per IP and per account.
+          const [ipLimit, emailLimit] = await Promise.all([
+            rateCheck(`login:ip:${ip}`, POLICIES.authLogin),
+            rateCheck(`login:email:${email}`, POLICIES.authLogin),
+          ]);
+
+          if (!ipLimit.allowed || !emailLimit.allowed) {
+            await audit({
+              action: 'auth.login_failed',
+              actorEmail: email,
+              outcome: 'blocked',
+              severity: 'warning',
+              details: { channel: 'web', reason: 'rate_limited', ip },
+            });
+            throw new Error('Too many sign-in attempts. Please try again later.');
+          }
+
           console.log('🔍 Auth attempt for:', email);
 
           const user = await User.findOne({ email }).select('+password');
-          
+
           if (!user) {
             console.log('❌ User not found:', email);
+            await audit({
+              action: 'auth.login_failed',
+              actorEmail: email,
+              outcome: 'failure',
+              details: { channel: 'web', reason: 'unknown_user', ip },
+            });
             throw new Error('Invalid credentials');
           }
 
@@ -72,15 +100,31 @@ export const authOptions: NextAuthOptions = {
 
           // Compare password
           const isMatch = await bcrypt.compare(password, user.password);
-          
+
           console.log('🔐 Password match:', isMatch);
 
           if (!isMatch) {
             console.log('❌ Password mismatch');
+            await audit({
+              action: 'auth.login_failed',
+              actorId: user._id.toString(),
+              actorEmail: email,
+              outcome: 'failure',
+              details: { channel: 'web', reason: 'bad_password', ip },
+            });
             throw new Error('Invalid credentials');
           }
 
           console.log('✅ Authentication successful for:', user.email);
+
+          await audit({
+            action: 'auth.login',
+            actorId: user._id.toString(),
+            actorEmail: user.email,
+            actorRole: user.role || 'user',
+            outcome: 'success',
+            details: { channel: 'web', ip },
+          });
 
           return {
             id: user._id.toString(),
