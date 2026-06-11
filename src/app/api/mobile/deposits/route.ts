@@ -5,9 +5,8 @@ import clientPromise from '@/lib/mongodb';
 
 export const runtime = 'nodejs';
 
-const JWT_SECRET =
-  process.env.JWT_SECRET ||
-  'b3bc4dcf9055e490cef86fd9647fc8acd61d6bbe07dfb85fb6848bfe7f4f3926';
+import { AUTH_SECRET } from '@/lib/authSecret';
+const JWT_SECRET = AUTH_SECRET;
 
 async function verifyAuth(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
