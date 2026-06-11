@@ -4,6 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
+import { AUTH_SECRET } from '@/lib/authSecret';
 
 declare module 'next-auth/jwt' {
   interface JWT {
@@ -31,8 +32,7 @@ declare module 'next-auth' {
 }
 
 export const authOptions: NextAuthOptions = {
-  // FIX: Use environment variable, not hardcoded secret
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: AUTH_SECRET,
 
   session: {
     strategy: 'jwt',

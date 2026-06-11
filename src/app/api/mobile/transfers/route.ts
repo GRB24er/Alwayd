@@ -5,7 +5,8 @@ import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import { sendTransactionEmail } from '@/lib/mail';
 
-const JWT_SECRET = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET!;
+import { AUTH_SECRET } from '@/lib/authSecret';
+const JWT_SECRET = AUTH_SECRET;
 
 async function getMobileUser(request: NextRequest) {
   const authHeader = request.headers.get('authorization');

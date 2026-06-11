@@ -7,8 +7,7 @@ import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// SAME SECRET AS YOUR authOptions.ts
-const AUTH_SECRET = '21b0133285c83665020046259b56217a7a787f1c9dd59fefe496f93dbba6deb2';
+import { AUTH_SECRET } from '@/lib/authSecret';
 
 export async function POST(request: NextRequest) {
   console.log('[Mobile Auth] POST - Login attempt');
