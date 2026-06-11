@@ -6,6 +6,7 @@ import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import { sendTransactionEmail } from '@/lib/mail';
+import { bankPostedDescription } from '@/lib/channels';
 
 // Credit types - ADD money
 const CREDIT_TYPES = ['deposit', 'transfer-in', 'interest', 'adjustment-credit'];
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ============ GENERATE REFERENCE ============
-    const reference = `ADM-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const reference = `TXN-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
     // ============ CREATE TRANSACTION ============
     const transaction = await Transaction.create({
@@ -111,14 +112,14 @@ export async function POST(req: NextRequest) {
       type: type,
       amount: txAmount,
       currency: 'USD', // Your schema only allows USD or BTC
-      description: description || `Admin ${type}`,
+      description: description || bankPostedDescription(type),
       status: shouldUpdateBalance ? 'approved' : 'pending',
       accountType: accountType,
       reference: reference,
       date: date ? new Date(date) : new Date(),
       posted: shouldUpdateBalance,
       postedAt: shouldUpdateBalance ? new Date() : null,
-      channel: 'admin',
+      channel: 'internal',
       origin: 'admin_panel'
     });
 

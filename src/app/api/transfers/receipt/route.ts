@@ -13,6 +13,7 @@ import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import { audit } from "@/lib/audit";
 import { verificationUrlFor } from "@/lib/siteUrl";
+import { channelLabel, displayDescription } from "@/lib/channels";
 import {
   generateTransferReceipt,
   TransferReceiptData,
@@ -259,7 +260,7 @@ export async function GET(request: NextRequest) {
       direction: isCredit ? "credit" : "debit",
       transferKind: kind,
       rail,
-      channel: tx.channel === "online" ? "Online Banking" : tx.channel || "Online Banking",
+      channel: channelLabel(tx.channel),
       amount,
       currency: tx.currency || "USD",
       fee: isCredit ? 0 : fee,
@@ -267,7 +268,7 @@ export async function GET(request: NextRequest) {
       initiatedAt: new Date(initiatedAt),
       completedAt: completedAt ? new Date(completedAt) : null,
       purpose: md.purposeOfTransfer || md.purpose,
-      narrative: tx.description,
+      narrative: displayDescription(tx.description, tx.type),
       sender,
       beneficiary,
       integrityHash,

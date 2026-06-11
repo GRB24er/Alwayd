@@ -8,6 +8,7 @@ import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import { sendTransactionEmail } from '@/lib/mail';
+import { bankPostedDescription } from '@/lib/channels';
 
 export async function POST(req: NextRequest) {
   try {
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
       userId: user._id,
       type: transactionType,
       amount: adjustmentAmount, // POSITIVE
-      description: description || `Admin ${type} adjustment`,
+      description: description || bankPostedDescription(transactionType),
       currency,
       status: 'completed',
       accountType,
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
       postedAt: new Date(),
       date: new Date(),
       reference: `ADJ-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-      channel: 'admin',
+      channel: 'internal',
       origin: 'admin_adjustment'
     });
 

@@ -11,7 +11,7 @@ const STEPS = [
   { id: 2, label: "KYC", desc: "Identity Verification" },
   { id: 3, label: "Documents", desc: "Upload Files" },
   { id: 4, label: "Assessment", desc: "Financial Profile" },
-  { id: 5, label: "Review", desc: "Admin Review" },
+  { id: 5, label: "Review", desc: "Underwriting Review" },
   { id: 6, label: "Offer", desc: "Loan Offer" },
   { id: 7, label: "Agreement", desc: "Sign & Accept" },
   { id: 8, label: "Disbursement", desc: "Funds Released" },

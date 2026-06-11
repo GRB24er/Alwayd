@@ -8,6 +8,7 @@ import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { downloadTransferReceipt } from "@/lib/receiptDownload";
+import { channelLabel } from "@/lib/channels";
 import styles from "./transactions.module.css";
 
 // Types
@@ -950,7 +951,7 @@ useEffect(() => {
                                 <>
                                   <span className={styles.separator}>•</span>
                                   <span className={styles.transactionChannel}>
-                                    via {transaction.channel}
+                                    via {channelLabel(transaction.channel)}
                                   </span>
                                 </>
                               )}

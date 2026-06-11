@@ -6,6 +6,7 @@ import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import { sendTransactionEmail } from '@/lib/mail';
+import { bankPostedDescription } from '@/lib/channels';
 
 export async function POST(req: NextRequest) {
   try {
@@ -89,13 +90,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const reference = `ADM-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const reference = `TXN-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
     const transaction = await Transaction.create({
       userId: user._id,
       type,
       amount: transactionAmount, // POSITIVE
-      description: description || `Admin ${type}`,
+      description: description || bankPostedDescription(type),
       status,
       accountType,
       reference,
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
       posted: status === 'completed',
       postedAt: status === 'completed' ? new Date() : null,
       date: new Date(),
-      channel: 'admin',
+      channel: 'internal',
       origin: 'admin_panel'
     });
 

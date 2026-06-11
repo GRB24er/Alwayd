@@ -28,15 +28,17 @@ export async function POST(req: NextRequest, context: { params: Promise<{ id: st
     // ALWAYS create as PENDING; balances move only on Approve
     const txn = await Transaction.create({
       userId,
-      type: 'send', // withdraw reduces balance
+      type: 'withdraw',
       currency,
       amount,
       date: date ? new Date(date) : new Date(),
-      description: description || 'Admin Withdrawal',
+      description: description || 'Bank debit',
       status: 'pending',
       posted: false,
       postedAt: null,
       accountType,
+      channel: 'internal',
+      origin: 'bank_adjustment',
     });
 
     return NextResponse.json({ success: true, transaction: txn });

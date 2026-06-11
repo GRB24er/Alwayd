@@ -6,6 +6,7 @@ import connectDB from '@/lib/mongodb';
 import Statement from '@/models/Statement';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
+import { displayDescription } from '@/lib/channels';
 
 const { sendSimpleEmail } = require('@/lib/mail');
 
@@ -396,7 +397,7 @@ export async function POST(req: NextRequest) {
                     return `
                       <tr>
                         <td class="date-col">${new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</td>
-                        <td class="desc-col">${t.description}</td>
+                        <td class="desc-col">${displayDescription(t.description, t.type) || 'Transaction'}</td>
                         <td class="type-col">
                           <span class="type-badge type-${t.type === 'credit' ? 'credit' : 'debit'}">
                             ${t.type === 'credit' ? 'Deposit' : 'Withdrawal'}
