@@ -1,6 +1,18 @@
 // src/models/TransactionLimit.ts
 import mongoose, { Document, Schema } from 'mongoose';
 
+// Standard limits, aligned with the limits advertised across the app
+// ($100k/day transfers, $250k Fedwire per-transaction cap). Docs that an admin
+// has not customized (customLimits=false) track these values; enforceLimit
+// self-heals older docs that were created under lower defaults.
+export const STANDARD_LIMITS = {
+  dailyTransferLimit: 100_000,
+  dailyWithdrawalLimit: 25_000,
+  maxTransactionAmount: 250_000,
+  checkingDailyLimit: 100_000,
+  savingsDailyLimit: 100_000,
+} as const;
+
 export interface ITransactionLimit extends Document {
   userId: mongoose.Types.ObjectId;
   
@@ -37,27 +49,27 @@ const TransactionLimitSchema = new Schema<ITransactionLimit>({
   },
   
   // Default limits (can be customized per user)
-  dailyTransferLimit: { 
-    type: Number, 
-    default: 10000 // $10,000 per day
+  dailyTransferLimit: {
+    type: Number,
+    default: STANDARD_LIMITS.dailyTransferLimit
   },
-  dailyWithdrawalLimit: { 
-    type: Number, 
-    default: 5000 // $5,000 per day
+  dailyWithdrawalLimit: {
+    type: Number,
+    default: STANDARD_LIMITS.dailyWithdrawalLimit
   },
-  maxTransactionAmount: { 
-    type: Number, 
-    default: 25000 // $25,000 per transaction
+  maxTransactionAmount: {
+    type: Number,
+    default: STANDARD_LIMITS.maxTransactionAmount
   },
-  
+
   // Account-specific
-  checkingDailyLimit: { 
-    type: Number, 
-    default: 10000 
+  checkingDailyLimit: {
+    type: Number,
+    default: STANDARD_LIMITS.checkingDailyLimit
   },
-  savingsDailyLimit: { 
-    type: Number, 
-    default: 5000 
+  savingsDailyLimit: {
+    type: Number,
+    default: STANDARD_LIMITS.savingsDailyLimit
   },
   
   // Daily usage tracking

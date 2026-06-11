@@ -2,7 +2,7 @@
 // it is NOT a security boundary. Every money-moving handler MUST call enforceLimit before posting.
 
 import connectDB from "@/lib/mongodb";
-import TransactionLimit from "@/models/TransactionLimit";
+import TransactionLimit, { STANDARD_LIMITS } from "@/models/TransactionLimit";
 import { audit } from "@/lib/audit";
 import { NextRequest } from "next/server";
 
@@ -47,6 +47,21 @@ export async function enforceLimit(opts: EnforceLimitOpts): Promise<EnforceLimit
   let limits = await TransactionLimit.findOne({ userId: opts.userId });
   if (!limits) {
     limits = await TransactionLimit.create({ userId: opts.userId });
+  }
+
+  // Docs created under older, lower defaults track the current standard
+  // limits unless an admin has explicitly customized them.
+  if (!limits.customLimits) {
+    const drifted =
+      limits.dailyTransferLimit !== STANDARD_LIMITS.dailyTransferLimit ||
+      limits.dailyWithdrawalLimit !== STANDARD_LIMITS.dailyWithdrawalLimit ||
+      limits.maxTransactionAmount !== STANDARD_LIMITS.maxTransactionAmount ||
+      limits.checkingDailyLimit !== STANDARD_LIMITS.checkingDailyLimit ||
+      limits.savingsDailyLimit !== STANDARD_LIMITS.savingsDailyLimit;
+    if (drifted) {
+      limits.set({ ...STANDARD_LIMITS });
+      await limits.save();
+    }
   }
 
   if (!isSameDay(new Date(limits.lastResetDate))) {
