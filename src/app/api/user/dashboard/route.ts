@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/authOptions";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
+import { displayDescription } from "@/lib/channels";
 
 interface FormattedTransaction {
   reference: string;
@@ -131,7 +132,7 @@ export async function GET(): Promise<NextResponse<DashboardResponse>> {
       currency: t.currency || "USD",
       amount: Math.abs(t.amount) || 0,
       date: t.date || t.createdAt || new Date(),
-      description: t.description || "Transaction",
+      description: displayDescription(t.description, t.type) || "Transaction",
       status: displayStatus(t.status),  // Formatted status
       rawStatus: t.status || "pending",  // Original status
       accountType: t.accountType || "checking",

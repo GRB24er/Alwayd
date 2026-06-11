@@ -190,7 +190,7 @@ export default function AdminDashboard() {
           type: transactionForm.type,
           amount: amount,
           accountType: transactionForm.accountType,
-          description: transactionForm.description || `Admin ${transactionForm.type}`,
+          description: transactionForm.description || undefined,
           currency: transactionForm.currency,
           status: "completed" // Always complete immediately for admin
         })

@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/authOptions";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
+import { displayDescription } from "@/lib/channels";
 
 export async function GET(request: NextRequest) {
   try {
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest) {
         type: tx.type || 'deposit',
         amount: Math.abs(tx.amount || 0),
         adjustedAmount: adjustedAmount,
-        description: tx.description || 'Transaction',
+        description: displayDescription(tx.description, tx.type) || 'Transaction',
         date: tx.date || tx.createdAt || new Date(),
         status: tx.status || 'pending',
         rawStatus: tx.status || 'pending',

@@ -5,6 +5,7 @@ import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import { sendTransactionEmail } from '@/lib/mail';
 import { generateCreditEmail, generateDebitEmail } from '@/lib/bankingEmailTemplates';
+import { bankPostedDescription } from '@/lib/channels';
 
 // Helper function to generate reference numbers
 function generateReference(type: string): string {
@@ -86,7 +87,7 @@ export async function POST(
       userId: user._id,
       type,
       amount,
-      description: description || `Admin ${type}`,
+      description: description || bankPostedDescription(type),
       status,
       accountType,
       reference,
@@ -94,7 +95,7 @@ export async function POST(
       posted: status === 'completed',
       postedAt: status === 'completed' ? new Date() : null,
       date: new Date(),
-      channel: 'admin',
+      channel: 'internal',
       origin: 'admin_panel'
     });
 
@@ -115,7 +116,7 @@ export async function POST(
           transactionType: type as any,
           amount: amount,
           currency: 'USD',
-          description: description || `Admin ${type}`,
+          description: description || bankPostedDescription(type),
           date: new Date(),
           accountType: accountType as any,
           balanceBefore: currentBalance,

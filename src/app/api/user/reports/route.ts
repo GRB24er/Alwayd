@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
+import { displayDescription } from '@/lib/channels';
 
 interface FormattedTxn {
   _id:        string;
@@ -75,7 +76,7 @@ export async function GET(request: Request) {
       currency:    t.currency,
       amount:      t.amount,
       date:        t.date.toISOString(),
-      description: t.description,
+      description: displayDescription(t.description, t.type),
     }));
 
     // 7. Return metrics + data

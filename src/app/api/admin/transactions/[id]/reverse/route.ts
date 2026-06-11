@@ -135,7 +135,7 @@ export async function POST(
     posted: false,
     ledgerPosted: false,
     reference: reversalRef,
-    channel: "admin",
+    channel: "internal",
     origin: "reversal",
     reversalOf: original._id,
     metadata: {

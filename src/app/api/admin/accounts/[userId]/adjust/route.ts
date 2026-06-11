@@ -164,7 +164,7 @@ export async function POST(
     posted: false,
     ledgerPosted: false,
     reference,
-    channel: "admin",
+    channel: "internal",
     origin: "admin_adjustment",
     metadata: {
       reasonCategory: parsed.value.reasonCategory,
@@ -210,7 +210,7 @@ export async function POST(
               side: parsed.value.direction === "credit" ? "debit" : "credit",
               amountMinor,
               userId: null,
-              description: `Contra: admin adjustment ${reference}`,
+              description: `Contra: account adjustment ${reference}`,
             },
           ],
         },

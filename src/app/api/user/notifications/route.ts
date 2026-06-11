@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/authOptions";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
+import { displayDescription } from "@/lib/channels";
 import mongoose from "mongoose";
 
 // Notification Schema
@@ -273,6 +274,6 @@ function getTransactionMessage(tx: any): string {
     case "payment":
       return `Your payment of ${amount} is ${tx.status}.`;
     default:
-      return `Transaction of ${amount} - ${tx.description || "No description"}`;
+      return `Transaction of ${amount} - ${displayDescription(tx.description, tx.type) || "No description"}`;
   }
 }

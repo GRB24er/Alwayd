@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/authOptions";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
+import { displayDescription } from "@/lib/channels";
 
 type TxLean = {
   _id: any;
@@ -51,7 +52,7 @@ export async function GET() {
       transactions: rows.map((tx) => ({
         _id: String(tx._id),
         reference: tx.reference,
-        description: tx.description,
+        description: displayDescription(tx.description, tx.type),
         amount: tx.amount,
         status: tx.status,
         date: tx.date,
