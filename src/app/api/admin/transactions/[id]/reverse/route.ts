@@ -20,6 +20,7 @@ import { generateAdjustmentDocument } from "@/lib/adjustmentDocument";
 import { renderEmail } from "@/lib/emailTemplate";
 import { sendSimpleEmail } from "@/lib/mail";
 import type { LedgerAccount } from "@/models/LedgerEntry";
+import { verificationUrlFor } from "@/lib/siteUrl";
 
 interface ReverseBody {
   reason: string;
@@ -245,7 +246,7 @@ export async function POST(
         email: target.email,
         accountNumber: target.accountNumber,
       },
-      verificationUrl: `${process.env.NEXT_PUBLIC_BASE_URL || ""}/verify/${reversalRef}`,
+      verificationUrl: verificationUrlFor(reversalRef),
     });
   } catch (err: any) {
     log.warn("reverse.pdf_failed", { err: err?.message, reversalRef });

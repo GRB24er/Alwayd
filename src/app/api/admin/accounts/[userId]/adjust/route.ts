@@ -20,6 +20,7 @@ import { generateAdjustmentDocument } from "@/lib/adjustmentDocument";
 import { renderEmail } from "@/lib/emailTemplate";
 import { sendSimpleEmail } from "@/lib/mail";
 import type { LedgerAccount } from "@/models/LedgerEntry";
+import { verificationUrlFor } from "@/lib/siteUrl";
 
 const ACCOUNT_VALUES = ["checking", "savings", "investment"] as const;
 const DIRECTION_VALUES = ["credit", "debit"] as const;
@@ -237,7 +238,7 @@ export async function POST(
   const balanceAfter = Number((fresh as any)?.[balanceField as any] || 0);
 
   // 4. Generate receipt PDF.
-  const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || ""}/verify/${reference}`;
+  const verificationUrl = verificationUrlFor(reference);
   let pdfBytes: Uint8Array | null = null;
   try {
     pdfBytes = await generateAdjustmentDocument({

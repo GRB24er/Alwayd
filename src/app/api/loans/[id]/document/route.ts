@@ -10,20 +10,11 @@ import connectDB from '@/lib/mongodb';
 import Loan from '@/models/Loan';
 import User from '@/models/User';
 import { generateLoanDocument, LoanDocumentType } from '@/lib/loanDocuments';
+import { verificationUrlFor } from '@/lib/siteUrl';
 
 export const runtime = 'nodejs';
 
 const VALID_TYPES: LoanDocumentType[] = ['offer', 'agreement', 'disbursement'];
-
-function buildBaseUrl(req: NextRequest): string {
-  const fromEnv =
-    process.env.NEXTAUTH_URL ||
-    process.env.NEXT_PUBLIC_APP_URL;
-  if (fromEnv) return fromEnv.replace(/\/$/, '');
-  const proto = req.headers.get('x-forwarded-proto') || 'https';
-  const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
-  return host ? `${proto}://${host}` : 'https://aldwycheuropeancapital.com';
-}
 
 export async function GET(
   req: NextRequest,
@@ -81,7 +72,6 @@ export async function GET(
     }
 
     const applicant = loan.userId as unknown as { name: string };
-    const baseUrl = buildBaseUrl(req);
 
     const pdf = await generateLoanDocument({
       referenceNumber: loan.referenceNumber,
@@ -98,7 +88,7 @@ export async function GET(
       offerExpiry: loan.offerExpiry,
       agreementSignedAt: loan.agreementSignedAt,
       agreementSignature: loan.agreementSignature,
-      verificationUrl: `${baseUrl}/verify/${encodeURIComponent(loan.referenceNumber)}`,
+      verificationUrl: verificationUrlFor(loan.referenceNumber),
     });
 
     const filename = `Aldwych-${typeParam}-${loan.referenceNumber}.pdf`;
