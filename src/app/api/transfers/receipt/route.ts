@@ -12,6 +12,7 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import { audit } from "@/lib/audit";
+import { verificationUrlFor } from "@/lib/siteUrl";
 import {
   generateTransferReceipt,
   TransferReceiptData,
@@ -60,24 +61,29 @@ interface TransferTxDoc {
     recipientRoutingLast4?: string;
     recipientSwiftBic?: string;
     recipientCountry?: string;
+    recipientCountryName?: string;
     recipientAddress?: string;
     purposeOfTransfer?: string;
     purpose?: string;
+    // International wires store the beneficiary bank/account differently.
+    bankName?: string;
+    railFields?: Record<string, unknown>;
   };
+}
+
+// International wires keep the beneficiary account in rail-specific fields
+// (IBAN, accountNumber, etc.) rather than a recipientAccountLast4.
+function intlBeneficiaryAccountLast4(railFields?: Record<string, unknown>): string | undefined {
+  if (!railFields) return undefined;
+  const candidate =
+    railFields.iban || railFields.accountNumber || railFields.account || railFields.clabe;
+  if (typeof candidate !== "string" || candidate.length < 4) return undefined;
+  return candidate.replace(/\s+/g, "").slice(-4);
 }
 
 function maskAccount(n?: string): string {
   if (!n) return "";
   return `••••${n.slice(-4)}`;
-}
-
-function baseUrl(request: NextRequest): string {
-  return (
-    process.env.NEXT_PUBLIC_BASE_URL ||
-    process.env.NEXTAUTH_URL ||
-    process.env.NEXT_PUBLIC_APP_URL ||
-    new URL(request.url).origin
-  );
 }
 
 // The rail and display name of the transfer, derived from how it was booked.
@@ -86,7 +92,7 @@ function describeTransfer(tx: TransferTxDoc): { kind: string; rail: string } {
   switch (tx.origin) {
     case "wire_transfer":
       return md.wireType === "international"
-        ? { kind: "International Wire Transfer", rail: "SWIFT" }
+        ? { kind: "International Wire Transfer", rail: String(md.rail || "SWIFT") }
         : { kind: "Domestic Wire Transfer", rail: "FEDWIRE" };
     case "external_transfer":
       return md.transferSpeed === "express"
@@ -199,10 +205,18 @@ export async function GET(request: NextRequest) {
       beneficiary = holderParty(accountType);
     } else {
       sender = holderParty(accountType);
+      // International wires record the beneficiary bank under `bankName` and the
+      // account inside rail-specific fields; domestic/external use `recipientBank`
+      // and `recipientAccountLast4`.
+      const intlLast4 = intlBeneficiaryAccountLast4(md.railFields);
       beneficiary = {
         name: md.recipientName || "—",
-        accountMasked: md.recipientAccountLast4 ? `••••${md.recipientAccountLast4}` : undefined,
-        bankName: md.recipientBank,
+        accountMasked: md.recipientAccountLast4
+          ? `••••${md.recipientAccountLast4}`
+          : intlLast4
+            ? `••••${intlLast4}`
+            : undefined,
+        bankName: md.recipientBank || md.bankName,
         routingMasked: md.recipientRoutingNumber
           ? `••••${String(md.recipientRoutingNumber).slice(-4)}`
           : md.recipientRoutingLast4
@@ -257,7 +271,7 @@ export async function GET(request: NextRequest) {
       sender,
       beneficiary,
       integrityHash,
-      verificationUrl: `${baseUrl(request)}/verify/${encodeURIComponent(tx.reference || tx._id.toString())}`,
+      verificationUrl: verificationUrlFor(tx.reference || tx._id.toString()),
       generatedAt,
     };
 

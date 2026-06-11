@@ -14,6 +14,7 @@ import { generateRestrictionNotice } from "@/lib/restrictionDocument";
 import { v, validate } from "@/lib/validators";
 import { logger } from "@/lib/logger";
 import { sendSimpleEmail } from "@/lib/mail";
+import { verificationUrlFor } from "@/lib/siteUrl";
 import {
   RestrictionAction,
   RestrictionReasonCategory,
@@ -163,7 +164,7 @@ export async function POST(
 
   // Generate the PDF notice (regardless of whether we email it, the customer
   // can download from their dashboard via the document endpoint).
-  const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || ""}/verify/${restriction.referenceNumber}`;
+  const verificationUrl = verificationUrlFor(restriction.referenceNumber);
   let pdfBytes: Uint8Array | null = null;
   try {
     pdfBytes = await generateRestrictionNotice({

@@ -9,6 +9,7 @@ import connectDB from "@/lib/mongodb";
 import Transaction from "@/models/Transaction";
 import User from "@/models/User";
 import { generateAdjustmentDocument } from "@/lib/adjustmentDocument";
+import { verificationUrlFor } from "@/lib/siteUrl";
 
 export async function GET(
   _request: NextRequest,
@@ -76,7 +77,7 @@ export async function GET(
       email: user.email,
       accountNumber: user.accountNumber,
     },
-    verificationUrl: `${process.env.NEXT_PUBLIC_BASE_URL || ""}/verify/${tx.reference}`,
+    verificationUrl: verificationUrlFor(tx.reference),
   });
 
   return new NextResponse(bytes as any, {

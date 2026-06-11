@@ -73,9 +73,9 @@ export async function GET(
     }
 
     // Funds transfer receipts carry the underlying transfer reference
-    // (WIRE-/EXT-/INT-/TXN-…). Report enough to authenticate the document
+    // (WIRE-/IWR-/EXT-/INT-/TXN-…). Report enough to authenticate the document
     // without disclosing beneficiary details to whoever scanned it.
-    if (/^(WIRE|EXT|INT|TXN)-/i.test(ref)) {
+    if (/^(WIRE|IWR|EXT|INT|TXN)-/i.test(ref)) {
       const TransactionModel = (await import("@/models/Transaction")).default;
       const tx = await TransactionModel.findOne({
         reference: { $in: [ref, `${ref}-OUT`] },

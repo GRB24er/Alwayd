@@ -9,6 +9,7 @@ import connectDB from "@/lib/mongodb";
 import AccountRestriction from "@/models/AccountRestriction";
 import User from "@/models/User";
 import { generateRestrictionNotice } from "@/lib/restrictionDocument";
+import { verificationUrlFor } from "@/lib/siteUrl";
 
 export async function GET(
   _request: NextRequest,
@@ -36,7 +37,7 @@ export async function GET(
       accountNumber: user.accountNumber,
       routingNumber: user.routingNumber,
     },
-    verificationUrl: `${process.env.NEXT_PUBLIC_BASE_URL || ""}/verify/${reference}`,
+    verificationUrl: verificationUrlFor(reference),
   });
 
   return new NextResponse(bytes as any, {
