@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView,
   Platform, ScrollView, ActivityIndicator, Animated, Dimensions,
@@ -8,17 +8,22 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from "../../constants/theme";
 import { APP_NAME, APP_TAG, APP_ESTABLISHED } from "../../constants/config";
 import { useAuth } from "../../hooks/useAuth";
+import { useBiometric } from "../../hooks/useBiometric";
 
 const { height } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const { login } = useAuth();
+  const { isAvailable, isEnabled, biometricType, authenticate } = useBiometric();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const shakeAnim = useRef(new Animated.Value(0)).current;
+
+  const biometricIcon: keyof typeof Ionicons.glyphMap =
+    biometricType === "face" ? "scan-outline" : "finger-print-outline";
 
   const shake = () => {
     Animated.sequence([
@@ -45,6 +50,15 @@ export default function LoginScreen() {
       shake();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBiometric = async () => {
+    setError("");
+    const success = await authenticate("Sign in to Aldwych European Capital");
+    if (!success) {
+      setError("Biometric authentication failed.");
+      shake();
     }
   };
 
@@ -130,25 +144,37 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={[Colors.gold, Colors.goldDark]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.buttonGradient}
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonFlex, loading && styles.buttonDisabled]}
+                onPress={handleLogin}
+                disabled={loading}
+                activeOpacity={0.8}
               >
-                {loading ? (
-                  <ActivityIndicator color={Colors.navyDark} />
-                ) : (
-                  <Text style={styles.buttonText}>Sign In</Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
+                <LinearGradient
+                  colors={[Colors.gold, Colors.goldDark]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.buttonGradient}
+                >
+                  {loading ? (
+                    <ActivityIndicator color={Colors.navyDark} />
+                  ) : (
+                    <Text style={styles.buttonText}>Sign In</Text>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {isAvailable && isEnabled && (
+                <TouchableOpacity
+                  style={styles.biometricBtn}
+                  onPress={handleBiometric}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name={biometricIcon} size={24} color={Colors.gold} />
+                </TouchableOpacity>
+              )}
+            </View>
 
             <TouchableOpacity style={styles.forgotBtn}>
               <Text style={styles.forgotText}>Forgot your password?</Text>
@@ -303,12 +329,18 @@ const styles = StyleSheet.create({
   eyeBtn: {
     padding: Spacing.md,
   },
-  button: {
+  buttonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
     marginTop: Spacing.sm,
+  },
+  button: {
     borderRadius: BorderRadius.md,
     overflow: "hidden",
     ...Shadow.gold,
   },
+  buttonFlex: { flex: 1 },
   buttonDisabled: {
     opacity: 0.7,
   },
@@ -322,6 +354,16 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     color: Colors.navyDark,
     letterSpacing: 0.5,
+  },
+  biometricBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.bgCardElevated,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: Colors.gold,
   },
   forgotBtn: {
     alignItems: "center",

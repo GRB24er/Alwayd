@@ -7,6 +7,8 @@ import { useAuth } from "../hooks/useAuth";
 import LoginScreen from "../screens/auth/LoginScreen";
 import TabNavigator from "./TabNavigator";
 import TransactionDetailScreen from "../screens/transactions/TransactionDetailScreen";
+import TransferFormScreen from "../screens/transfers/TransferFormScreen";
+import AccountDetailScreen from "../screens/accounts/AccountDetailScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +31,16 @@ export default function RootNavigator() {
           <Stack.Screen
             name="TransactionDetail"
             component={TransactionDetailScreen}
+            options={{ animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="TransferForm"
+            component={TransferFormScreen}
+            options={{ animation: "slide_from_right" }}
+          />
+          <Stack.Screen
+            name="AccountDetail"
+            component={AccountDetailScreen}
             options={{ animation: "slide_from_right" }}
           />
         </>
