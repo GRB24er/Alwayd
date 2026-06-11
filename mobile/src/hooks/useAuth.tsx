@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import * as LocalAuthentication from "expo-local-authentication";
+import * as SecureStore from "expo-secure-store";
 import * as client from "../api/client";
 import type { User } from "../types";
+
+const BIOMETRIC_ENABLED_KEY = "biometric_enabled";
 
 interface AuthState {
   isLoading: boolean;
@@ -33,6 +37,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
         return;
       }
+
+      const bioPref = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY);
+      if (bioPref === "true") {
+        const hasHw = await LocalAuthentication.hasHardwareAsync();
+        const enrolled = hasHw && await LocalAuthentication.isEnrolledAsync();
+        if (enrolled) {
+          const result = await LocalAuthentication.authenticateAsync({
+            promptMessage: "Authenticate to access your account",
+            cancelLabel: "Use Password",
+            disableDeviceFallback: false,
+          });
+          if (!result.success) {
+            setIsAuthenticated(false);
+            setUser(null);
+            return;
+          }
+        }
+      }
+
       const { user: u } = await client.verifyToken();
       setUser(u);
       setIsAuthenticated(true);
@@ -51,6 +74,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await client.login(email, password);
     setUser(data.user);
     setIsAuthenticated(true);
+
+    const hasHw = await LocalAuthentication.hasHardwareAsync();
+    const enrolled = hasHw && await LocalAuthentication.isEnrolledAsync();
+    if (enrolled) {
+      await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, "true");
+    }
   };
 
   const logout = async () => {

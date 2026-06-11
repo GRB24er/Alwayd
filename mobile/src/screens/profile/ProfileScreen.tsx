@@ -1,15 +1,17 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, StatusBar } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, StatusBar } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors, Spacing, FontSize, FontWeight, BorderRadius, Shadow } from "../../constants/theme";
 import { useAuth } from "../../hooks/useAuth";
+import { useBiometric } from "../../hooks/useBiometric";
 import { maskAccountNumber } from "../../utils/format";
 import { APP_NAME, APP_ESTABLISHED, SUPPORT_EMAIL } from "../../constants/config";
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const { isAvailable, isEnabled, biometricType, enable, disable } = useBiometric();
 
   const handleLogout = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -56,7 +58,26 @@ export default function ProfileScreen() {
 
         {/* Security */}
         <MenuSection title="Security">
-          <MenuItem icon="finger-print" label="Biometric Authentication" />
+          {isAvailable && (
+            <View style={styles.menuItem}>
+              <View style={styles.menuIcon}>
+                <Ionicons
+                  name={biometricType === "face" ? "scan-outline" : "finger-print"}
+                  size={18}
+                  color={Colors.gold}
+                />
+              </View>
+              <Text style={styles.menuLabel}>
+                {biometricType === "face" ? "Face ID" : "Biometric Login"}
+              </Text>
+              <Switch
+                value={isEnabled}
+                onValueChange={(v) => (v ? enable() : disable())}
+                trackColor={{ false: Colors.border, true: Colors.gold }}
+                thumbColor={Colors.white}
+              />
+            </View>
+          )}
           <MenuItem icon="lock-closed-outline" label="Change Password" />
           <MenuItem icon="phone-portrait-outline" label="Two-Factor Authentication" />
           <MenuItem icon="shield-checkmark-outline" label="Login Activity" />
