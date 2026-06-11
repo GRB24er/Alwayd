@@ -31,12 +31,16 @@ export type GatedAction =
   | "open_credit_card"
   | "open_investment";
 
+// Transfer rails are NOT KYC-gated: identity is established at onboarding and
+// via the admin verification controls, sanctions screening still runs on every
+// transfer, and compromised accounts are stopped with account-status
+// restrictions (freeze/block). Tiered KYC remains for product opening.
 const ACTION_MIN_LEVEL: Record<GatedAction, KycLevel> = {
   view_account: "tier_0",
-  internal_transfer: "tier_1",
-  domestic_external_transfer: "tier_2",
-  domestic_wire: "tier_2",
-  international_wire: "tier_3",
+  internal_transfer: "tier_0",
+  domestic_external_transfer: "tier_0",
+  domestic_wire: "tier_0",
+  international_wire: "tier_0",
   open_credit_card: "tier_2",
   open_investment: "tier_2",
 };
