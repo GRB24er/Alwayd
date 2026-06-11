@@ -6,6 +6,9 @@ import Transaction from '@/models/Transaction';
 import { sendTransactionEmail } from '@/lib/mail';
 
 import { AUTH_SECRET } from '@/lib/authSecret';
+import { check as rateCheck, POLICIES } from '@/lib/rateLimit';
+import { audit } from '@/lib/audit';
+import { runIdempotent } from '@/lib/idempotency';
 const JWT_SECRET = AUTH_SECRET;
 
 async function getMobileUser(request: NextRequest) {
@@ -46,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { 
+    const {
       type,
       fromAccount = 'checking',
       toAccount,
@@ -57,7 +60,7 @@ export async function POST(request: NextRequest) {
       swiftCode,
       country,
       amount,
-      description 
+      description
     } = body;
 
     const transferAmount = Math.abs(Number(amount));
@@ -69,18 +72,105 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Velocity limit: cap transfer initiations per user.
+    const rate = await rateCheck(`transfer:user:${decoded.userId}`, POLICIES.transferInitiate);
+    if (!rate.allowed) {
+      await audit({
+        action: 'rate_limit.exceeded',
+        actorId: decoded.userId,
+        actorEmail: decoded.email,
+        outcome: 'blocked',
+        severity: 'warning',
+        details: { channel: 'mobile', endpoint: 'mobile/transfers' },
+        request,
+      });
+      return NextResponse.json(
+        { success: false, error: 'Transfer limit reached. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds) } }
+      );
+    }
+
+    // Replay protection: cache responses by Idempotency-Key so a retry
+    // (network blip, double-tap) can't book the same transfer twice.
+    return runIdempotent({
+      request,
+      endpoint: 'mobile/transfers',
+      userId: decoded.userId,
+      body,
+      optional: true,
+      handler: () =>
+        executeTransfer({
+          request, user, type, fromAccount, toAccount, recipientAccount,
+          recipientName, recipientBank, recipientRoutingNumber, swiftCode,
+          country, transferAmount, description,
+        }),
+    });
+
+  } catch (error) {
+    console.error('Mobile transfer error:', error);
+    return NextResponse.json(
+      { success: false, error: 'Transfer failed' },
+      { status: 500 }
+    );
+  }
+}
+
+async function executeTransfer({
+  request, user, type, fromAccount, toAccount, recipientAccount,
+  recipientName, recipientBank, recipientRoutingNumber, swiftCode,
+  country, transferAmount, description,
+}: {
+  request: NextRequest;
+  user: any;
+  type: string;
+  fromAccount: string;
+  toAccount?: string;
+  recipientAccount?: string;
+  recipientName?: string;
+  recipientBank?: string;
+  recipientRoutingNumber?: string;
+  swiftCode?: string;
+  country?: string;
+  transferAmount: number;
+  description?: string;
+}) {
+  try {
     const balanceField = `${fromAccount}Balance`;
     const currentBalance = (user as any)[balanceField] || 0;
 
     if (transferAmount > currentBalance) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: 'Insufficient funds',
           available: currentBalance,
           requested: transferAmount
         },
         { status: 400 }
+      );
+    }
+
+    // Duplicate-submission guard: an identical pending transfer created in
+    // the last 60s is almost certainly a double-tap, not a new instruction.
+    const duplicate = await Transaction.findOne({
+      userId: user._id,
+      type: 'transfer-out',
+      amount: transferAmount,
+      accountType: fromAccount,
+      status: 'pending',
+      'metadata.transferType': type,
+      ...(recipientAccount ? { 'metadata.recipientAccount': recipientAccount } : {}),
+      createdAt: { $gte: new Date(Date.now() - 60 * 1000) },
+    }).lean();
+
+    if (duplicate) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'A matching transfer was just submitted. If this is a separate payment, please wait a minute and try again.',
+          reference: (duplicate as any).reference,
+        },
+        { status: 409 }
       );
     }
 
@@ -178,6 +268,23 @@ export async function POST(request: NextRequest) {
     } catch (emailError) {
       console.error('Email failed:', emailError);
     }
+
+    await audit({
+      action: type === 'internal' ? 'transfer.internal.initiated' : 'transfer.wire.initiated',
+      actorId: user._id.toString(),
+      actorEmail: user.email,
+      resourceId: reference,
+      outcome: 'success',
+      details: {
+        channel: 'mobile',
+        transferType: type,
+        amount: transferAmount,
+        fromAccount,
+        toAccount,
+        recipientName,
+      },
+      request,
+    });
 
     return NextResponse.json({
       success: true,

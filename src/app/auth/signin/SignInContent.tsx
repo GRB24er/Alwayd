@@ -87,7 +87,7 @@ export default function SignInContent() {
   }, [rememberMe, email]);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
     if (lockoutTime > 0) {
       timer = setTimeout(() => setLockoutTime((t) => t - 1), 1000);
     } else if (isLocked && lockoutTime === 0) {
