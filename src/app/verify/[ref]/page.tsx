@@ -13,17 +13,34 @@ interface VerifyResponse {
   referenceNumber?: string;
   documentType?: string;
   status?: string;
-  borrower?: string;
-  loanType?: string;
   amount?: number;
   currency?: string;
+  verifiedAt?: string;
+  // Loan-specific
+  borrower?: string;
+  loanType?: string;
   termMonths?: number;
   interestRate?: number;
   monthlyPayment?: number;
   issuedAt?: string;
   offerExpiry?: string;
   agreementSignedAt?: string;
-  verifiedAt?: string;
+  // Transfer receipt
+  customer?: string;
+  receiptNumber?: string;
+  action?: string;
+  accountType?: string;
+  initiatedAt?: string;
+  settledAt?: string;
+  // Restriction notice
+  reasonCategory?: string;
+  effectiveFrom?: string;
+  effectiveUntil?: string;
+  liftedAt?: string;
+  issuedBy?: string;
+  issuedByTitle?: string;
+  // Adjustment / reversal
+  reversedReference?: string;
 }
 
 async function fetchVerification(ref: string): Promise<VerifyResponse> {
@@ -41,11 +58,12 @@ async function fetchVerification(ref: string): Promise<VerifyResponse> {
   }
 }
 
-const fmtEUR = (n: number) =>
-  new Intl.NumberFormat("en-GB", { style: "currency", currency: "EUR" }).format(n);
+const fmtMoney = (n: number, currency = "USD") =>
+  new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(n);
 
 const fmtDate = (s: string) =>
   new Date(s).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+
 
 export default async function VerifyPage({
   params,
@@ -95,6 +113,12 @@ export default async function VerifyPage({
                 <span>Reference Number</span>
                 <strong>{data.referenceNumber}</strong>
               </div>
+              {data.receiptNumber && (
+                <div className={styles.detailItem}>
+                  <span>Receipt Number</span>
+                  <strong>{data.receiptNumber}</strong>
+                </div>
+              )}
               <div className={styles.detailItem}>
                 <span>Document Type</span>
                 <strong>{data.documentType}</strong>
@@ -103,22 +127,38 @@ export default async function VerifyPage({
                 <span>Status</span>
                 <strong className={styles.statusBadge}>{data.status?.replace(/_/g, " ").toUpperCase()}</strong>
               </div>
-              <div className={styles.detailItem}>
-                <span>Borrower</span>
-                <strong>{data.borrower}</strong>
-              </div>
-              <div className={styles.detailItem}>
-                <span>Facility Type</span>
-                <strong>{data.loanType}</strong>
-              </div>
+
+              {/* Person / entity — loan uses "borrower", everything else uses "customer" */}
+              {data.borrower && !data.customer && (
+                <div className={styles.detailItem}>
+                  <span>Borrower</span>
+                  <strong>{data.borrower}</strong>
+                </div>
+              )}
+              {data.customer && (
+                <div className={styles.detailItem}>
+                  <span>Account Holder</span>
+                  <strong>{data.customer}</strong>
+                </div>
+              )}
+
+              {/* ── Loan-specific fields ── */}
+              {data.loanType && (
+                <div className={styles.detailItem}>
+                  <span>Facility Type</span>
+                  <strong>{data.loanType}</strong>
+                </div>
+              )}
               <div className={styles.detailItem}>
                 <span>Amount</span>
-                <strong>{data.amount !== undefined ? fmtEUR(data.amount) : "—"}</strong>
+                <strong>{data.amount !== undefined ? fmtMoney(data.amount, data.currency || "USD") : "—"}</strong>
               </div>
-              <div className={styles.detailItem}>
-                <span>Term</span>
-                <strong>{data.termMonths ? `${data.termMonths} months` : "—"}</strong>
-              </div>
+              {data.termMonths !== undefined && (
+                <div className={styles.detailItem}>
+                  <span>Term</span>
+                  <strong>{data.termMonths} months</strong>
+                </div>
+              )}
               {data.interestRate !== undefined && (
                 <div className={styles.detailItem}>
                   <span>Interest Rate</span>
@@ -128,9 +168,71 @@ export default async function VerifyPage({
               {data.monthlyPayment !== undefined && (
                 <div className={styles.detailItem}>
                   <span>Monthly Payment</span>
-                  <strong>{fmtEUR(data.monthlyPayment)}</strong>
+                  <strong>{fmtMoney(data.monthlyPayment, data.currency || "USD")}</strong>
                 </div>
               )}
+
+              {/* ── Transfer-specific fields ── */}
+              {data.accountType && (
+                <div className={styles.detailItem}>
+                  <span>Account</span>
+                  <strong>{data.accountType.charAt(0).toUpperCase() + data.accountType.slice(1)}</strong>
+                </div>
+              )}
+              {data.initiatedAt && (
+                <div className={styles.detailItem}>
+                  <span>Initiated</span>
+                  <strong>{fmtDate(data.initiatedAt)}</strong>
+                </div>
+              )}
+              {data.settledAt && (
+                <div className={styles.detailItem}>
+                  <span>Settled</span>
+                  <strong>{fmtDate(data.settledAt)}</strong>
+                </div>
+              )}
+
+              {/* ── Restriction-specific fields ── */}
+              {data.reasonCategory && (
+                <div className={styles.detailItem}>
+                  <span>Reason</span>
+                  <strong>{data.reasonCategory}</strong>
+                </div>
+              )}
+              {data.effectiveFrom && (
+                <div className={styles.detailItem}>
+                  <span>Effective From</span>
+                  <strong>{fmtDate(data.effectiveFrom)}</strong>
+                </div>
+              )}
+              {data.effectiveUntil && (
+                <div className={styles.detailItem}>
+                  <span>Effective Until</span>
+                  <strong>{fmtDate(data.effectiveUntil)}</strong>
+                </div>
+              )}
+              {data.liftedAt && (
+                <div className={styles.detailItem}>
+                  <span>Lifted</span>
+                  <strong>{fmtDate(data.liftedAt)}</strong>
+                </div>
+              )}
+              {data.issuedBy && (
+                <div className={styles.detailItem}>
+                  <span>Issued By</span>
+                  <strong>{data.issuedBy}{data.issuedByTitle ? `, ${data.issuedByTitle}` : ""}</strong>
+                </div>
+              )}
+
+              {/* ── Adjustment / reversal ── */}
+              {data.reversedReference && (
+                <div className={styles.detailItem}>
+                  <span>Original Reference</span>
+                  <strong>{data.reversedReference}</strong>
+                </div>
+              )}
+
+              {/* ── Common date fields ── */}
               {data.issuedAt && (
                 <div className={styles.detailItem}>
                   <span>Issued</span>
