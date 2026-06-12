@@ -15,9 +15,10 @@ import executeScheduledTransfers from '@/lib/scheduledTransferExecutor';
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify the request is from Vercel Cron (in production)
+    // Fail closed: this endpoint moves money, so it is unreachable until
+    // CRON_SECRET is configured and presented by the caller (Vercel Cron).
     const authHeader = request.headers.get('authorization');
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
