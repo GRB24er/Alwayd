@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Transaction from '@/models/Transaction';
 import User from '@/models/User';
+import { requireAdmin } from '@/lib/adminGuard';
 
 // GET - Get single transaction
 export async function GET(
@@ -10,6 +11,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     await connectDB();
     
     // Await params first
@@ -48,6 +52,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     const { id } = await params;
     const body = await req.json();
     
@@ -93,6 +100,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     const { id } = await params;
     const body = await req.json();
     
@@ -159,6 +169,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     const { id } = await params;
     
     await connectDB();

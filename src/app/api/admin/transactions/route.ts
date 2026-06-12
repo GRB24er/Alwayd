@@ -2,10 +2,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Transaction from '@/models/Transaction';
+import { requireAdmin } from '@/lib/adminGuard';
 
 // GET - Get all transactions for admin
 export async function GET(req: NextRequest) {
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     await connectDB();
     
     const { searchParams } = new URL(req.url);
@@ -88,6 +92,9 @@ export async function GET(req: NextRequest) {
 // POST - Create new transaction
 export async function POST(req: NextRequest) {
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     await connectDB();
     const body = await req.json();
     

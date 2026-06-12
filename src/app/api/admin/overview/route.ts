@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
-import { snapshotFromUser } from '@/lib/accounts'; 
+import { snapshotFromUser } from '@/lib/accounts';
+import { requireAdmin } from '@/lib/adminGuard';
 
 export async function GET(req: NextRequest) {
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     await connectDB();
 
     const { searchParams } = new URL(req.url);

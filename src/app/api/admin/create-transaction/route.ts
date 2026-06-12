@@ -7,6 +7,7 @@ import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import { sendTransactionEmail } from '@/lib/mail';
 import { bankPostedDescription } from '@/lib/channels';
+import { requireAdmin } from '@/lib/adminGuard';
 
 // Credit types - ADD money
 const CREDIT_TYPES = ['deposit', 'transfer-in', 'interest', 'adjustment-credit'];
@@ -34,9 +35,12 @@ export async function POST(req: NextRequest) {
   console.log('═══════════════════════════════════════');
   
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     const body = await req.json();
-    
-    const { 
+
+    const {
       userId,
       type, 
       amount, 

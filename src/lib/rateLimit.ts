@@ -72,5 +72,6 @@ export const POLICIES = {
   otpRequest: { limit: 5, windowMs: 15 * 60 * 1000 }, // 5 / 15 min per user
   otpVerify: { limit: 10, windowMs: 15 * 60 * 1000 }, // 10 / 15 min per user
   transferInitiate: { limit: 30, windowMs: 60 * 60 * 1000 }, // 30 / hour per user
+  verificationAttempt: { limit: 5, windowMs: 15 * 60 * 1000 }, // 5 / 15 min per user
   passwordReset: { limit: 3, windowMs: 60 * 60 * 1000 }, // 3 / hour per IP
 } as const;
