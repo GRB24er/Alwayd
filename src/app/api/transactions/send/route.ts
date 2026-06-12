@@ -1,6 +1,4 @@
-// FILE: src/app/api/transactions/send/route.ts
-// COMPLETE FIXED VERSION - WITH EMAIL
-
+// src/app/api/transactions/send/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
@@ -8,13 +6,22 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import { sendTransactionEmail } from "@/lib/mail";
+import { check, POLICIES } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rl = await check(`send:${session.user.email}`, POLICIES.transferInitiate);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: "Too many transfer requests. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const body = await req.json();

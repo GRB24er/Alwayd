@@ -1,6 +1,4 @@
 // src/app/api/transfers/verify/route.ts
-// Verify transfer with the security code
-
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
@@ -8,15 +6,22 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import { sendTransactionEmail } from "@/lib/mail";
+import { check, POLICIES } from "@/lib/rateLimit";
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('[Transfer Verify] Started');
-    
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.email) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rl = await check(`verify:${session.user.email}`, POLICIES.verificationAttempt);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { success: false, error: "Too many verification attempts. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const { reference, verificationCode } = await request.json();
@@ -35,13 +40,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
-    // Find the transaction
+    const safeRef = reference.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     const transaction = await Transaction.findOne({
       userId: user._id,
       $or: [
         { reference: reference },
         { reference: `${reference}-OUT` },
-        { reference: { $regex: new RegExp(`^${reference}`) } }
+        { reference: { $regex: new RegExp(`^${safeRef}`) } }
       ]
     });
 
