@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { getBearerUser } from "@/lib/mobileAuth";
 import mongoose from "mongoose";
 import crypto from "crypto";
 import connectDB from "@/lib/mongodb";
@@ -114,8 +115,11 @@ const ACCOUNT_LABEL: Record<string, string> = {
 
 export async function GET(request: NextRequest) {
   try {
+    // Web sends a NextAuth session cookie; the mobile app sends a Bearer JWT.
+    // Either identifies the account holder — ownership checks below are the same.
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    const bearer = session?.user?.email ? null : getBearerUser(request);
+    if (!session?.user?.email && !bearer) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
@@ -130,7 +134,9 @@ export async function GET(request: NextRequest) {
     }
 
     await connectDB();
-    const user = await User.findOne({ email: session.user.email });
+    const user = session?.user?.email
+      ? await User.findOne({ email: session.user.email })
+      : await User.findById(bearer!.userId);
     if (!user) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }

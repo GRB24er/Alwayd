@@ -6,6 +6,7 @@ import Transaction from '@/models/Transaction';
 import { sendTransactionEmail } from '@/lib/mail';
 import { generateCreditEmail, generateDebitEmail } from '@/lib/bankingEmailTemplates';
 import { bankPostedDescription } from '@/lib/channels';
+import { requireAdmin } from '@/lib/adminGuard';
 
 // Helper function to generate reference numbers
 function generateReference(type: string): string {
@@ -32,6 +33,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     // Await params before accessing id
     const resolvedParams = await params;
     console.log('Transaction API called for user:', resolvedParams.id);

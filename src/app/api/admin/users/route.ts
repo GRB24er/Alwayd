@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import mongoose from 'mongoose';
+import { requireAdmin } from '@/lib/adminGuard';
 
 // Define the User schema if not already defined
 const userSchema = new mongoose.Schema({
@@ -34,8 +35,11 @@ interface IUser {
 
 export async function GET(req: NextRequest) {
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     console.log('Users API route called');
-    
+
     // Connect to database using your existing connectDB function
     await connectDB();
     console.log('Connected to database');

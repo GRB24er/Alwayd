@@ -329,9 +329,11 @@ export async function GET(request: NextRequest) {
     const reference = searchParams.get('reference');
 
     if (reference) {
+      // Escape regex metacharacters so user input can't alter the pattern.
+      const escaped = reference.slice(0, 60).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const transaction = await Transaction.findOne({
         userId: decoded.userId,
-        reference: { $regex: new RegExp(`^${reference}`) }
+        reference: { $regex: new RegExp(`^${escaped}`) }
       }).lean();
 
       if (!transaction) {

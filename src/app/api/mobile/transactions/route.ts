@@ -50,14 +50,49 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const page = parseInt(searchParams.get('page') || '1');
+    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
+    const page = Math.max(parseInt(searchParams.get('page') || '1'), 1);
     const type = searchParams.get('type');
+    const accountType = searchParams.get('accountType');
+    const status = searchParams.get('status');
+    const search = searchParams.get('search');
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
 
     const query: any = { userId: user._id };
-    
+
     if (type && type !== 'all') {
       query.type = type;
+    }
+    if (accountType && accountType !== 'all') {
+      query.accountType = accountType;
+    }
+    if (status && status !== 'all') {
+      query.status = status;
+    }
+    if (search && search.trim()) {
+      // Escape regex metacharacters so user input can't alter the pattern.
+      const escaped = search.trim().slice(0, 100).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.$or = [
+        { description: { $regex: escaped, $options: 'i' } },
+        { reference: { $regex: escaped, $options: 'i' } },
+        { 'metadata.recipientName': { $regex: escaped, $options: 'i' } },
+      ];
+    }
+    if (from || to) {
+      query.date = {};
+      if (from) {
+        const fromDate = new Date(from);
+        if (!isNaN(fromDate.getTime())) query.date.$gte = fromDate;
+      }
+      if (to) {
+        const toDate = new Date(to);
+        if (!isNaN(toDate.getTime())) {
+          toDate.setHours(23, 59, 59, 999);
+          query.date.$lte = toDate;
+        }
+      }
+      if (Object.keys(query.date).length === 0) delete query.date;
     }
 
     const transactions = await Transaction.find(query)

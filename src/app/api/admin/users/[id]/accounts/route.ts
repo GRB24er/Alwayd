@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { snapshotFromUser } from '@/lib/accounts';
+import { requireAdmin } from '@/lib/adminGuard';
 
 export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const admin = await requireAdmin(_req);
+    if (!admin.ok) return admin.response;
+
     await connectDB();
     const { id } = await context.params;
     const user: any = await User.findById(id).lean();

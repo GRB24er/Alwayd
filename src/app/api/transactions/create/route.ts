@@ -1,15 +1,17 @@
-// FILE: src/app/api/admin/create-transaction/route.ts
-// FIXED - ADMIN CAN CREATE ANY TRANSACTION (NO BALANCE CHECKS)
-
+// src/app/api/transactions/create/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Transaction from '@/models/Transaction';
 import { sendTransactionEmail } from '@/lib/mail';
 import { bankPostedDescription } from '@/lib/channels';
+import { requireAdmin } from '@/lib/adminGuard';
 
 export async function POST(req: NextRequest) {
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     const body = await req.json();
     
     const { 

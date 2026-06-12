@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Transaction from '@/models/Transaction';
 import User from '@/models/User';
+import { requireAdmin } from '@/lib/adminGuard';
 
 export async function POST(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     await connectDB();
     const { id: userId } = await context.params;
 

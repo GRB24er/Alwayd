@@ -6,6 +6,7 @@ import Transaction from '@/models/Transaction';
 import { sendTransactionEmail } from '@/lib/mail';
 import { generateCreditEmail, generateDebitEmail } from '@/lib/bankingEmailTemplates';
 import { bankPostedDescription } from '@/lib/channels';
+import { requireAdmin } from '@/lib/adminGuard';
 
 // Helper function to generate reference numbers
 function generateReference(type: string): string {
@@ -29,9 +30,12 @@ function generateReference(type: string): string {
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }  // FIXED: Added Promise wrapper
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     await connectDB();
     
     // FIXED: Await params before accessing id
@@ -181,9 +185,12 @@ export async function POST(
 // GET - Get all transactions for a user
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }  // FIXED: Added Promise wrapper
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const admin = await requireAdmin(req);
+    if (!admin.ok) return admin.response;
+
     await connectDB();
     
     // FIXED: Await params before accessing id
