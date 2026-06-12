@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { sendWelcomeEmail } from '@/lib/mail';
+import { check, POLICIES, ipFromHeaders } from '@/lib/rateLimit';
 
 // Helper functions for generating account details
 function generateAccountNumber() {
@@ -24,8 +25,16 @@ function generateBitcoinAddress() {
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = ipFromHeaders(request.headers);
+    const rl = await check(`register:${ip}`, POLICIES.authRegister);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many registration attempts. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
-    console.log('Registration request body:', body);
     
     // Extract fields - handle both simple and enhanced forms
     const {
