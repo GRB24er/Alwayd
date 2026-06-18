@@ -1,10 +1,11 @@
-import { ScrollView, Text, View, Pressable, Image, Dimensions, RefreshControl, ActivityIndicator } from "react-native";
+import { ScrollView, Text, View, Pressable, Image, Dimensions, RefreshControl, ActivityIndicator, Animated } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useBankAuth } from "@/lib/auth-context";
+import { useRealtimeContext } from "@/lib/realtime-context";
 import * as BankingAPI from "@/lib/banking-api";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -13,12 +14,15 @@ export default function HomeScreen() {
   const colors = useColors();
   const router = useRouter();
   const { user, isAuthenticated } = useBankAuth();
+  const { status: wsStatus, latestBalances, latestTransaction, onNewTransaction } = useRealtimeContext();
 
   const [greeting, setGreeting] = useState("Good morning");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [dashboardData, setDashboardData] = useState<BankingAPI.DashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [liveTransactions, setLiveTransactions] = useState<BankingAPI.BankTransaction[]>([]);
+  const flashAnim = useRef(new Animated.Value(0)).current;
 
   // Fallback mock data when API is not connected
   const FALLBACK_BALANCES = {
@@ -36,8 +40,37 @@ export default function HomeScreen() {
     { _id: "5", reference: "TXN-005", description: "Utility Payment - Hydro", amount: -245.50, date: "2026-06-10", status: "completed", type: "payment", accountType: "checking" },
   ];
 
-  const balances = dashboardData?.balances || FALLBACK_BALANCES;
-  const transactions = dashboardData?.transactions || FALLBACK_TRANSACTIONS;
+  useEffect(() => {
+    if (latestBalances && dashboardData) {
+      setDashboardData((prev) =>
+        prev ? { ...prev, balances: latestBalances } : prev
+      );
+      Animated.sequence([
+        Animated.timing(flashAnim, { toValue: 1, duration: 200, useNativeDriver: false }),
+        Animated.timing(flashAnim, { toValue: 0, duration: 800, useNativeDriver: false }),
+      ]).start();
+    }
+  }, [latestBalances]);
+
+  useEffect(() => {
+    return onNewTransaction((txn) => {
+      setLiveTransactions((prev) => {
+        const exists = prev.some((t) => t._id === txn._id);
+        if (exists) return prev;
+        return [txn as BankingAPI.BankTransaction, ...prev].slice(0, 10);
+      });
+      Animated.sequence([
+        Animated.timing(flashAnim, { toValue: 1, duration: 200, useNativeDriver: false }),
+        Animated.timing(flashAnim, { toValue: 0, duration: 800, useNativeDriver: false }),
+      ]).start();
+    });
+  }, [onNewTransaction]);
+
+  const balances = latestBalances || dashboardData?.balances || FALLBACK_BALANCES;
+  const apiTransactions = dashboardData?.transactions || FALLBACK_TRANSACTIONS;
+  const transactions = liveTransactions.length > 0
+    ? [...liveTransactions, ...apiTransactions.filter((t) => !liveTransactions.some((l) => l._id === t._id))].slice(0, 10)
+    : apiTransactions;
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -123,7 +156,20 @@ export default function HomeScreen() {
               <Text className="text-foreground text-base font-semibold">{userName}</Text>
             </View>
           </View>
-          <View className="flex-row gap-2">
+          <View className="flex-row gap-2 items-center">
+            {/* Live connection indicator */}
+            <View style={{ flexDirection: "row", alignItems: "center", marginRight: 4 }}>
+              <View style={{
+                width: 7,
+                height: 7,
+                borderRadius: 4,
+                backgroundColor: wsStatus === "connected" ? "#22C55E" : wsStatus === "connecting" ? "#F59E0B" : "#6B7280",
+                marginRight: 4,
+              }} />
+              <Text style={{ fontSize: 9, color: colors.muted, fontWeight: "500" }}>
+                {wsStatus === "connected" ? "LIVE" : wsStatus === "connecting" ? "..." : ""}
+              </Text>
+            </View>
             <Pressable
               onPress={() => router.push("/notifications" as any)}
               style={({ pressed }) => [
@@ -144,7 +190,11 @@ export default function HomeScreen() {
         </View>
 
         {/* Balance Card */}
-        <View className="mx-5 mt-4 rounded-2xl p-5 overflow-hidden" style={{ backgroundColor: "#001A3D" }}>
+        <Animated.View className="mx-5 mt-4 rounded-2xl p-5 overflow-hidden" style={{
+          backgroundColor: "#001A3D",
+          borderWidth: 1.5,
+          borderColor: flashAnim.interpolate({ inputRange: [0, 1], outputRange: ["rgba(201,169,98,0)", "rgba(201,169,98,0.6)"] }),
+        }}>
           <View className="flex-row items-center justify-between mb-1">
             <Text style={{ color: "#9CA3AF", fontSize: 13 }}>Total Assets</Text>
             <View className="flex-row items-center gap-1 px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(201, 169, 98, 0.15)" }}>
@@ -185,7 +235,7 @@ export default function HomeScreen() {
               );
             })}
           </View>
-        </View>
+        </Animated.View>
 
         {/* Quick Actions */}
         <View className="mx-5 mt-6">

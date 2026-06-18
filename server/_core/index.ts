@@ -8,6 +8,8 @@ import { registerStorageProxy } from "./storageProxy";
 import { registerReceiptRoutes } from "../receipt-routes";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { initWebSocket, getConnectedCount } from "../websocket";
+import { registerWSRoutes } from "../ws-routes";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -59,10 +61,13 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerReceiptRoutes(app);
+  registerWSRoutes(app);
 
   app.get("/api/health", (_req, res) => {
-    res.json({ ok: true, timestamp: Date.now() });
+    res.json({ ok: true, timestamp: Date.now(), wsClients: getConnectedCount() });
   });
+
+  initWebSocket(server);
 
   app.use(
     "/api/trpc",
