@@ -10,11 +10,12 @@ import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import * as BankingAPI from "@/lib/banking-api";
 import * as BiometricAuth from "@/lib/biometric-auth";
 import * as NotificationService from "@/lib/notifications";
 import * as Haptics from "expo-haptics";
+import { useRealtimeContext } from "@/lib/realtime-context";
 
 const TRANSFER_TYPES = [
   { id: "internal", title: "Internal", subtitle: "Between your accounts", icon: "arrow.left.arrow.right" as const },
@@ -39,15 +40,31 @@ const RECENT_TRANSFERS = [
 export default function TransfersScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { status: wsStatus, latestTransferStatus, onTransferStatus } = useRealtimeContext();
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusUpdates, setStatusUpdates] = useState<Array<{ reference: string; status: string; message?: string }>>([]);
 
   // Transfer form state
   const [amount, setAmount] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [recipientAccount, setRecipientAccount] = useState("");
   const [description, setDescription] = useState("");
+
+  useEffect(() => {
+    return onTransferStatus((update) => {
+      setStatusUpdates((prev) => {
+        const filtered = prev.filter((s) => s.reference !== update.reference);
+        return [{ reference: update.reference, status: update.status, message: update.message }, ...filtered].slice(0, 5);
+      });
+      if (update.status === "completed") {
+        Alert.alert("Transfer Completed", `${update.reference} has been completed successfully.`);
+      } else if (update.status === "failed") {
+        Alert.alert("Transfer Failed", update.message || `${update.reference} failed.`);
+      }
+    });
+  }, [onTransferStatus]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -154,6 +171,31 @@ export default function TransfersScreen() {
           <Text className="text-foreground text-2xl font-bold">Transfers</Text>
           <Text className="text-muted text-sm mt-1">Send money securely</Text>
         </View>
+
+        {/* Live Status Updates */}
+        {statusUpdates.length > 0 && (
+          <View className="mx-5 mt-3">
+            {statusUpdates.map((update) => {
+              const isComplete = update.status === "completed";
+              const isFailed = update.status === "failed";
+              const bg = isComplete ? "rgba(34,197,94,0.08)" : isFailed ? "rgba(239,68,68,0.08)" : "rgba(245,158,11,0.08)";
+              const borderClr = isComplete ? "rgba(34,197,94,0.2)" : isFailed ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)";
+              const textClr = isComplete ? "#22C55E" : isFailed ? "#EF4444" : "#F59E0B";
+              return (
+                <View
+                  key={update.reference}
+                  style={{ backgroundColor: bg, borderWidth: 1, borderColor: borderClr, borderRadius: 10, padding: 10, marginBottom: 6, flexDirection: "row", alignItems: "center" }}
+                >
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: textClr, marginRight: 8 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 11, fontWeight: "600", color: textClr }}>{update.reference} — {update.status.toUpperCase()}</Text>
+                    {update.message && <Text style={{ fontSize: 10, color: colors.muted, marginTop: 2 }}>{update.message}</Text>}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
 
         {/* Transfer Types */}
         <View className="mx-5 mt-4">

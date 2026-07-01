@@ -9,6 +9,7 @@ import { Platform } from "react-native";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { BankAuthProvider } from "@/lib/auth-context";
+import { RealtimeProvider } from "@/lib/realtime-context";
 import {
   SafeAreaFrameContext,
   SafeAreaInsetsContext,
@@ -82,14 +83,16 @@ export default function RootLayout() {
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <BankAuthProvider>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="oauth/callback" />
-              <Stack.Screen name="signin" options={{ presentation: "fullScreenModal" }} />
-              <Stack.Screen name="signup" options={{ presentation: "fullScreenModal" }} />
-              <Stack.Screen name="receipt" options={{ presentation: "modal" }} />
-            </Stack>
-            <StatusBar style="auto" />
+            <RealtimeProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="oauth/callback" />
+                <Stack.Screen name="signin" options={{ presentation: "fullScreenModal" }} />
+                <Stack.Screen name="signup" options={{ presentation: "fullScreenModal" }} />
+                <Stack.Screen name="receipt" options={{ presentation: "modal" }} />
+              </Stack>
+              <StatusBar style="auto" />
+            </RealtimeProvider>
           </BankAuthProvider>
         </QueryClientProvider>
       </trpc.Provider>
