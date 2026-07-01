@@ -116,6 +116,17 @@ function textRight(page: PDFPage, text: string, rightEdge: number, y: number, fo
   page.drawText(text, { x: rightEdge - w, y, size, font, color });
 }
 
+// Letter-spaced (tracked) wordmark, drawn from a right edge.
+function trackedRight(page: PDFPage, text: string, rightEdge: number, y: number, font: PDFFont, size: number, tracking: number, color = NAVY) {
+  const chars = text.split("");
+  const totalW = chars.reduce((acc, c) => acc + font.widthOfTextAtSize(c, size) + tracking, 0) - tracking;
+  let x = rightEdge - totalW;
+  for (const c of chars) {
+    page.drawText(c, { x, y, size, font, color });
+    x += font.widthOfTextAtSize(c, size) + tracking;
+  }
+}
+
 function drawDottedRule(page: PDFPage, y: number, x1 = ML, x2 = PW - MR) {
   let x = x1;
   while (x < x2) {
@@ -171,44 +182,48 @@ function drawWatermark(page: PDFPage, ctx: Ctx) {
 }
 
 // ─── Page 1 Header ──────────────────────────────────────────────────────────
+// Clean white masthead so the navy logo is fully visible (like a real bank).
 function drawPage1Header(page: PDFPage, ctx: Ctx): number {
   const { f, b, logo, data } = ctx;
 
   // Top gold accent bar
-  page.drawRectangle({ x: 0, y: PH - 5, width: PW, height: 5, color: GOLD });
+  page.drawRectangle({ x: 0, y: PH - 4, width: PW, height: 4, color: GOLD });
 
-  // Navy header band
-  const bandH = 40;
-  const bandY = PH - 5 - bandH;
-  page.drawRectangle({ x: 0, y: bandY, width: PW, height: bandH, color: NAVY_DEEP });
-
-  // Logo in header band
+  // Logo (navy) on white, top-left
+  const logoTop = PH - 20;
+  let logoBottom = logoTop;
   if (logo) {
-    const lw = 125;
+    const lw = 168;
     const lh = lw * (logo.h / logo.w);
-    page.drawImage(logo.img, { x: ML + 2, y: bandY + (bandH - lh) / 2, width: lw, height: lh });
+    logoBottom = logoTop - lh;
+    page.drawImage(logo.img, { x: ML, y: logoBottom, width: lw, height: lh });
   } else {
-    page.drawText("ALDWYCH EUROPEAN CAPITAL", { x: ML + 4, y: bandY + 13, size: 12, font: b, color: WHITE });
+    logoBottom = logoTop - 30;
+    page.drawText("ALDWYCH EUROPEAN CAPITAL", { x: ML, y: logoTop - 20, size: 15, font: b, color: NAVY });
   }
 
-  // Product title (right side of band)
-  const prod = "Private Banking";
-  textRight(page, prod, PW - MR, bandY + 13, b, 17, GOLD);
+  // Product wordmark (right), letter-spaced navy caps + gold underline
+  const wordmark = "PRIVATE BANKING";
+  const wmY = logoTop - 20;
+  trackedRight(page, wordmark, PW - MR, wmY, b, 13, 2.2, NAVY);
+  const wmW = wordmark.split("").reduce((a, c) => a + b.widthOfTextAtSize(c, 13) + 2.2, 0) - 2.2;
+  page.drawRectangle({ x: PW - MR - wmW, y: wmY - 6, width: wmW, height: 1.6, color: GOLD });
 
-  // Thin gold line under band
-  page.drawRectangle({ x: 0, y: bandY - 2, width: PW, height: 2, color: GOLD });
+  // Full-width gold divider under the masthead
+  const dividerY = logoBottom - 12;
+  page.drawRectangle({ x: ML, y: dividerY, width: CW, height: 1.4, color: GOLD });
 
   // ── Left column: branch address + customer address ──
-  let ly = bandY - 20;
+  let ly = dividerY - 18;
 
-  page.drawText("Your office address:", { x: ML, y: ly, size: 7, font: b, color: TEXT_DARK });
-  ly -= 11;
+  page.drawText("Your office address:", { x: ML, y: ly, size: 7.5, font: b, color: TEXT_DARK });
+  ly -= 12;
   page.drawText(data.bankInfo.branchAddress || "Aldwych House, 71-91 Aldwych", { x: ML, y: ly, size: 8.5, font: f, color: TEXT_BODY });
   ly -= 11;
   page.drawText("London WC2B 4HN, United Kingdom", { x: ML, y: ly, size: 8.5, font: f, color: TEXT_BODY });
 
-  // Customer mailing block (indented slightly)
-  ly -= 30;
+  // Customer mailing block (indented)
+  ly -= 26;
   const cx = ML + 12;
   page.drawText(data.accountHolder.name.toUpperCase(), { x: cx, y: ly, size: 9.5, font: b, color: TEXT_DARK });
   if (data.accountHolder.addressLine1) {
@@ -224,41 +239,31 @@ function drawPage1Header(page: PDFPage, ctx: Ctx): number {
     page.drawText(data.accountHolder.addressLine3.toUpperCase(), { x: cx, y: ly, size: 9, font: f, color: TEXT_BODY });
   }
 
-  // ── Right column: bank info block (aligned right) ──
-  const rx = PW - MR - 170;
-  let ry = bandY - 20;
+  // ── Right column: bank info block ──
+  const rx = PW - MR - 172;
+  let ry = dividerY - 18;
 
-  const drawInfoLabel = (label: string) => {
-    page.drawText(label, { x: rx, y: ry, size: 7.5, font: b, color: TEXT_DARK });
-    ry -= 11;
-  };
-  const drawInfoValue = (val: string) => {
-    page.drawText(val, { x: rx, y: ry, size: 8.5, font: f, color: TEXT_BODY });
-    ry -= 11;
-  };
+  const label = (t: string) => { page.drawText(t, { x: rx, y: ry, size: 7.5, font: b, color: TEXT_DARK }); ry -= 11; };
+  const value = (t: string) => { page.drawText(t, { x: rx, y: ry, size: 8.5, font: f, color: TEXT_BODY }); ry -= 11; };
 
-  drawInfoLabel("Your Office");
-  drawInfoValue(data.bankInfo.branchName || "PRIVATE BANKING OFFICE");
-  if (data.bankInfo.transitNumber) {
-    drawInfoValue(`Account ref: ${data.bankInfo.transitNumber}`);
-  }
-  ry -= 6;
+  label("Your Office");
+  value(data.bankInfo.branchName || "PRIVATE BANKING OFFICE");
+  if (data.bankInfo.transitNumber) value(`Account ref: ${data.bankInfo.transitNumber}`);
+  ry -= 7;
 
-  drawInfoLabel("For questions about your");
-  page.drawText("statement call", { x: rx, y: ry, size: 7.5, font: b, color: TEXT_DARK });
-  ry -= 11;
-  drawInfoValue(data.bankInfo.phone || "+44 (0)20 7946 0000");
-  ry -= 6;
+  label("For questions about your");
+  page.drawText("statement call", { x: rx, y: ry, size: 7.5, font: b, color: TEXT_DARK }); ry -= 11;
+  value(data.bankInfo.phone || "+44 (0)20 7946 0000");
+  ry -= 7;
 
-  drawInfoLabel("Online Banking");
-  drawInfoValue(data.bankInfo.website || "www.aldwycheuropeancapital.com");
-  ry -= 6;
+  label("Online Banking");
+  value(data.bankInfo.website || "www.aldwycheuropeancapital.com");
+  ry -= 7;
 
-  drawInfoLabel("Your Plan");
-  drawInfoValue(data.bankInfo.plan || "Private Banking Premier");
+  label("Your Plan");
+  value(data.bankInfo.plan || "Private Banking Premier");
 
-  // Return the Y position below both columns
-  return Math.min(ly, ry) - 10;
+  return Math.min(ly, ry) - 12;
 }
 
 // ─── Continuation Header (pages 2+) ────────────────────────────────────────
@@ -269,25 +274,21 @@ function drawContinuationHeader(page: PDFPage, ctx: Ctx): number {
   page.drawRectangle({ x: 0, y: PH - 4, width: PW, height: 4, color: GOLD });
 
   // Slim navy band
-  const bandH = 28;
+  const bandH = 30;
   const bandY = PH - 4 - bandH;
   page.drawRectangle({ x: 0, y: bandY, width: PW, height: bandH, color: NAVY_DEEP });
 
-  // Bank name + statement info in the band
-  page.drawText("Your Private Banking Statement", { x: ML + 4, y: bandY + 9, size: 9, font: b, color: WHITE });
-  const holderLine = `${data.accountHolder.name}`;
-  textRight(page, holderLine, PW - MR, bandY + 15, f, 8, GOLD_LIGHT);
-  const periodLine = `For the period ending ${fmtDateLong(data.period.endDate)}`;
-  textRight(page, periodLine, PW - MR, bandY + 4, f, 7.5, GOLD_LIGHT);
+  // Left: statement title (single line, vertically centred)
+  page.drawText("Your Private Banking Statement", { x: ML, y: bandY + 11, size: 9.5, font: b, color: WHITE });
 
-  // Thin gold accent
+  // Right: holder + period stacked (two lines, clear of the left title)
+  textRight(page, data.accountHolder.name, PW - MR, bandY + 17, f, 8, GOLD_LIGHT);
+  textRight(page, `Period ending ${fmtDateLong(data.period.endDate)}`, PW - MR, bandY + 6, f, 7.5, GOLD_LIGHT);
+
+  // Thin gold accent under band
   page.drawRectangle({ x: 0, y: bandY - 1.5, width: PW, height: 1.5, color: GOLD });
 
-  // Product title (right)
-  const prod = "Private Banking";
-  textRight(page, prod, PW - MR, bandY + 9, b, 10, GOLD);
-
-  return bandY - 18;
+  return bandY - 22;
 }
 
 // ─── Statement Title + Summary ──────────────────────────────────────────────
@@ -312,55 +313,59 @@ function drawTitleAndSummary(page: PDFPage, ctx: Ctx, startY: number): number {
   //   Col 2: Total deducted   (right-aligned at RE2)
   //   Col 3: Total added      (right-aligned at RE3)
   //   Col 4: Closing balance  (right-aligned at RE4)
-  const RE1 = ML + 220;
-  const RE2 = ML + 318;
-  const RE3 = ML + 408;
+  const RE1 = ML + 218;
+  const RE2 = ML + 322;
+  const RE3 = ML + 414;
   const RE4 = PW - MR;
 
-  // Math operator positions (centered between columns)
-  const opY = y + 4;
-  textRight(page, "-", RE1 + 14, opY, b, 11, TEXT_BODY);
-  textRight(page, "+", RE2 + 14, opY, b, 11, TEXT_BODY);
-  textRight(page, "=", RE3 + 14, opY, b, 11, TEXT_BODY);
-
-  // Column headers (two lines each, right-aligned)
+  // Column headers — clean two-line grid (no operators here, no overlap)
   const hdrSize = 7.5;
-  const hdr1Y = y + 10;
-  const hdr2Y = y;
+  const hdr1Y = y + 10;   // top line
+  const hdr2Y = y;        // bottom line
 
   page.drawText("Account", { x: ML, y: hdr2Y, size: hdrSize, font: b, color: TEXT_DARK });
 
   textRight(page, "Opening", RE1, hdr1Y, f, hdrSize, TEXT_DARK);
   textRight(page, "balance ($)", RE1, hdr2Y, f, hdrSize, TEXT_DARK);
 
-  textRight(page, "Total", RE2, hdr1Y, f, hdrSize, TEXT_DARK);
-  textRight(page, "amounts", RE2, hdr1Y - 9, f, hdrSize, TEXT_DARK);
-
-  // "deducted ($)" sits at hdr2Y for col 2
+  textRight(page, "Total amounts", RE2, hdr1Y, f, hdrSize, TEXT_DARK);
   textRight(page, "deducted ($)", RE2, hdr2Y, f, hdrSize, TEXT_DARK);
 
-  textRight(page, "Total", RE3, hdr1Y, f, hdrSize, TEXT_DARK);
-  textRight(page, "amounts", RE3, hdr1Y - 9, f, hdrSize, TEXT_DARK);
+  textRight(page, "Total amounts", RE3, hdr1Y, f, hdrSize, TEXT_DARK);
   textRight(page, "added ($)", RE3, hdr2Y, f, hdrSize, TEXT_DARK);
 
   textRight(page, "Closing", RE4, hdr1Y, f, hdrSize, TEXT_DARK);
-  textRight(page, "balance ($) on", RE4, hdr2Y, f, hdrSize, TEXT_DARK);
+  textRight(page, "balance ($)", RE4, hdr2Y, f, hdrSize, TEXT_DARK);
 
   y -= 8;
 
   // Bold rule under summary header
   page.drawLine({ start: { x: ML, y }, end: { x: PW - MR, y }, thickness: 1.2, color: BLACK });
-  y -= 16;
+  y -= 18;
 
   // Account data row
   page.drawText(data.account.name, { x: ML, y, size: 8.5, font: f, color: TEXT_BODY });
   page.drawText(`# ${data.account.number}`, { x: ML, y: y - 12, size: 8.5, font: f, color: TEXT_BODY });
 
   const valY = y - 4;
-  textRight(page, fmtSigned(data.summary.openingBalance, ccy), RE1, valY, f, 9, TEXT_BODY);
-  textRight(page, fmtAbs(data.summary.totalDebits, ccy), RE2, valY, f, 9, TEXT_BODY);
-  textRight(page, fmtAbs(data.summary.totalCredits, ccy), RE3, valY, f, 9, TEXT_BODY);
-  textRight(page, fmtSigned(data.summary.closingBalance, ccy), RE4, valY, b, 9, data.summary.closingBalance < 0 ? RED_NEG : TEXT_DARK);
+  const openStr = fmtSigned(data.summary.openingBalance, ccy);
+  const dedStr  = fmtAbs(data.summary.totalDebits, ccy);
+  const addStr  = fmtAbs(data.summary.totalCredits, ccy);
+  const closeStr = fmtSigned(data.summary.closingBalance, ccy);
+
+  textRight(page, openStr, RE1, valY, f, 9, TEXT_BODY);
+  textRight(page, dedStr, RE2, valY, f, 9, TEXT_BODY);
+  textRight(page, addStr, RE3, valY, f, 9, TEXT_BODY);
+  textRight(page, closeStr, RE4, valY, b, 9, data.summary.closingBalance < 0 ? RED_NEG : TEXT_DARK);
+
+  // Operators sit in the clear gaps between the numbers, on the data baseline
+  const gapMid = (rightEdgePrev: number, rightEdgeNext: number, nextStr: string) => {
+    const nextStart = rightEdgeNext - f.widthOfTextAtSize(nextStr, 9);
+    return (rightEdgePrev + nextStart) / 2;
+  };
+  page.drawText("-", { x: gapMid(RE1, RE2, dedStr) - 2, y: valY, size: 11, font: b, color: TEXT_MUTED });
+  page.drawText("+", { x: gapMid(RE2, RE3, addStr) - 3, y: valY, size: 11, font: b, color: TEXT_MUTED });
+  page.drawText("=", { x: gapMid(RE3, RE4, closeStr) - 3, y: valY, size: 11, font: b, color: TEXT_MUTED });
 
   y -= 32;
   return y;
@@ -470,9 +475,9 @@ function drawFooter(page: PDFPage, ctx: Ctx, pageNum: number, totalPages: number
   // Page label
   page.drawText(`Page ${pageNum} of ${totalPages}`, { x: ML, y: 26, size: 8, font: f, color: TEXT_MUTED });
 
-  // Footer branded bar (right-aligned)
-  const barW = 210;
-  const barH = 26;
+  // Footer branded bar (right-aligned), white text (visible on navy)
+  const barW = 232;
+  const barH = 28;
   const barX = PW - barW;
   const barY = 12;
 
@@ -482,19 +487,12 @@ function drawFooter(page: PDFPage, ctx: Ctx, pageNum: number, totalPages: number
   // Navy bar
   page.drawRectangle({ x: barX, y: barY, width: barW, height: barH, color: NAVY_DEEP });
 
-  // Logo in footer bar (if available) or text
-  if (logo) {
-    const lw = 100;
-    const lh = lw * (logo.h / logo.w);
-    page.drawImage(logo.img, {
-      x: barX + barW - lw - 10,
-      y: barY + (barH - lh) / 2,
-      width: lw,
-      height: lh,
-    });
-  } else {
-    textRight(page, "Aldwych European Capital", PW - MR - 8, barY + 9, b, 8.5, WHITE);
-  }
+  // Bank name (white) + tagline (gold) inside the bar
+  textRight(page, "Aldwych European Capital", PW - MR - 12, barY + 15, b, 9, WHITE);
+  textRight(page, "Private Banking · Est. 1897", PW - MR - 12, barY + 5, f, 6.5, GOLD_LIGHT);
+
+  // Small gold star accent on the left of the bar
+  page.drawText("*", { x: barX + 12, y: barY + 8, size: 14, font: b, color: GOLD });
 
   // Bottom gold line
   page.drawRectangle({ x: 0, y: 0, width: PW, height: 3, color: GOLD });
