@@ -1,28 +1,38 @@
-import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from "pdf-lib";
-import QRCode from "qrcode";
+import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb, degrees } from "pdf-lib";
 import fs from "fs/promises";
 import path from "path";
 import crypto from "crypto";
 
-const NAVY = rgb(0.0509, 0.1411, 0.2509);
-const NAVY_DEEP = rgb(0.031, 0.094, 0.188);
-const GOLD = rgb(0.7882, 0.6627, 0.3843);
-const TEXT = rgb(0.2, 0.2, 0.2);
-const MUTED = rgb(0.45, 0.45, 0.45);
-const LIGHT_GRAY = rgb(0.92, 0.92, 0.92);
-const TABLE_HEADER_BG = rgb(0.96, 0.96, 0.96);
-const WHITE = rgb(1, 1, 1);
-const BLACK = rgb(0, 0, 0);
-const RED = rgb(0.72, 0.2, 0.2);
-const GREEN_DARK = rgb(0.063, 0.55, 0.35);
+// ─── Brand Palette ──────────────────────────────────────────────────────────
+const NAVY       = rgb(0.051, 0.141, 0.251);
+const NAVY_DEEP  = rgb(0.031, 0.094, 0.188);
+const GOLD       = rgb(0.788, 0.663, 0.384);
+const GOLD_LIGHT = rgb(0.91, 0.84, 0.68);
+const BLACK      = rgb(0, 0, 0);
+const WHITE      = rgb(1, 1, 1);
+const TEXT_DARK   = rgb(0.15, 0.15, 0.15);
+const TEXT_BODY   = rgb(0.25, 0.25, 0.25);
+const TEXT_MUTED  = rgb(0.50, 0.50, 0.50);
+const RULE_LIGHT  = rgb(0.82, 0.82, 0.82);
+const RULE_DOTS   = rgb(0.78, 0.78, 0.78);
+const RED_NEG     = rgb(0.72, 0.15, 0.15);
 
-const PAGE_W = 595.28;
-const PAGE_H = 841.89;
-const MARGIN_LEFT = 48;
-const MARGIN_RIGHT = 48;
-const CONTENT_W = PAGE_W - MARGIN_LEFT - MARGIN_RIGHT;
-const HEADER_HEIGHT = 130;
-const FOOTER_HEIGHT = 60;
+// ─── Page Geometry ──────────────────────────────────────────────────────────
+const PW = 595.28;       // A4 width
+const PH = 841.89;       // A4 height
+const ML = 50;            // margin left
+const MR = 50;            // margin right
+const CW = PW - ML - MR; // content width
+const FOOTER_Y = 52;     // bottom reserved
+
+// ─── Column Grid (transaction table — fixed positions, right-edge anchored) ─
+const TX_DATE_X    = ML;
+const TX_DATE_W    = 52;
+const TX_DESC_X    = ML + 56;
+const TX_DESC_W    = 190;
+const TX_DEBIT_RE  = ML + 358;   // right edge of debit column
+const TX_CREDIT_RE = ML + 448;   // right edge of credit column
+const TX_BAL_RE    = PW - MR;    // right edge of balance column
 
 export interface StatementTransaction {
   date: string;
@@ -68,943 +78,546 @@ export interface StatementData {
   };
 }
 
-const fmtMoney = (n: number, ccy = "USD") =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: ccy,
-    minimumFractionDigits: 2,
-  }).format(Math.abs(n));
-
-const fmtMoneyRaw = (n: number, ccy = "USD") => {
-  const formatted = fmtMoney(n, ccy);
-  return n < 0 ? `-${formatted}` : formatted;
+// ─── Helpers ────────────────────────────────────────────────────────────────
+const fmtAbs = (n: number, ccy = "USD") =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: ccy, minimumFractionDigits: 2 }).format(Math.abs(n));
+const fmtSigned = (n: number, ccy = "USD") => {
+  const s = fmtAbs(n, ccy);
+  return n < 0 ? `-${s}` : s;
 };
-
-const fmtDate = (d: string) => {
-  const date = new Date(d);
-  return date.toLocaleDateString("en-US", { month: "short", day: "2-digit" });
+const fmtDateShort = (d: string) => {
+  const dt = new Date(d);
+  const m = dt.toLocaleDateString("en-US", { month: "short" });
+  const day = String(dt.getDate()).padStart(2, "0");
+  return `${m} ${day}`;
 };
+const fmtDateLong = (d: string) =>
+  new Date(d).toLocaleDateString("en-US", { month: "long", day: "2-digit", year: "numeric" });
 
-const fmtDateLong = (d: string) => {
-  const date = new Date(d);
-  return date.toLocaleDateString("en-US", {
-    month: "long",
-    day: "2-digit",
-    year: "numeric",
-  });
-};
-
-function fitText(text: string, font: PDFFont, size: number, maxWidth: number): string {
-  if (font.widthOfTextAtSize(text, size) <= maxWidth) return text;
-  let t = text;
-  while (t.length > 1 && font.widthOfTextAtSize(`${t}...`, size) > maxWidth)
-    t = t.slice(0, -1);
-  return `${t.trimEnd()}...`;
-}
-
-function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
+function wrapText(text: string, font: PDFFont, size: number, maxW: number): string[] {
   const words = text.split(/\s+/).filter(Boolean);
-  const out: string[] = [];
-  let line = "";
+  const lines: string[] = [];
+  let cur = "";
   for (const w of words) {
-    const next = line ? `${line} ${w}` : w;
-    if (font.widthOfTextAtSize(next, size) > maxWidth) {
-      if (line) out.push(line);
-      line = w;
+    const test = cur ? `${cur} ${w}` : w;
+    if (font.widthOfTextAtSize(test, size) > maxW) {
+      if (cur) lines.push(cur);
+      cur = w;
     } else {
-      line = next;
+      cur = test;
     }
   }
-  if (line) out.push(line);
-  return out;
+  if (cur) lines.push(cur);
+  return lines.length ? lines : [""];
+}
+
+function textRight(page: PDFPage, text: string, rightEdge: number, y: number, font: PDFFont, size: number, color = TEXT_BODY) {
+  const w = font.widthOfTextAtSize(text, size);
+  page.drawText(text, { x: rightEdge - w, y, size, font, color });
+}
+
+function drawDottedRule(page: PDFPage, y: number, x1 = ML, x2 = PW - MR) {
+  let x = x1;
+  while (x < x2) {
+    const end = Math.min(x + 1.2, x2);
+    page.drawLine({ start: { x, y }, end: { x: end, y }, thickness: 0.35, color: RULE_DOTS });
+    x = end + 2.2;
+  }
+}
+
+function drawSolidRule(page: PDFPage, y: number, thickness = 0.5, color = RULE_LIGHT) {
+  page.drawLine({ start: { x: ML, y }, end: { x: PW - MR, y }, thickness, color });
 }
 
 async function loadLogoBytes(): Promise<Uint8Array | null> {
-  const paths = [
+  for (const p of [
     path.join(process.cwd(), "assets", "images", "logo-full.png"),
     path.resolve(__dirname, "..", "assets", "images", "logo-full.png"),
-  ];
-  for (const p of paths) {
-    try {
-      return await fs.readFile(p);
-    } catch {
-      continue;
-    }
+  ]) {
+    try { return await fs.readFile(p); } catch { continue; }
   }
   return null;
 }
 
-function generateDocumentHash(data: StatementData): string {
-  const payload = JSON.stringify({
-    holder: data.accountHolder.name,
-    account: data.account.number,
-    period: data.period.label,
-    closing: data.summary.closingBalance,
-  });
-  return crypto.createHash("sha256").update(payload).digest("hex").slice(0, 16).toUpperCase();
+function genHash(data: StatementData): string {
+  return crypto.createHash("sha256").update(JSON.stringify({
+    h: data.accountHolder.name, a: data.account.number,
+    p: data.period.label, c: data.summary.closingBalance,
+  })).digest("hex").slice(0, 16).toUpperCase();
 }
 
-// Column layout for transaction table (BMO-style)
-const COL = {
-  date: { x: MARGIN_LEFT, w: 55 },
-  desc: { x: MARGIN_LEFT + 55, w: 205 },
-  debit: { x: MARGIN_LEFT + 260, w: 100 },
-  credit: { x: MARGIN_LEFT + 360, w: 90 },
-  balance: { x: MARGIN_LEFT + 450, w: CONTENT_W - 450 + MARGIN_LEFT },
-};
-
-interface PageCtx {
+interface Ctx {
   pdf: PDFDocument;
-  font: PDFFont;
-  bold: PDFFont;
-  logo: { width: number; height: number; embed: PDFImage } | null;
+  f: PDFFont;     // regular
+  b: PDFFont;     // bold
+  logo: { w: number; h: number; img: PDFImage } | null;
   data: StatementData;
-  docHash: string;
-  generatedAt: Date;
+  hash: string;
+  now: Date;
 }
 
-function drawGoldTopBar(page: PDFPage) {
-  page.drawRectangle({
-    x: 0,
-    y: PAGE_H - 4,
-    width: PAGE_W,
-    height: 4,
-    color: GOLD,
+// ─── Logo Watermark ─────────────────────────────────────────────────────────
+function drawWatermark(page: PDFPage, ctx: Ctx) {
+  if (!ctx.logo) return;
+  const wmW = 320;
+  const wmH = wmW * (ctx.logo.h / ctx.logo.w);
+  page.drawImage(ctx.logo.img, {
+    x: PW / 2 - wmW / 2,
+    y: PH / 2 - wmH / 2 - 30,
+    width: wmW,
+    height: wmH,
+    opacity: 0.04,
   });
 }
 
-function drawHeader(page: PDFPage, ctx: PageCtx, pageNum: number, pageCount: number) {
-  const { font, bold, logo, data } = ctx;
+// ─── Page 1 Header ──────────────────────────────────────────────────────────
+function drawPage1Header(page: PDFPage, ctx: Ctx): number {
+  const { f, b, logo, data } = ctx;
 
-  drawGoldTopBar(page);
+  // Top gold accent bar
+  page.drawRectangle({ x: 0, y: PH - 5, width: PW, height: 5, color: GOLD });
 
   // Navy header band
-  page.drawRectangle({
-    x: 0,
-    y: PAGE_H - 4 - 36,
-    width: PAGE_W,
-    height: 36,
-    color: NAVY_DEEP,
-  });
+  const bandH = 40;
+  const bandY = PH - 5 - bandH;
+  page.drawRectangle({ x: 0, y: bandY, width: PW, height: bandH, color: NAVY_DEEP });
 
-  // Product title in header band (right-aligned, like BMO's "Everyday Banking")
-  const productTitle = "Private Banking";
-  const ptW = bold.widthOfTextAtSize(productTitle, 16);
-  page.drawText(productTitle, {
-    x: PAGE_W - MARGIN_RIGHT - ptW,
-    y: PAGE_H - 30,
-    size: 16,
-    font: bold,
-    color: GOLD,
-  });
-
-  // Logo or bank name (left side of header band)
+  // Logo in header band
   if (logo) {
-    const sw = 120;
-    const sh = sw * (logo.height / logo.width);
-    page.drawImage(logo.embed, {
-      x: MARGIN_LEFT,
-      y: PAGE_H - 4 - 36 + (36 - sh) / 2,
-      width: sw,
-      height: sh,
-    });
+    const lw = 125;
+    const lh = lw * (logo.h / logo.w);
+    page.drawImage(logo.img, { x: ML + 2, y: bandY + (bandH - lh) / 2, width: lw, height: lh });
   } else {
-    page.drawText("ALDWYCH EUROPEAN CAPITAL", {
-      x: MARGIN_LEFT + 4,
-      y: PAGE_H - 28,
-      size: 11,
-      font: bold,
-      color: WHITE,
-    });
+    page.drawText("ALDWYCH EUROPEAN CAPITAL", { x: ML + 4, y: bandY + 13, size: 12, font: b, color: WHITE });
   }
 
-  // Thin gold line under header band
-  page.drawRectangle({
-    x: 0,
-    y: PAGE_H - 4 - 36 - 1.5,
-    width: PAGE_W,
-    height: 1.5,
-    color: GOLD,
-  });
+  // Product title (right side of band)
+  const prod = "Private Banking";
+  textRight(page, prod, PW - MR, bandY + 13, b, 17, GOLD);
 
-  const infoStartY = PAGE_H - 58;
+  // Thin gold line under band
+  page.drawRectangle({ x: 0, y: bandY - 2, width: PW, height: 2, color: GOLD });
 
-  // Bank branch address (top-left, below header)
-  page.drawText("Your office address:", {
-    x: MARGIN_LEFT,
-    y: infoStartY,
-    size: 7,
-    font: bold,
-    color: TEXT,
-  });
-  const branchAddr = data.bankInfo.branchAddress || "Aldwych House, 71-91 Aldwych";
-  page.drawText(branchAddr, {
-    x: MARGIN_LEFT,
-    y: infoStartY - 11,
-    size: 8,
-    font,
-    color: TEXT,
-  });
-  page.drawText("London WC2B 4HN, United Kingdom", {
-    x: MARGIN_LEFT,
-    y: infoStartY - 22,
-    size: 8,
-    font,
-    color: TEXT,
-  });
+  // ── Left column: branch address + customer address ──
+  let ly = bandY - 20;
 
-  // Customer mailing address (left, lower)
-  const addrY = infoStartY - 52;
-  page.drawText(data.accountHolder.name.toUpperCase(), {
-    x: MARGIN_LEFT + 10,
-    y: addrY,
-    size: 9,
-    font: bold,
-    color: TEXT,
-  });
+  page.drawText("Your office address:", { x: ML, y: ly, size: 7, font: b, color: TEXT_DARK });
+  ly -= 11;
+  page.drawText(data.bankInfo.branchAddress || "Aldwych House, 71-91 Aldwych", { x: ML, y: ly, size: 8.5, font: f, color: TEXT_BODY });
+  ly -= 11;
+  page.drawText("London WC2B 4HN, United Kingdom", { x: ML, y: ly, size: 8.5, font: f, color: TEXT_BODY });
+
+  // Customer mailing block (indented slightly)
+  ly -= 30;
+  const cx = ML + 12;
+  page.drawText(data.accountHolder.name.toUpperCase(), { x: cx, y: ly, size: 9.5, font: b, color: TEXT_DARK });
   if (data.accountHolder.addressLine1) {
-    page.drawText(data.accountHolder.addressLine1.toUpperCase(), {
-      x: MARGIN_LEFT + 10,
-      y: addrY - 13,
-      size: 9,
-      font,
-      color: TEXT,
-    });
+    ly -= 13;
+    page.drawText(data.accountHolder.addressLine1.toUpperCase(), { x: cx, y: ly, size: 9, font: f, color: TEXT_BODY });
   }
   if (data.accountHolder.addressLine2) {
-    page.drawText(data.accountHolder.addressLine2.toUpperCase(), {
-      x: MARGIN_LEFT + 10,
-      y: addrY - 26,
-      size: 9,
-      font,
-      color: TEXT,
-    });
+    ly -= 13;
+    page.drawText(data.accountHolder.addressLine2.toUpperCase(), { x: cx, y: ly, size: 9, font: f, color: TEXT_BODY });
+  }
+  if (data.accountHolder.addressLine3) {
+    ly -= 13;
+    page.drawText(data.accountHolder.addressLine3.toUpperCase(), { x: cx, y: ly, size: 9, font: f, color: TEXT_BODY });
   }
 
-  // Right-side info block (BMO-style: branch info, phone, etc.)
-  const rightX = PAGE_W - MARGIN_RIGHT - 160;
-  let ry = infoStartY;
+  // ── Right column: bank info block (aligned right) ──
+  const rx = PW - MR - 170;
+  let ry = bandY - 20;
 
-  page.drawText("Your Office", {
-    x: rightX,
-    y: ry,
-    size: 7.5,
-    font: bold,
-    color: TEXT,
-  });
-  ry -= 11;
-  page.drawText(data.bankInfo.branchName || "PRIVATE BANKING OFFICE", {
-    x: rightX,
-    y: ry,
-    size: 8,
-    font,
-    color: TEXT,
-  });
-  if (data.bankInfo.transitNumber) {
+  const drawInfoLabel = (label: string) => {
+    page.drawText(label, { x: rx, y: ry, size: 7.5, font: b, color: TEXT_DARK });
     ry -= 11;
-    page.drawText(`Account reference: ${data.bankInfo.transitNumber}`, {
-      x: rightX,
-      y: ry,
-      size: 8,
-      font,
-      color: TEXT,
-    });
+  };
+  const drawInfoValue = (val: string) => {
+    page.drawText(val, { x: rx, y: ry, size: 8.5, font: f, color: TEXT_BODY });
+    ry -= 11;
+  };
+
+  drawInfoLabel("Your Office");
+  drawInfoValue(data.bankInfo.branchName || "PRIVATE BANKING OFFICE");
+  if (data.bankInfo.transitNumber) {
+    drawInfoValue(`Account ref: ${data.bankInfo.transitNumber}`);
   }
+  ry -= 6;
 
-  ry -= 18;
-  page.drawText("For questions about your", {
-    x: rightX,
-    y: ry,
-    size: 7.5,
-    font: bold,
-    color: TEXT,
-  });
-  ry -= 10;
-  page.drawText("statement call", {
-    x: rightX,
-    y: ry,
-    size: 7.5,
-    font: bold,
-    color: TEXT,
-  });
+  drawInfoLabel("For questions about your");
+  page.drawText("statement call", { x: rx, y: ry, size: 7.5, font: b, color: TEXT_DARK });
   ry -= 11;
-  page.drawText(data.bankInfo.phone || "+44 (0)20 7946 0000", {
-    x: rightX,
-    y: ry,
-    size: 8,
-    font,
-    color: TEXT,
-  });
+  drawInfoValue(data.bankInfo.phone || "+44 (0)20 7946 0000");
+  ry -= 6;
 
-  ry -= 16;
-  page.drawText("Online Banking", {
-    x: rightX,
-    y: ry,
-    size: 7.5,
-    font: bold,
-    color: TEXT,
-  });
-  ry -= 11;
-  page.drawText(data.bankInfo.website || "www.aldwycheuropeancapital.com", {
-    x: rightX,
-    y: ry,
-    size: 8,
-    font,
-    color: TEXT,
-  });
+  drawInfoLabel("Online Banking");
+  drawInfoValue(data.bankInfo.website || "www.aldwycheuropeancapital.com");
+  ry -= 6;
 
-  ry -= 16;
-  page.drawText("Your Plan", {
-    x: rightX,
-    y: ry,
-    size: 7.5,
-    font: bold,
-    color: TEXT,
-  });
-  ry -= 11;
-  page.drawText(data.bankInfo.plan || "Private Banking Premier", {
-    x: rightX,
-    y: ry,
-    size: 8,
-    font,
-    color: TEXT,
-  });
+  drawInfoLabel("Your Plan");
+  drawInfoValue(data.bankInfo.plan || "Private Banking Premier");
+
+  // Return the Y position below both columns
+  return Math.min(ly, ry) - 10;
 }
 
-function drawStatementTitle(
-  page: PDFPage,
-  ctx: PageCtx,
-  startY: number
-): number {
-  const { font, bold, data } = ctx;
-  let y = startY;
+// ─── Continuation Header (pages 2+) ────────────────────────────────────────
+function drawContinuationHeader(page: PDFPage, ctx: Ctx): number {
+  const { f, b, logo, data } = ctx;
 
-  // Main title (BMO: "Your Everyday Banking statement")
-  const title = `Your ${data.account.type} Statement`;
-  page.drawText(title, {
-    x: MARGIN_LEFT,
-    y,
-    size: 16,
-    font: bold,
-    color: BLACK,
-  });
-  y -= 18;
+  // Slim top bar
+  page.drawRectangle({ x: 0, y: PH - 4, width: PW, height: 4, color: GOLD });
 
-  // Period subtitle
-  page.drawText(`For the period ending ${fmtDateLong(data.period.endDate)}`, {
-    x: MARGIN_LEFT,
-    y,
-    size: 10,
-    font,
-    color: TEXT,
-  });
-  y -= 28;
+  // Slim navy band
+  const bandH = 28;
+  const bandY = PH - 4 - bandH;
+  page.drawRectangle({ x: 0, y: bandY, width: PW, height: bandH, color: NAVY_DEEP });
 
-  return y;
+  // Bank name + statement info in the band
+  page.drawText("Your Private Banking Statement", { x: ML + 4, y: bandY + 9, size: 9, font: b, color: WHITE });
+  const holderLine = `${data.accountHolder.name}`;
+  textRight(page, holderLine, PW - MR, bandY + 15, f, 8, GOLD_LIGHT);
+  const periodLine = `For the period ending ${fmtDateLong(data.period.endDate)}`;
+  textRight(page, periodLine, PW - MR, bandY + 4, f, 7.5, GOLD_LIGHT);
+
+  // Thin gold accent
+  page.drawRectangle({ x: 0, y: bandY - 1.5, width: PW, height: 1.5, color: GOLD });
+
+  // Product title (right)
+  const prod = "Private Banking";
+  textRight(page, prod, PW - MR, bandY + 9, b, 10, GOLD);
+
+  return bandY - 18;
 }
 
-function drawAccountSummary(
-  page: PDFPage,
-  ctx: PageCtx,
-  startY: number
-): number {
-  const { font, bold, data } = ctx;
+// ─── Statement Title + Summary ──────────────────────────────────────────────
+function drawTitleAndSummary(page: PDFPage, ctx: Ctx, startY: number): number {
+  const { f, b, data } = ctx;
   const ccy = data.account.currency;
   let y = startY;
 
-  // Section heading
-  page.drawText("Summary of your account", {
-    x: MARGIN_LEFT,
-    y,
-    size: 13,
-    font: bold,
-    color: BLACK,
-  });
-  y -= 24;
+  // Title
+  page.drawText(`Your ${data.account.type} Statement`, { x: ML, y, size: 17, font: b, color: BLACK });
+  y -= 18;
+  page.drawText(`For the period ending ${fmtDateLong(data.period.endDate)}`, { x: ML, y, size: 10.5, font: f, color: TEXT_BODY });
+  y -= 30;
 
-  // Summary table header row
-  const colWidths = [160, 90, 90, 90, 70];
-  const colX = [
-    MARGIN_LEFT,
-    MARGIN_LEFT + 160,
-    MARGIN_LEFT + 250,
-    MARGIN_LEFT + 340,
-    MARGIN_LEFT + 430,
-  ];
-  const headerLabels = [
-    ["", ""],
-    ["Opening", "balance ($)"],
-    ["Total amounts", "deducted ($)"],
-    ["Total amounts", "added ($)"],
-    ["Closing", `balance ($)`],
-  ];
-  const mathSymbols = ["", "", "-", "+", "="];
+  // ── Summary of your account ──
+  page.drawText("Summary of your account", { x: ML, y, size: 14, font: b, color: BLACK });
+  y -= 28;
 
-  // Column headers (two-line, right-aligned except first)
-  for (let i = 1; i < headerLabels.length; i++) {
-    const [line1, line2] = headerLabels[i];
-    const w1 = font.widthOfTextAtSize(line1, 7.5);
-    const w2 = font.widthOfTextAtSize(line2, 7.5);
-    const cx = colX[i] + colWidths[i] - 4;
-    page.drawText(line1, {
-      x: cx - w1,
-      y: y + 10,
-      size: 7.5,
-      font,
-      color: TEXT,
-    });
-    page.drawText(line2, {
-      x: cx - w2,
-      y: y,
-      size: 7.5,
-      font,
-      color: TEXT,
-    });
-  }
+  // Summary table — 5 fixed columns with precise positions
+  //   Col 0: Account label    (left-aligned, ML)
+  //   Col 1: Opening balance  (right-aligned at RE1)
+  //   Col 2: Total deducted   (right-aligned at RE2)
+  //   Col 3: Total added      (right-aligned at RE3)
+  //   Col 4: Closing balance  (right-aligned at RE4)
+  const RE1 = ML + 220;
+  const RE2 = ML + 318;
+  const RE3 = ML + 408;
+  const RE4 = PW - MR;
 
-  // Math symbols between columns
-  for (let i = 2; i < mathSymbols.length; i++) {
-    if (mathSymbols[i]) {
-      page.drawText(mathSymbols[i], {
-        x: colX[i] - 8,
-        y: y + 4,
-        size: 10,
-        font: bold,
-        color: TEXT,
-      });
-    }
-  }
+  // Math operator positions (centered between columns)
+  const opY = y + 4;
+  textRight(page, "-", RE1 + 14, opY, b, 11, TEXT_BODY);
+  textRight(page, "+", RE2 + 14, opY, b, 11, TEXT_BODY);
+  textRight(page, "=", RE3 + 14, opY, b, 11, TEXT_BODY);
 
-  // "Account" label
-  page.drawText("Account", {
-    x: MARGIN_LEFT,
-    y: y,
-    size: 7.5,
-    font: bold,
-    color: TEXT,
-  });
+  // Column headers (two lines each, right-aligned)
+  const hdrSize = 7.5;
+  const hdr1Y = y + 10;
+  const hdr2Y = y;
+
+  page.drawText("Account", { x: ML, y: hdr2Y, size: hdrSize, font: b, color: TEXT_DARK });
+
+  textRight(page, "Opening", RE1, hdr1Y, f, hdrSize, TEXT_DARK);
+  textRight(page, "balance ($)", RE1, hdr2Y, f, hdrSize, TEXT_DARK);
+
+  textRight(page, "Total", RE2, hdr1Y, f, hdrSize, TEXT_DARK);
+  textRight(page, "amounts", RE2, hdr1Y - 9, f, hdrSize, TEXT_DARK);
+
+  // "deducted ($)" sits at hdr2Y for col 2
+  textRight(page, "deducted ($)", RE2, hdr2Y, f, hdrSize, TEXT_DARK);
+
+  textRight(page, "Total", RE3, hdr1Y, f, hdrSize, TEXT_DARK);
+  textRight(page, "amounts", RE3, hdr1Y - 9, f, hdrSize, TEXT_DARK);
+  textRight(page, "added ($)", RE3, hdr2Y, f, hdrSize, TEXT_DARK);
+
+  textRight(page, "Closing", RE4, hdr1Y, f, hdrSize, TEXT_DARK);
+  textRight(page, "balance ($) on", RE4, hdr2Y, f, hdrSize, TEXT_DARK);
 
   y -= 8;
 
-  // Divider line under headers
-  page.drawLine({
-    start: { x: MARGIN_LEFT, y },
-    end: { x: PAGE_W - MARGIN_RIGHT, y },
-    thickness: 1,
-    color: BLACK,
-  });
-  y -= 14;
+  // Bold rule under summary header
+  page.drawLine({ start: { x: ML, y }, end: { x: PW - MR, y }, thickness: 1.2, color: BLACK });
+  y -= 16;
 
-  // Account row
-  const accLabel = `${data.account.name}`;
-  const accNum = `# ${data.account.number}`;
-  page.drawText(accLabel, {
-    x: MARGIN_LEFT,
-    y,
-    size: 8.5,
-    font,
-    color: TEXT,
-  });
-  page.drawText(accNum, {
-    x: MARGIN_LEFT,
-    y: y - 12,
-    size: 8.5,
-    font,
-    color: TEXT,
-  });
+  // Account data row
+  page.drawText(data.account.name, { x: ML, y, size: 8.5, font: f, color: TEXT_BODY });
+  page.drawText(`# ${data.account.number}`, { x: ML, y: y - 12, size: 8.5, font: f, color: TEXT_BODY });
 
-  const summaryValues = [
-    fmtMoneyRaw(data.summary.openingBalance, ccy),
-    fmtMoney(data.summary.totalDebits, ccy),
-    fmtMoney(data.summary.totalCredits, ccy),
-    fmtMoneyRaw(data.summary.closingBalance, ccy),
-  ];
+  const valY = y - 4;
+  textRight(page, fmtSigned(data.summary.openingBalance, ccy), RE1, valY, f, 9, TEXT_BODY);
+  textRight(page, fmtAbs(data.summary.totalDebits, ccy), RE2, valY, f, 9, TEXT_BODY);
+  textRight(page, fmtAbs(data.summary.totalCredits, ccy), RE3, valY, f, 9, TEXT_BODY);
+  textRight(page, fmtSigned(data.summary.closingBalance, ccy), RE4, valY, b, 9, data.summary.closingBalance < 0 ? RED_NEG : TEXT_DARK);
 
-  for (let i = 0; i < summaryValues.length; i++) {
-    const val = summaryValues[i];
-    const vw = font.widthOfTextAtSize(val, 8.5);
-    page.drawText(val, {
-      x: colX[i + 1] + colWidths[i + 1] - 4 - vw,
-      y: y - 4,
-      size: 8.5,
-      font,
-      color: TEXT,
-    });
-  }
-
-  y -= 30;
-
+  y -= 32;
   return y;
 }
 
-function drawTransactionTableHeader(
-  page: PDFPage,
-  ctx: PageCtx,
-  startY: number,
-  continued = false
-): number {
-  const { font, bold } = ctx;
+// ─── Transaction Table Header ───────────────────────────────────────────────
+function drawTxTableHeader(page: PDFPage, ctx: Ctx, startY: number, continued: boolean): number {
+  const { f, b } = ctx;
   let y = startY;
 
-  // Section heading
   const heading = continued
     ? "Here's what happened in your account (continued)"
     : "Here's what happened in your account";
-  page.drawText(heading, {
-    x: MARGIN_LEFT,
-    y,
-    size: 13,
-    font: bold,
-    color: BLACK,
-  });
-  y -= 22;
+  page.drawText(heading, { x: ML, y, size: 14, font: b, color: BLACK });
+  y -= 26;
 
-  // Column headers
-  const headers = [
-    { label: "Date", x: COL.date.x, align: "left" as const },
-    { label: "Description", x: COL.desc.x, align: "left" as const },
-    {
-      label: "Amounts deducted",
-      label2: "from your account ($)",
-      x: COL.debit.x + COL.debit.w,
-      align: "right" as const,
-    },
-    {
-      label: "Amounts added",
-      label2: "to your account ($)",
-      x: COL.credit.x + COL.credit.w,
-      align: "right" as const,
-    },
-    {
-      label: "Balance ($)",
-      x: COL.balance.x + COL.balance.w,
-      align: "right" as const,
-    },
-  ];
+  // Two-line column headers
+  const hs = 7.5;
+  const h1 = y + 10;
+  const h2 = y;
 
-  for (const h of headers) {
-    if (h.align === "right") {
-      const w1 = bold.widthOfTextAtSize(h.label, 7.5);
-      page.drawText(h.label, {
-        x: h.x - w1,
-        y: h.label2 ? y + 10 : y + 4,
-        size: 7.5,
-        font: bold,
-        color: TEXT,
-      });
-      if (h.label2) {
-        const w2 = bold.widthOfTextAtSize(h.label2, 7.5);
-        page.drawText(h.label2, {
-          x: h.x - w2,
-          y,
-          size: 7.5,
-          font: bold,
-          color: TEXT,
-        });
-      }
-    } else {
-      page.drawText(h.label, {
-        x: h.x,
-        y: y + 4,
-        size: 7.5,
-        font: bold,
-        color: TEXT,
-      });
-    }
-  }
+  page.drawText("Date", { x: TX_DATE_X, y: h2 + 2, size: hs, font: b, color: TEXT_DARK });
+  page.drawText("Description", { x: TX_DESC_X, y: h2 + 2, size: hs, font: b, color: TEXT_DARK });
 
-  y -= 10;
+  textRight(page, "Amounts deducted", TX_DEBIT_RE, h1, b, hs, TEXT_DARK);
+  textRight(page, "from your account ($)", TX_DEBIT_RE, h2, b, hs, TEXT_DARK);
 
-  // Bold line under column headers
-  page.drawLine({
-    start: { x: MARGIN_LEFT, y },
-    end: { x: PAGE_W - MARGIN_RIGHT, y },
-    thickness: 1.5,
-    color: BLACK,
-  });
-  y -= 6;
+  textRight(page, "Amounts added", TX_CREDIT_RE, h1, b, hs, TEXT_DARK);
+  textRight(page, "to your account ($)", TX_CREDIT_RE, h2, b, hs, TEXT_DARK);
+
+  textRight(page, "Balance ($)", TX_BAL_RE, h2 + 2, b, hs, TEXT_DARK);
+
+  y -= 8;
+  page.drawLine({ start: { x: ML, y }, end: { x: PW - MR, y }, thickness: 1.5, color: BLACK });
+  y -= 8;
 
   return y;
 }
 
-function drawAccountSubheader(
-  page: PDFPage,
-  ctx: PageCtx,
-  startY: number,
-  continued = false
-): number {
-  const { font, bold, data } = ctx;
-  let y = startY;
+// ─── Account Sub-header ─────────────────────────────────────────────────────
+function drawAccountSubheader(page: PDFPage, ctx: Ctx, y: number, continued: boolean): number {
+  const { f, b, data } = ctx;
 
-  // Account name and number row
   const accLine = `${data.account.name} # ${data.account.number}`;
-  page.drawText(accLine, {
-    x: COL.desc.x,
-    y,
-    size: 8.5,
-    font: bold,
-    color: TEXT,
-  });
+  page.drawText(accLine, { x: TX_DESC_X, y, size: 9, font: b, color: TEXT_DARK });
 
   if (continued) {
-    const contText = "(continued)";
-    const cw = font.widthOfTextAtSize(contText, 8.5);
-    page.drawText(contText, {
-      x: COL.balance.x + COL.balance.w - cw,
-      y,
-      size: 8.5,
-      font,
-      color: TEXT,
-    });
+    textRight(page, "(continued)", TX_BAL_RE, y, f, 9, TEXT_MUTED);
   }
-
   y -= 16;
 
   if (!continued) {
-    // Owner line
-    page.drawText("Owner:", {
-      x: MARGIN_LEFT,
-      y,
-      size: 8,
-      font,
-      color: TEXT,
-    });
+    page.drawText("Owner:", { x: ML, y, size: 8, font: f, color: TEXT_MUTED });
     y -= 12;
-    page.drawText(data.accountHolder.name.toUpperCase(), {
-      x: MARGIN_LEFT,
-      y,
-      size: 8.5,
-      font: bold,
-      color: TEXT,
-    });
-    y -= 18;
+    page.drawText(data.accountHolder.name.toUpperCase(), { x: ML, y, size: 9, font: b, color: TEXT_DARK });
+    y -= 20;
   }
 
   return y;
 }
 
-function drawDottedLine(page: PDFPage, y: number) {
-  const startX = MARGIN_LEFT;
-  const endX = PAGE_W - MARGIN_RIGHT;
-  const dashLen = 1.5;
-  const gapLen = 2;
-  let x = startX;
-  while (x < endX) {
-    const segEnd = Math.min(x + dashLen, endX);
-    page.drawLine({
-      start: { x, y },
-      end: { x: segEnd, y },
-      thickness: 0.3,
-      color: LIGHT_GRAY,
-    });
-    x = segEnd + gapLen;
-  }
-}
-
-function drawTransactionRow(
-  page: PDFPage,
-  ctx: PageCtx,
-  tx: StatementTransaction,
-  y: number,
-  isOpening = false,
-  isClosing = false
-): number {
-  const { font, bold, data } = ctx;
+// ─── Single Transaction Row ─────────────────────────────────────────────────
+function drawTxRow(page: PDFPage, ctx: Ctx, tx: StatementTransaction, y: number, kind: "normal" | "opening" | "closing"): number {
+  const { f, b, data } = ctx;
   const ccy = data.account.currency;
-  const rowFont = isOpening || isClosing ? bold : font;
-  const fontSize = 8.5;
+  const sz = 8.5;
+  const useFont = kind !== "normal" ? b : f;
 
   // Date
-  if (!isClosing) {
-    page.drawText(fmtDate(tx.date), {
-      x: COL.date.x,
-      y,
-      size: fontSize,
-      font: rowFont,
-      color: TEXT,
-    });
-  } else {
-    page.drawText(fmtDate(tx.date), {
-      x: COL.date.x,
-      y,
-      size: fontSize,
-      font: bold,
-      color: TEXT,
-    });
-  }
+  page.drawText(fmtDateShort(tx.date), { x: TX_DATE_X, y, size: sz, font: useFont, color: TEXT_DARK });
 
-  // Description (may wrap)
-  const descLines = wrapText(tx.description, rowFont, fontSize, COL.desc.w - 8);
+  // Description (wrap within TX_DESC_W)
+  const maxDescW = kind === "closing" ? TX_DESC_W + 40 : TX_DESC_W;
+  const descLines = wrapText(tx.description, useFont, sz, maxDescW);
   for (let i = 0; i < descLines.length; i++) {
-    page.drawText(descLines[i], {
-      x: COL.desc.x,
-      y: y - i * 12,
-      size: fontSize,
-      font: rowFont,
-      color: TEXT,
-    });
+    page.drawText(descLines[i], { x: TX_DESC_X, y: y - i * 11, size: sz, font: useFont, color: TEXT_BODY });
   }
 
-  // Debit amount
+  // Debit
   if (tx.debit && tx.debit > 0) {
-    const debitStr = fmtMoney(tx.debit, ccy);
-    const dw = font.widthOfTextAtSize(debitStr, fontSize);
-    page.drawText(debitStr, {
-      x: COL.debit.x + COL.debit.w - dw,
-      y,
-      size: fontSize,
-      font: isClosing ? bold : font,
-      color: TEXT,
-    });
+    textRight(page, fmtAbs(tx.debit, ccy), TX_DEBIT_RE, y, kind === "closing" ? b : f, sz, TEXT_BODY);
   }
 
-  // Credit amount
+  // Credit
   if (tx.credit && tx.credit > 0) {
-    const creditStr = fmtMoney(tx.credit, ccy);
-    const cw = font.widthOfTextAtSize(creditStr, fontSize);
-    page.drawText(creditStr, {
-      x: COL.credit.x + COL.credit.w - cw,
-      y,
-      size: fontSize,
-      font: isClosing ? bold : font,
-      color: TEXT,
-    });
+    textRight(page, fmtAbs(tx.credit, ccy), TX_CREDIT_RE, y, kind === "closing" ? b : f, sz, TEXT_BODY);
   }
 
-  // Balance (right-aligned)
-  if (!isClosing) {
-    const balStr = fmtMoneyRaw(tx.balance, ccy);
-    const bw = font.widthOfTextAtSize(balStr, fontSize);
-    page.drawText(balStr, {
-      x: COL.balance.x + COL.balance.w - bw,
-      y,
-      size: fontSize,
-      font: rowFont,
-      color: tx.balance < 0 ? RED : TEXT,
-    });
+  // Balance (not shown on closing totals row)
+  if (kind !== "closing") {
+    const balColor = tx.balance < 0 ? RED_NEG : TEXT_BODY;
+    textRight(page, fmtSigned(tx.balance, ccy), TX_BAL_RE, y, useFont, sz, balColor);
   }
 
-  const rowHeight = Math.max(descLines.length * 12, 12) + 8;
-  return y - rowHeight;
+  const rowH = Math.max(descLines.length * 11, 11) + 7;
+  return y - rowH;
 }
 
-function drawFooter(
-  page: PDFPage,
-  ctx: PageCtx,
-  pageNum: number,
-  pageCount: number,
-  showContinued = false
-) {
-  const { font, bold, logo } = ctx;
+// ─── Footer ─────────────────────────────────────────────────────────────────
+function drawFooter(page: PDFPage, ctx: Ctx, pageNum: number, totalPages: number, showContinued: boolean) {
+  const { f, b, logo } = ctx;
 
   if (showContinued) {
-    const contText = "continued";
-    const cw = font.widthOfTextAtSize(contText, 8);
-    page.drawText(contText, {
-      x: PAGE_W - MARGIN_RIGHT - cw,
-      y: FOOTER_HEIGHT + 16,
-      size: 8,
-      font,
-      color: TEXT,
-    });
+    textRight(page, "continued", PW - MR, FOOTER_Y + 20, f, 8.5, TEXT_MUTED);
   }
 
-  // Page number (left)
-  page.drawText(`Page ${pageNum} of ${pageCount}`, {
-    x: MARGIN_LEFT,
-    y: 24,
-    size: 8,
-    font,
-    color: TEXT,
-  });
+  // Page label
+  page.drawText(`Page ${pageNum} of ${totalPages}`, { x: ML, y: 26, size: 8, font: f, color: TEXT_MUTED });
 
-  // Bottom navy bar with bank branding
-  page.drawRectangle({
-    x: PAGE_W - 200,
-    y: 14,
-    width: 200 - MARGIN_RIGHT + 20,
-    height: 24,
-    color: NAVY_DEEP,
-  });
+  // Footer branded bar (right-aligned)
+  const barW = 210;
+  const barH = 26;
+  const barX = PW - barW;
+  const barY = 12;
 
-  // Gold accent on the bar
-  page.drawRectangle({
-    x: PAGE_W - 200,
-    y: 38,
-    width: 200 - MARGIN_RIGHT + 20,
-    height: 2,
-    color: GOLD,
-  });
+  // Gold accent strip above bar
+  page.drawRectangle({ x: barX, y: barY + barH, width: barW, height: 2.5, color: GOLD });
 
-  // Bank name in footer bar
-  const bankName = "Aldwych European Capital";
-  const bnW = bold.widthOfTextAtSize(bankName, 8);
-  page.drawText(bankName, {
-    x: PAGE_W - MARGIN_RIGHT + 20 - 10 - bnW,
-    y: 22,
-    size: 8,
-    font: bold,
-    color: WHITE,
-  });
+  // Navy bar
+  page.drawRectangle({ x: barX, y: barY, width: barW, height: barH, color: NAVY_DEEP });
+
+  // Logo in footer bar (if available) or text
+  if (logo) {
+    const lw = 100;
+    const lh = lw * (logo.h / logo.w);
+    page.drawImage(logo.img, {
+      x: barX + barW - lw - 10,
+      y: barY + (barH - lh) / 2,
+      width: lw,
+      height: lh,
+    });
+  } else {
+    textRight(page, "Aldwych European Capital", PW - MR - 8, barY + 9, b, 8.5, WHITE);
+  }
 
   // Bottom gold line
-  page.drawRectangle({
-    x: 0,
-    y: 0,
-    width: PAGE_W,
-    height: 3,
-    color: GOLD,
-  });
+  page.drawRectangle({ x: 0, y: 0, width: PW, height: 3, color: GOLD });
 }
 
-function drawDisclaimerAndInfo(
-  page: PDFPage,
-  ctx: PageCtx,
-  startY: number
-): number {
-  const { font, bold } = ctx;
+// ─── Disclaimer ─────────────────────────────────────────────────────────────
+function drawDisclaimer(page: PDFPage, ctx: Ctx, startY: number): number {
+  const { f, b } = ctx;
   let y = startY;
 
-  // Error reporting disclaimer (like BMO)
-  const disclaimer =
-    "Please report any errors, omissions or irregularities in writing within 30 days of the statement date after which this statement shall be deemed accurate except for any amount credited to your account in error.";
-  const lines = wrapText(disclaimer, font, 7.5, CONTENT_W);
-  for (const line of lines) {
-    page.drawText(line, {
-      x: MARGIN_LEFT,
-      y,
-      size: 7.5,
-      font,
-      color: TEXT,
-    });
+  const disclaimer = "Please report any errors, omissions or irregularities in writing within 30 days of the statement date after which this statement shall be deemed accurate except for any amount credited to your account in error.";
+  const lines = wrapText(disclaimer, f, 7.5, CW);
+  for (const ln of lines) {
+    page.drawText(ln, { x: ML, y, size: 7.5, font: f, color: TEXT_MUTED });
     y -= 10;
   }
+  y -= 8;
 
-  y -= 10;
-
-  // Registration numbers
-  page.drawText("Registration numbers", {
-    x: MARGIN_LEFT,
-    y,
-    size: 8,
-    font: bold,
-    color: TEXT,
-  });
+  page.drawText("Registration numbers", { x: ML, y, size: 8, font: b, color: TEXT_DARK });
   y -= 12;
-  page.drawText(
-    "FCA Registration — 09876543     PRA Registration — AEC/2024/0091",
-    {
-      x: MARGIN_LEFT,
-      y,
-      size: 8,
-      font,
-      color: TEXT,
-    }
-  );
+  page.drawText("FCA Registration — 09876543     PRA Registration — AEC/2024/0091", { x: ML, y, size: 8, font: f, color: TEXT_BODY });
   y -= 20;
+
+  // Document hash
+  page.drawText(`Document integrity: ${ctx.hash}`, { x: ML, y, size: 7, font: f, color: TEXT_MUTED });
+  y -= 10;
+  page.drawText(`Generated: ${ctx.now.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })} at ${ctx.now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} UTC`, { x: ML, y, size: 7, font: f, color: TEXT_MUTED });
+  y -= 16;
 
   return y;
 }
 
-export async function generateStatementPDF(
-  data: StatementData
-): Promise<Uint8Array> {
-  const generatedAt = new Date();
-  const docHash = generateDocumentHash(data);
+// ─── Main Generator ─────────────────────────────────────────────────────────
+export async function generateStatementPDF(data: StatementData): Promise<Uint8Array> {
+  const now = new Date();
+  const hash = genHash(data);
 
   const pdf = await PDFDocument.create();
-  pdf.setTitle(
-    `Account Statement — ${data.accountHolder.name} — ${data.period.label}`
-  );
+  pdf.setTitle(`Account Statement — ${data.accountHolder.name} — ${data.period.label}`);
   pdf.setAuthor("Aldwych European Capital — Private Banking");
   pdf.setSubject(`Statement for ${data.account.name} ${data.account.number}`);
   pdf.setProducer("Aldwych European Capital");
-  pdf.setCreationDate(generatedAt);
+  pdf.setCreationDate(now);
 
-  const font = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const f = await pdf.embedFont(StandardFonts.Helvetica);
+  const b = await pdf.embedFont(StandardFonts.HelveticaBold);
 
   const logoBytes = await loadLogoBytes();
-  let logo: PageCtx["logo"] = null;
+  let logo: Ctx["logo"] = null;
   if (logoBytes) {
     try {
       const img = await pdf.embedPng(logoBytes);
-      logo = { width: img.width, height: img.height, embed: img };
+      logo = { w: img.width, h: img.height, img };
     } catch {
       try {
         const img = await pdf.embedJpg(logoBytes);
-        logo = { width: img.width, height: img.height, embed: img };
-      } catch {
-        logo = null;
-      }
+        logo = { w: img.width, h: img.height, img };
+      } catch { logo = null; }
     }
   }
 
-  const ctx: PageCtx = { pdf, font, bold, logo, data, docHash, generatedAt };
+  const ctx: Ctx = { pdf, f, b, logo, data, hash, now };
 
-  // Build all pages
-  const pages: PDFPage[] = [];
-  let currentPage = pdf.addPage([PAGE_W, PAGE_H]);
-  pages.push(currentPage);
+  // ── Page management ──
+  const allPages: PDFPage[] = [];
+  let page = pdf.addPage([PW, PH]);
+  allPages.push(page);
 
-  // Page 1: header + summary + start of transactions
-  drawHeader(currentPage, ctx, 1, 1); // page count updated later
-  let y = PAGE_H - HEADER_HEIGHT - 72;
-  y = drawStatementTitle(currentPage, ctx, y);
-  y = drawAccountSummary(currentPage, ctx, y);
+  // Watermark on every page will be applied at the end
+  const needsNewPage = (y: number, minSpace = 80) => y < FOOTER_Y + minSpace;
+
+  const addPage = (isContinuation: boolean): [PDFPage, number] => {
+    const p = pdf.addPage([PW, PH]);
+    allPages.push(p);
+    const startY = isContinuation ? drawContinuationHeader(p, ctx) : PH - 30;
+    return [p, startY];
+  };
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // PAGE 1: Header, Summary, Transaction Table
+  // ══════════════════════════════════════════════════════════════════════════
+  let y = drawPage1Header(page, ctx);
+  y = drawTitleAndSummary(page, ctx, y);
 
   // Transaction table
-  y -= 8;
-  y = drawTransactionTableHeader(currentPage, ctx, y, false);
-  y = drawAccountSubheader(currentPage, ctx, y, false);
+  y -= 6;
+  y = drawTxTableHeader(page, ctx, y, false);
+  y = drawAccountSubheader(page, ctx, y, false);
 
   // Opening balance row
-  if (data.transactions.length > 0) {
-    const openingTx: StatementTransaction = {
-      date: data.period.startDate,
-      description: "Opening balance",
-      balance: data.summary.openingBalance,
-    };
-    y = drawTransactionRow(currentPage, ctx, openingTx, y, true, false);
-    drawDottedLine(currentPage, y + 6);
-    y -= 2;
-  }
+  const openingTx: StatementTransaction = {
+    date: data.period.startDate,
+    description: "Opening balance",
+    balance: data.summary.openingBalance,
+  };
+  y = drawTxRow(page, ctx, openingTx, y, "opening");
+  drawDottedRule(page, y + 5);
+  y -= 2;
 
   // Transaction rows
-  for (let i = 0; i < data.transactions.length; i++) {
-    const tx = data.transactions[i];
-
-    // Check if we need a new page
-    if (y < FOOTER_HEIGHT + 80) {
-      // New page needed
-      currentPage = pdf.addPage([PAGE_W, PAGE_H]);
-      pages.push(currentPage);
-
-      drawGoldTopBar(currentPage);
-
-      // Continuation header (simpler than page 1)
-      y = PAGE_H - 30;
-      y = drawTransactionTableHeader(currentPage, ctx, y, true);
-      y = drawAccountSubheader(currentPage, ctx, y, true);
+  for (const tx of data.transactions) {
+    if (needsNewPage(y)) {
+      [page, y] = addPage(true);
+      y = drawTxTableHeader(page, ctx, y, true);
+      y = drawAccountSubheader(page, ctx, y, true);
     }
 
-    y = drawTransactionRow(currentPage, ctx, tx, y, false, false);
-    drawDottedLine(currentPage, y + 6);
+    y = drawTxRow(page, ctx, tx, y, "normal");
+    drawDottedRule(page, y + 5);
     y -= 2;
   }
 
-  // Closing totals row
-  if (y < FOOTER_HEIGHT + 60) {
-    currentPage = pdf.addPage([PAGE_W, PAGE_H]);
-    pages.push(currentPage);
-    drawGoldTopBar(currentPage);
-    y = PAGE_H - 30;
-    y = drawTransactionTableHeader(currentPage, ctx, y, true);
-    y = drawAccountSubheader(currentPage, ctx, y, true);
+  // Closing totals
+  if (needsNewPage(y, 60)) {
+    [page, y] = addPage(true);
+    y = drawTxTableHeader(page, ctx, y, true);
+    y = drawAccountSubheader(page, ctx, y, true);
   }
 
-  // Separator before closing
-  page_drawLine(currentPage, y + 4);
+  // Solid rule before closing
+  drawSolidRule(page, y + 4, 0.8, BLACK);
+  y -= 2;
+
   const closingTx: StatementTransaction = {
     date: data.period.endDate,
     description: "Closing totals",
@@ -1012,34 +625,21 @@ export async function generateStatementPDF(
     credit: data.summary.totalCredits,
     balance: data.summary.closingBalance,
   };
-  y = drawTransactionRow(currentPage, ctx, closingTx, y, false, true);
-
-  y -= 16;
+  y = drawTxRow(page, ctx, closingTx, y, "closing");
+  y -= 14;
 
   // Disclaimer
-  if (y < FOOTER_HEIGHT + 80) {
-    currentPage = pdf.addPage([PAGE_W, PAGE_H]);
-    pages.push(currentPage);
-    drawGoldTopBar(currentPage);
-    y = PAGE_H - 40;
+  if (needsNewPage(y, 100)) {
+    [page, y] = addPage(true);
   }
-  y = drawDisclaimerAndInfo(currentPage, ctx, y);
+  y = drawDisclaimer(page, ctx, y);
 
-  // Draw footers on all pages
-  const totalPages = pages.length;
-  for (let i = 0; i < pages.length; i++) {
-    const isLast = i === pages.length - 1;
-    drawFooter(pages[i], ctx, i + 1, totalPages, !isLast);
+  // ── Apply watermark + footer to all pages ──
+  const total = allPages.length;
+  for (let i = 0; i < total; i++) {
+    drawWatermark(allPages[i], ctx);
+    drawFooter(allPages[i], ctx, i + 1, total, i < total - 1);
   }
 
   return await pdf.save();
-}
-
-function page_drawLine(page: PDFPage, y: number) {
-  page.drawLine({
-    start: { x: MARGIN_LEFT, y },
-    end: { x: PAGE_W - MARGIN_RIGHT, y },
-    thickness: 0.8,
-    color: BLACK,
-  });
 }
