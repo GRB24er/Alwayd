@@ -176,7 +176,7 @@ export default function SignInScreen() {
 
             {/* Forgot Password */}
             <View className="items-end">
-              <Pressable style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}>
+              <Pressable onPress={() => router.push("/forgot-password" as any)} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}>
                 <Text style={{ color: "#C9A962", fontSize: 13, fontWeight: "600" }}>Forgot Password?</Text>
               </Pressable>
             </View>
@@ -234,7 +234,7 @@ export default function SignInScreen() {
 
           {/* Sign Up Link */}
           <View className="flex-row items-center justify-center mt-8">
-            <Text className="text-muted text-sm">Don't have an account? </Text>
+            <Text className="text-muted text-sm">Don&apos;t have an account? </Text>
             <Pressable onPress={() => router.push("/signup" as any)} style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}>
               <Text style={{ color: "#C9A962", fontSize: 14, fontWeight: "600" }}>Apply Now</Text>
             </Pressable>
