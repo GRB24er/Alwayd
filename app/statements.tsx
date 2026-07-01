@@ -24,8 +24,45 @@ import {
   type BankBalances,
 } from "@/lib/banking-api";
 import * as Haptics from "expo-haptics";
-import * as FileSystem from "expo-file-system";
+// Use the legacy file API: this Expo version's main entry no longer exports
+// cacheDirectory/writeAsStringAsync/EncodingType (moved to /legacy).
+import {
+  cacheDirectory,
+  writeAsStringAsync,
+  EncodingType,
+} from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
+
+// Encode raw bytes to base64. Self-contained so it does not depend on Node's
+// Buffer or a global btoa (neither is guaranteed in the React Native runtime).
+const B64_CHARS =
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let out = "";
+  let i = 0;
+  for (; i + 2 < bytes.length; i += 3) {
+    const n = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
+    out +=
+      B64_CHARS[(n >> 18) & 63] +
+      B64_CHARS[(n >> 12) & 63] +
+      B64_CHARS[(n >> 6) & 63] +
+      B64_CHARS[n & 63];
+  }
+  const rem = bytes.length - i;
+  if (rem === 1) {
+    const n = bytes[i] << 16;
+    out += B64_CHARS[(n >> 18) & 63] + B64_CHARS[(n >> 12) & 63] + "==";
+  } else if (rem === 2) {
+    const n = (bytes[i] << 16) | (bytes[i + 1] << 8);
+    out +=
+      B64_CHARS[(n >> 18) & 63] +
+      B64_CHARS[(n >> 12) & 63] +
+      B64_CHARS[(n >> 6) & 63] +
+      "=";
+  }
+  return out;
+}
 
 interface StatementItem {
   id: string;
@@ -231,35 +268,27 @@ export default function StatementsScreen() {
     const { getBaseUrl } = await import("@/lib/banking-api");
     const baseUrl = await getBaseUrl();
     const filename = `AEC_Statement_${statement.period.replace(/\s+/g, "_")}.pdf`;
-    const fileUri = `${FileSystem.cacheDirectory}${filename}`;
+    const fileUri = `${cacheDirectory}${filename}`;
 
-    const downloadResult = await FileSystem.downloadAsync(
-      `${baseUrl}/api/statement/generate`,
-      fileUri,
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    // POST the statement payload and receive the PDF bytes.
+    const response = await fetch(`${baseUrl}/api/statement/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(`Statement request failed (${response.status})`);
 
-    if (downloadResult.status !== 200) {
-      // Fall back to POST via uploadAsync
-      const response = await FileSystem.uploadAsync(
-        `${baseUrl}/api/statement/generate`,
-        fileUri,
-        {
-          httpMethod: "POST",
-          uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-          headers: { "Content-Type": "application/json" },
-          fieldName: "file",
-        }
-      );
-    }
+    // Convert the binary response to base64 and write it to a cache file.
+    const arrayBuffer = await response.arrayBuffer();
+    const base64 = arrayBufferToBase64(arrayBuffer);
+    await writeAsStringAsync(fileUri, base64, { encoding: EncodingType.Base64 });
 
     const canShare = await Sharing.isAvailableAsync();
     if (canShare) {
       await Sharing.shareAsync(fileUri, {
         mimeType: "application/pdf",
         dialogTitle: `Statement - ${statement.period}`,
+        UTI: "com.adobe.pdf",
       });
     }
   }
