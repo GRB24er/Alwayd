@@ -9,6 +9,8 @@ then deploy the web app.
 | `forgot-password.route.ts`                | `src/app/api/auth/forgot-password/route.ts`        | Step 1: email a 6-digit reset code (public)    |
 | `reset-password.route.ts`                 | `src/app/api/auth/reset-password/route.ts`         | Step 2: verify code + set new password (public)|
 | `change-password.route.ts`                | `src/app/api/user/change-password/route.ts`        | Replaces existing: now also accepts the mobile JWT (Bearer) in addition to the NextAuth session |
+| `reset-password-page.tsx`                 | `src/app/auth/reset-password/page.tsx`             | **Fixes the 404** from the sign-in page's "Recover Access" button |
+| `reset-password-page.module.css`          | `src/app/auth/reset-password/reset.module.css`     | Stylesheet for the page above (matches sign-in design) |
 
 They only use libraries that already exist in the web project:
 `@/lib/mongodb`, `@/models/User`, `@/lib/otpService`, `@/lib/rateLimit`,
