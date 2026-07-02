@@ -82,6 +82,7 @@ export default function SecurityScreen() {
         <View className="mx-5 mt-6">
           <Text className="text-muted text-xs font-semibold uppercase tracking-wider mb-3 ml-1">Password</Text>
           <Pressable
+            onPress={() => router.push("/change-password" as any)}
             style={({ pressed }) => [
               {
                 flexDirection: "row",
@@ -100,7 +101,7 @@ export default function SecurityScreen() {
             </View>
             <View className="flex-1 ml-3">
               <Text className="text-foreground text-sm font-medium">Change Password</Text>
-              <Text className="text-muted text-xs">Last changed 45 days ago</Text>
+              <Text className="text-muted text-xs">Update your account password</Text>
             </View>
             <IconSymbol name="chevron.right" size={16} color={colors.muted} />
           </Pressable>

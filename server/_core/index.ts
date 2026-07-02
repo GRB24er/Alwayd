@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { registerReceiptRoutes } from "../receipt-routes";
+import { registerStatementRoutes } from "../statement-routes";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 
@@ -59,6 +60,7 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerReceiptRoutes(app);
+  registerStatementRoutes(app);
 
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true, timestamp: Date.now() });

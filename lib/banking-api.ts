@@ -320,6 +320,83 @@ export async function isAuthenticated(): Promise<boolean> {
   return !!token;
 }
 
+// ─── Password Management ─────────────────────────────────────────────────────
+
+/**
+ * Change the signed-in user's password.
+ * Requires the current password; the backend re-verifies it.
+ */
+export async function changePassword(params: {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}): Promise<{ success: boolean; message?: string }> {
+  const data = await request<{ success: boolean; message?: string; error?: string }>(
+    "/api/user/change-password",
+    {
+      method: "POST",
+      body: JSON.stringify(params),
+    }
+  );
+  return data;
+}
+
+/**
+ * Request a password reset code for the given email.
+ * The backend always responds success (no account enumeration); if the
+ * account exists, a 6-digit code is emailed to it.
+ */
+export async function requestPasswordReset(email: string): Promise<{ success: boolean; message?: string }> {
+  const baseUrl = await getBaseUrl();
+  if (!baseUrl) {
+    throw new Error("Banking API URL not configured. Please set your web app URL in Settings.");
+  }
+
+  const response = await fetch(`${baseUrl}/api/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.toLowerCase().trim() }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new ApiError(data.error || `Request failed (${response.status})`, response.status);
+  }
+  return data;
+}
+
+/**
+ * Complete a password reset using the emailed code.
+ */
+export async function resetPasswordWithCode(params: {
+  email: string;
+  code: string;
+  newPassword: string;
+  confirmPassword: string;
+}): Promise<{ success: boolean; message?: string }> {
+  const baseUrl = await getBaseUrl();
+  if (!baseUrl) {
+    throw new Error("Banking API URL not configured. Please set your web app URL in Settings.");
+  }
+
+  const response = await fetch(`${baseUrl}/api/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: params.email.toLowerCase().trim(),
+      code: params.code.trim(),
+      newPassword: params.newPassword,
+      confirmPassword: params.confirmPassword,
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new ApiError(data.error || `Request failed (${response.status})`, response.status);
+  }
+  return data;
+}
+
 // ─── Dashboard ───────────────────────────────────────────────────────────────
 
 export async function getDashboard(): Promise<DashboardData> {
