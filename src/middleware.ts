@@ -42,11 +42,20 @@ export async function middleware(req: NextRequest) {
       if (!isAdminEmail && !isAdminRole) {
         return NextResponse.redirect(new URL('/dashboard?error=access-denied', req.url));
       }
+      // Second factor: the emailed sign-in code must be verified.
+      if (session.otpVerified !== true) {
+        return NextResponse.redirect(new URL('/auth/verify', req.url));
+      }
     }
 
     if (PROTECTED_PATHS.some((p) => path.startsWith(p))) {
       if (!session) {
         return NextResponse.redirect(new URL('/auth/signin?error=auth-required', req.url));
+      }
+      // Second factor: the emailed sign-in code must be verified before any
+      // account page opens. /auth/verify handles sending + checking the code.
+      if (session.otpVerified !== true) {
+        return NextResponse.redirect(new URL('/auth/verify', req.url));
       }
     }
 

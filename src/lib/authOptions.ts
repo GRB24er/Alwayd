@@ -1,6 +1,7 @@
 // src/lib/authOptions.ts
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import jsonwebtoken from 'jsonwebtoken';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
@@ -15,6 +16,8 @@ declare module 'next-auth/jwt' {
     checkingBalance?: number;
     savingsBalance?: number;
     investmentBalance?: number;
+    /** True once the emailed login code has been verified for this session. */
+    otpVerified?: boolean;
   }
 }
 
@@ -29,6 +32,7 @@ declare module 'next-auth' {
       checkingBalance?: number;
       savingsBalance?: number;
       investmentBalance?: number;
+      otpVerified?: boolean;
     };
   }
 }
@@ -144,14 +148,37 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
         token.checkingBalance = (user as any).checkingBalance;
         token.savingsBalance = (user as any).savingsBalance;
         token.investmentBalance = (user as any).investmentBalance;
+        // Password alone is not enough: the emailed login code must be
+        // verified before protected pages open (see middleware).
+        token.otpVerified = false;
       }
+
+      // Second factor completion. The client calls useSession().update with
+      // an otpProof it received from /api/auth/otp/verify-login. The proof is
+      // a short-lived JWT signed with AUTH_SECRET, so it cannot be forged by
+      // the client — we verify signature, purpose, and that it was issued for
+      // this exact user.
+      if (trigger === 'update' && (session as any)?.otpProof) {
+        try {
+          const proof = jsonwebtoken.verify(
+            (session as any).otpProof,
+            AUTH_SECRET
+          ) as { sub?: string; purpose?: string };
+          if (proof.purpose === 'login-otp' && proof.sub && proof.sub === token.id) {
+            token.otpVerified = true;
+          }
+        } catch {
+          // Invalid or expired proof — leave otpVerified unchanged.
+        }
+      }
+
       return token;
     },
 
@@ -161,6 +188,7 @@ export const authOptions: NextAuthOptions = {
       session.user.checkingBalance = token.checkingBalance;
       session.user.savingsBalance = token.savingsBalance;
       session.user.investmentBalance = token.investmentBalance;
+      session.user.otpVerified = token.otpVerified === true;
       return session;
     }
   },

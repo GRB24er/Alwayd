@@ -1,0 +1,230 @@
+/* src/app/auth/verify/verify.module.css — sign-in second factor */
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #f8f7f5 0%, #faf9f7 100%);
+}
+
+.card {
+  width: 100%;
+  max-width: 440px;
+  background: white;
+  border: 1px solid rgba(201, 169, 98, 0.18);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(13, 36, 64, 0.08);
+  padding: 2.5rem 2rem 2rem;
+}
+
+.logoContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.logo {
+  height: 56px;
+  object-fit: contain;
+}
+
+.shieldIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: rgba(201, 169, 98, 0.12);
+  color: #a8935f;
+  margin: 0 auto 1.25rem;
+}
+
+.heading {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0d2440;
+  text-align: center;
+  margin: 0 0 0.5rem;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.55;
+  margin: 0 0 1.75rem;
+}
+
+.subtitle strong {
+  color: #0d2440;
+}
+
+.message {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.messageIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.successMessage {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: #047857;
+}
+.successMessage .messageIcon { color: #10b981; }
+
+.errorMessage {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+}
+.errorMessage .messageIcon { color: #ef4444; }
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.codeInput {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.6em;
+  text-align: center;
+  color: #0d2440;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.codeInput::placeholder {
+  color: #d1d5db;
+  letter-spacing: 0.3em;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.codeInput:focus {
+  border-color: #c9a962;
+  box-shadow: 0 0 0 3px rgba(201, 169, 98, 0.15);
+}
+
+.codeInput:disabled {
+  background: rgba(201, 169, 98, 0.05);
+  cursor: not-allowed;
+}
+
+.expiryNote {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  text-align: center;
+  margin: -0.5rem 0 0;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #b8944d 0%, #c9a962 100%);
+  color: #0d2440;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.submitButton:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
+.submitButton:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.resendRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.resendButton {
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #a8935f;
+  cursor: pointer;
+}
+.resendButton:hover:not(:disabled) { text-decoration: underline; }
+.resendButton:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.signOutRow {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #f1f5f9;
+  text-align: center;
+  font-size: 0.83rem;
+  color: #9ca3af;
+}
+
+.signOutButton {
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #a8935f;
+  cursor: pointer;
+}
+.signOutButton:hover { text-decoration: underline; }
+
+.securityNote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1.5rem;
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
+.securityNote svg { color: #c9a962; }
+
+.loadingScreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(201, 169, 98, 0.15);
+  border-top-color: #c9a962;
+  border-radius: 50%;
+  animation: verifySpin 1s linear infinite;
+}
+
+@keyframes verifySpin {
+  to { transform: rotate(360deg); }
+}
