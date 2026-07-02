@@ -20,13 +20,47 @@
 
 .mainContent {
   flex: 1;
-  margin-left: 260px;
+  margin-left: 300px; /* matches the fixed Sidebar width */
   display: flex;
   flex-direction: column;
 }
 
+/* Layout classes used by page.tsx — .main must clear the fixed 300px
+   sidebar on desktop; the 768px media query below resets it to 0. */
+.main {
+  flex: 1;
+  margin-left: 300px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sidebar {
+  flex-shrink: 0;
+}
+
 .content {
   flex: 1;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 60vh;
+  gap: 1rem;
+  color: var(--aec-text-muted);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(201, 169, 98, 0.15);
+  border-top-color: var(--aec-gold);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 .loadingScreen {
