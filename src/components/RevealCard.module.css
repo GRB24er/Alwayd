@@ -1,0 +1,38 @@
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  flex: 1;
+  min-width: 200px;
+}
+.label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+.valueRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.value {
+  font-family: monospace;
+  font-size: 1rem;
+  letter-spacing: 1px;
+}
+.buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+.iconBtn {
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+}
+.iconBtn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #374151;
+}

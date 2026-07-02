@@ -1,0 +1,110 @@
+/* File: src/components/Sidebar.module.css */
+
+/* add primary color variable if not already defined */
+:root {
+  --primary-color: #4f46e5;
+}
+
+/* Layout */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 240px;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0;
+  transition: width 0.3s ease, transform 0.3s ease;
+  z-index: 50;
+}
+
+.collapsed {
+  width: 80px;
+}
+
+.mobileOpen {
+  transform: translateX(0);
+}
+
+/* Collapse button */
+.collapseBtn {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin: 0.5rem;
+  color: #6b7280;
+}
+
+.rotate180 {
+  transform: rotate(180deg);
+}
+
+/* Navigation Links */
+.nav {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  color: #374151;
+  font-size: 0.95rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.navItem:hover {
+  background: #f3f4f6;
+  color: var(--primary-color);
+}
+
+.active {
+  background: var(--primary-color);
+  color: #fff;
+  border-radius: 6px;
+}
+
+/* Icon wrapper */
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile toggle button */
+.mobileToggle {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0.5rem;
+  z-index: 60;
+  display: none;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 240px;
+  }
+
+  .mobileToggle {
+    display: block;
+  }
+
+  .collapsed {
+    width: 240px; /* disable collapse on mobile */
+  }
+}

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512"><svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="SvgjsLinearGradient1003" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981"></stop>
+      <stop offset="100%" style="stop-color:#059669"></stop>
+    </linearGradient>
+    <linearGradient id="SvgjsLinearGradient1002" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24"></stop>
+      <stop offset="100%" style="stop-color:#d97706"></stop>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="256" fill="url(#bgGradient)"></circle>
+  
+  <!-- Inner Circle (subtle) -->
+  <circle cx="256" cy="256" r="220" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"></circle>
+  
+  <!-- Z Letter - Main Symbol -->
+  <path d="M160 150 L352 150 L352 190 L220 310 L352 310 L352 362 L160 362 L160 322 L292 202 L160 202 Z" fill="white"></path>
+  
+  <!-- Gold Accent Bar -->
+  <rect x="160" y="380" width="192" height="8" rx="4" fill="url(#goldGradient)"></rect>
+  
+  <!-- Small decorative elements -->
+  <circle cx="140" cy="256" r="6" fill="rgba(255,255,255,0.3)"></circle>
+  <circle cx="372" cy="256" r="6" fill="rgba(255,255,255,0.3)"></circle>
+</svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
+@media (prefers-color-scheme: dark) { :root { filter: none; } }
+</style></svg>

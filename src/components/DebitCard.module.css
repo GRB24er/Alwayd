@@ -1,0 +1,55 @@
+.card {
+  position: relative;
+  width: 320px;
+  height: 200px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  color: #fff;
+  padding: 24px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-family: 'Inter', sans-serif;
+}
+
+.logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.chip {
+  width: 40px;
+  height: 30px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.7);
+  margin-top: 16px;
+}
+
+.number {
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  margin-top: 12px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  margin-top: 16px;
+}
+
+.accountName {
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.expiry {
+  font-variant-numeric: tabular-nums;
+}
+
+.holderName {
+  font-size: 0.85rem;
+  margin-top: 4px;
+  opacity: 0.85;
+}

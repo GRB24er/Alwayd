@@ -1,0 +1,536 @@
+/* ─── LOAN APPLICATION — ALDWYCH EUROPEAN CAPITAL ─── */
+
+.applyRoot {
+  min-height: 100vh;
+  background: #f4f6f9;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ─── NAV ─── */
+.applyNav {
+  background: #0d2440;
+  padding: 0 40px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+}
+.applyNavLogo { display: flex; align-items: center; text-decoration: none; }
+.applyNavRight { display: flex; align-items: center; gap: 20px; }
+.applyNavSecure {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 500;
+}
+.applyNavLink {
+  font-size: 13px; color: rgba(255,255,255,0.75); text-decoration: none;
+  padding: 6px 14px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px;
+  transition: all 0.2s;
+}
+.applyNavLink:hover { color: #c9a962; border-color: #c9a962; }
+
+/* ─── PROGRESS BAR ─── */
+.progressBar {
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 20px 40px;
+  overflow-x: auto;
+}
+.progressInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+}
+.progressStep {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  position: relative;
+  flex: 1;
+  min-width: 100px;
+}
+.progressDot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.3s;
+  z-index: 2;
+}
+.progressStepActive .progressDot {
+  background: #0d2440;
+  color: #fff;
+}
+.progressStepCurrent .progressDot {
+  background: #c9a962;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(201,169,98,0.2);
+}
+.progressLabel { flex: 1; min-width: 0; }
+.progressLabelMain {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  white-space: nowrap;
+  transition: color 0.3s;
+}
+.progressStepActive .progressLabelMain { color: #0d2440; }
+.progressStepCurrent .progressLabelMain { color: #c9a962; }
+.progressLabelSub {
+  font-size: 11px;
+  color: #cbd5e1;
+  white-space: nowrap;
+}
+.progressLine {
+  position: absolute;
+  top: 16px;
+  left: 42px;
+  right: 0;
+  height: 2px;
+  background: #e2e8f0;
+  transition: background 0.3s;
+}
+.progressLineActive { background: #0d2440; }
+
+/* ─── MAIN CONTENT ─── */
+.applyContent {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 40px;
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+}
+
+.applyCard {
+  flex: 1;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+/* ─── ERROR BANNER ─── */
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fef2f2;
+  border-bottom: 1px solid #fecaca;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 14px 28px;
+}
+
+/* ─── STEP CONTENT ─── */
+.stepContent { padding: 40px; }
+.stepHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 36px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.stepNum {
+  font-size: 40px;
+  font-weight: 900;
+  color: rgba(201,169,98,0.3);
+  line-height: 1;
+  flex-shrink: 0;
+  letter-spacing: -0.03em;
+}
+.stepTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0d2440;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+.stepDesc { font-size: 15px; color: #64748b; line-height: 1.6; margin: 0; }
+
+/* ─── FORMS ─── */
+.formGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.formGroup { display: flex; flex-direction: column; gap: 6px; }
+.formGroupFull { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; }
+.formGroup label, .formGroupFull label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+.req { color: #dc2626; }
+.input {
+  padding: 12px 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+.input:focus {
+  border-color: #c9a962;
+  box-shadow: 0 0 0 3px rgba(201,169,98,0.12);
+}
+.textarea { resize: vertical; min-height: 80px; }
+.subSection {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0d2440;
+  margin: 28px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.alreadyHave {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #64748b;
+}
+.alreadyHave a { color: #c9a962; font-weight: 600; text-decoration: none; }
+.alreadyHave a:hover { text-decoration: underline; }
+
+/* ─── KYC ─── */
+.kycBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(201,169,98,0.08);
+  border: 1px solid rgba(201,169,98,0.25);
+  color: #92742a;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 28px;
+}
+.declarationsSection {
+  margin-top: 28px;
+  padding: 24px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.declarationsTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0d2440;
+  margin: 0 0 4px;
+}
+.checkboxLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+  cursor: pointer;
+}
+.checkbox {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: #c9a962;
+  cursor: pointer;
+}
+
+/* ─── DOCUMENTS ─── */
+.docsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.docCard {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s;
+  background: #fff;
+}
+.docCard:hover { border-color: #c9a962; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+.docCardUploaded { border-color: #10b981; background: #f0fdf4; }
+.docCardTop { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px; }
+.docIcon {
+  width: 44px; height: 44px; background: #f8fafc; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.docInfo { flex: 1; }
+.docLabel { font-size: 14px; font-weight: 700; color: #0d2440; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.docRequired { font-size: 10px; font-weight: 700; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 100px; }
+.docDesc { font-size: 12px; color: #64748b; line-height: 1.5; }
+.docUploaded { font-size: 11px; color: #10b981; font-weight: 600; margin-top: 4px; }
+.uploadProgressBar { height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden; margin-bottom: 12px; }
+.uploadProgressFill { height: 100%; background: linear-gradient(90deg, #c9a962, #a8883f); border-radius: 2px; transition: width 0.2s; }
+.uploadBtn {
+  display: flex; align-items: center; gap: 6px; justify-content: center;
+  width: 100%; padding: 10px; background: #f8fafc; border: 1.5px dashed #cbd5e1;
+  border-radius: 8px; font-size: 13px; font-weight: 600; color: #64748b;
+  cursor: pointer; transition: all 0.2s;
+}
+.uploadBtn:hover { border-color: #c9a962; color: #c9a962; background: rgba(201,169,98,0.04); }
+
+/* ─── LOAN TYPE GRID ─── */
+.loanTypeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.loanTypeCard {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fff;
+}
+.loanTypeCard:hover { border-color: #c9a962; }
+.loanTypeCardSelected { border-color: #c9a962; background: rgba(201,169,98,0.06); }
+.loanTypeLabel { font-size: 13px; font-weight: 700; color: #0d2440; margin-bottom: 4px; }
+.loanTypeRange { font-size: 11px; color: #64748b; margin-bottom: 2px; }
+.loanTypeRate { font-size: 12px; font-weight: 600; color: #c9a962; }
+
+/* ─── REVIEW ─── */
+.reviewCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+}
+.reviewIcon { margin-bottom: 20px; }
+.refNumber {
+  display: inline-block;
+  background: rgba(201,169,98,0.1);
+  border: 1px solid rgba(201,169,98,0.3);
+  color: #92742a;
+  font-size: 13px;
+  padding: 6px 16px;
+  border-radius: 100px;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+.reviewTitle { font-size: 22px; font-weight: 800; color: #0d2440; margin: 0 0 12px; }
+.reviewDesc { font-size: 15px; color: #64748b; line-height: 1.7; margin: 0 0 32px; max-width: 500px; margin-left: auto; margin-right: auto; }
+.reviewTimeline { display: flex; flex-direction: column; gap: 0; max-width: 400px; margin: 0 auto 24px; text-align: left; }
+.reviewTimelineItem { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #e2e8f0; }
+.reviewTimelineItem:last-child { border-bottom: none; }
+.reviewTimelineDot {
+  width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.reviewTimelineDotDone { background: #10b981; color: #fff; }
+.reviewTimelineLabel { flex: 1; font-size: 14px; font-weight: 500; color: #374151; }
+.reviewTimelineTime { font-size: 12px; color: #94a3b8; }
+.reviewNote { font-size: 13px; color: #94a3b8; font-style: italic; margin-top: 16px; }
+
+/* ─── OFFER ─── */
+.offerCard {
+  background: linear-gradient(135deg, #0d2440, #1a3a5c);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.offerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.offerApproved {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #10b981;
+}
+.offerExpiry { font-size: 13px; color: rgba(255,255,255,0.5); }
+.offerGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(255,255,255,0.06);
+}
+.offerItem {
+  padding: 28px 24px;
+  background: rgba(13,36,64,0.8);
+}
+.offerItemLabel { font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 500; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+.offerItemValue { font-size: 22px; font-weight: 800; color: #c9a962; letter-spacing: -0.02em; }
+.offerDisclaimer {
+  padding: 20px 32px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  line-height: 1.6;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+/* ─── AGREEMENT ─── */
+.agreementDoc {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+.agreementDocHeader {
+  background: #f8fafc;
+  padding: 24px 28px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.agreementDocTitle { font-size: 16px; font-weight: 800; color: #0d2440; letter-spacing: 0.05em; }
+.agreementDocRef { font-size: 12px; color: #94a3b8; margin-left: auto; }
+.agreementDocBody {
+  padding: 28px;
+  max-height: 280px;
+  overflow-y: auto;
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.75;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.agreementDocBody p { margin: 0; }
+.signatureSection { background: #f8fafc; border-radius: 12px; padding: 24px; border: 1px solid #e2e8f0; }
+.signatureTitle { font-size: 16px; font-weight: 700; color: #0d2440; margin: 0 0 16px; }
+.signatureInput { font-family: 'Georgia', serif; font-size: 18px; font-style: italic; color: #0d2440; }
+
+/* ─── DISBURSEMENT ─── */
+.disbursementSuccess { padding: 20px; text-align: center; }
+.successIcon { margin-bottom: 24px; }
+.successTitle { font-size: 26px; font-weight: 800; color: #0d2440; margin: 0 0 16px; letter-spacing: -0.02em; }
+.successDesc { font-size: 16px; color: #64748b; line-height: 1.7; margin: 0 0 36px; max-width: 520px; margin-left: auto; margin-right: auto; }
+.disbursementDetails {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  max-width: 480px;
+  margin: 0 auto 36px;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+}
+.disbursementItem { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.disbursementItem span { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+.disbursementItem strong { font-size: 16px; color: #0d2440; }
+.disbursementActions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+/* ─── STEP NAV ─── */
+.stepNav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 24px 40px;
+  border-top: 1px solid #f1f5f9;
+  background: #fafafa;
+}
+.stepNavBack {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 24px; background: #fff; border: 1.5px solid #e2e8f0;
+  border-radius: 8px; font-size: 14px; font-weight: 600; color: #64748b;
+  cursor: pointer; transition: all 0.2s;
+}
+.stepNavBack:hover { border-color: #0d2440; color: #0d2440; }
+.stepNavNext {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 32px; background: linear-gradient(135deg, #c9a962, #a8883f);
+  border: none; border-radius: 8px; font-size: 15px; font-weight: 700; color: #fff;
+  cursor: pointer; transition: all 0.25s; box-shadow: 0 4px 16px rgba(201,169,98,0.3);
+}
+.stepNavNext:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,169,98,0.4); }
+.stepNavNext:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ─── SIDEBAR ─── */
+.applySidebar { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
+.sidebarCard {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+}
+.sidebarTitle { font-size: 15px; font-weight: 700; color: #0d2440; margin: 0 0 16px; }
+.sidebarItem {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: #475569; padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.sidebarItem:last-child { border-bottom: none; }
+.sidebarText { font-size: 13px; color: #64748b; line-height: 1.6; margin: 0 0 12px; }
+.sidebarEmail { font-size: 13px; color: #c9a962; font-weight: 600; text-decoration: none; word-break: break-all; }
+.sidebarEmail:hover { text-decoration: underline; }
+.sidebarCompliance { display: flex; flex-direction: column; gap: 8px; }
+.sidebarComplianceBadge {
+  font-size: 12px; font-weight: 600; color: #475569;
+  background: #f8fafc; border: 1px solid #e2e8f0;
+  padding: 8px 12px; border-radius: 8px;
+}
+
+/* ─── SHARED CTA STYLES ─── */
+.heroCtaPrimary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, #c9a962, #a8883f);
+  color: #fff; text-decoration: none; font-size: 15px; font-weight: 600;
+  padding: 14px 28px; border-radius: 8px; transition: all 0.25s;
+  box-shadow: 0 4px 16px rgba(201,169,98,0.3);
+}
+.heroCtaPrimary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,169,98,0.4); }
+.heroCtaSecondary {
+  display: inline-flex; align-items: center;
+  background: transparent; color: #0d2440; text-decoration: none;
+  font-size: 15px; font-weight: 500; padding: 14px 28px; border-radius: 8px;
+  border: 1.5px solid #0d2440; transition: all 0.25s;
+}
+.heroCtaSecondary:hover { background: rgba(13,36,64,0.06); }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .applyContent { flex-direction: column; padding: 0 20px; }
+  .applySidebar { width: 100%; }
+  .formGrid2 { grid-template-columns: 1fr; }
+  .formGroupFull { grid-column: auto; }
+  .docsGrid { grid-template-columns: 1fr; }
+  .loanTypeGrid { grid-template-columns: repeat(2, 1fr); }
+  .offerGrid { grid-template-columns: repeat(2, 1fr); }
+  .disbursementDetails { grid-template-columns: 1fr; }
+  .progressBar { padding: 16px 20px; }
+  .applyNav { padding: 0 20px; }
+  .stepContent { padding: 28px 20px; }
+  .stepNav { padding: 20px; }
+}
+@media (max-width: 600px) {
+  .loanTypeGrid { grid-template-columns: 1fr; }
+  .offerGrid { grid-template-columns: 1fr; }
+  .progressInner { gap: 0; }
+  .progressLabel { display: none; }
+}

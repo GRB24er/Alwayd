@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Aldwych European Capital",
+    "slug": "aldwych-banking",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "aldwych",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a0e1a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.aldwycheuropeancapital.app",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Authenticate with Face ID for secure banking access"
+      }
+    },
+    "android": {
+      "package": "com.aldwycheuropeancapital.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0a0e1a",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "CAMERA"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-local-authentication"
+    ]
+  }
+}

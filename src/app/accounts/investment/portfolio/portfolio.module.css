@@ -1,0 +1,312 @@
+.wrapper {
+  display: flex;
+  min-height: 100vh;
+  background: #f9fafb;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  padding: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Header */
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.headerInfo h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.headerInfo p {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.tradeBtn,
+.reportBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tradeBtn {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+}
+
+.tradeBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+}
+
+.reportBtn {
+  background: white;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.reportBtn:hover {
+  background: #f9fafb;
+}
+
+/* Performance Cards */
+.performanceCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.perfCard {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.perfCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.perfLabel {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.perfBadge {
+  background: #dcfce7;
+  color: #16a34a;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.perfValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.75rem;
+}
+
+.perfChange {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.changePositive {
+  color: #16a34a;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.changeNegative {
+  color: #dc2626;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.changeTime {
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+
+/* View Tabs */
+.viewTabs {
+  display: flex;
+  gap: 0.25rem;
+  background: white;
+  padding: 0.25rem;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  border: 1px solid #e5e7eb;
+}
+
+.viewTabs button {
+  flex: 1;
+  padding: 0.875rem;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.viewTabs button:hover {
+  background: #f9fafb;
+}
+
+.viewTabs button.activeTab {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+}
+
+/* Content Area */
+.contentArea {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Allocation Section */
+.allocationSection {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  border: 1px solid #e5e7eb;
+}
+
+.allocationSection h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 1.5rem;
+}
+
+.allocationGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.allocationBar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.barLabel {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.barTrack {
+  height: 32px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.3s ease;
+}
+
+.barValue {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+/* Holdings Section */
+.holdingsSection {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  border: 1px solid #e5e7eb;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.sectionHeader h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.viewAllLink {
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.holdingsTable {
+  overflow-x: auto;
+}
+
+.holdingsTable table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.holdingsTable th {
+  text-align: left;
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.holdingsTable td {
+  padding: 1rem 0.75rem;
+  font-size: 0.875rem;
+  color: #374151;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.symbol {
+  font-weight: 700;
+  color: #111827;
+}
+
+.value {
+  font-weight: 600;
+  color: #111827;
+}
+
+.positive {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.negative {
+  color: #dc2626;
+  font-weight: 600;
+}

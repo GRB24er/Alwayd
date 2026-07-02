@@ -1,0 +1,487 @@
+/* Main Layout */
+.wrapper {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.container {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Hero Section */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+  color: white;
+  border-radius: 0.5rem;
+  margin: 1rem 0 2rem;
+}
+
+.heroContent {
+  flex: 1;
+  max-width: 600px;
+}
+
+.heroTitle {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.heroSubtitle {
+  font-size: 1.25rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+}
+
+.heroCTA {
+  display: flex;
+  gap: 1rem;
+}
+
+.heroImage {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.illustration {
+  font-size: 8rem;
+  opacity: 0.8;
+}
+
+/* Buttons */
+.primaryButton, 
+.secondaryButton,
+.selectButton,
+.learnMoreButton,
+.submitButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.primaryButton {
+  background-color: #ffffff;
+  color: #2563eb;
+}
+
+.primaryButton:hover {
+  background-color: #f0f4ff;
+  transform: translateY(-1px);
+}
+
+.secondaryButton {
+  background-color: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.secondaryButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.selectButton {
+  background-color: #2563eb;
+  color: white;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.selectButton:hover {
+  background-color: #1d4ed8;
+}
+
+.learnMoreButton {
+  background: none;
+  color: #2563eb;
+  padding: 0.5rem 0;
+  font-weight: 500;
+}
+
+.learnMoreButton:hover {
+  text-decoration: underline;
+}
+
+.submitButton {
+  background-color: #2563eb;
+  color: white;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+}
+
+.submitButton:hover {
+  background-color: #1d4ed8;
+}
+
+/* Tab Navigation */
+.tabNav {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 2rem;
+}
+
+.tab {
+  padding: 0.75rem 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: #6b7280;
+  position: relative;
+}
+
+.tab:hover {
+  color: #2563eb;
+}
+
+.activeTab {
+  color: #2563eb;
+}
+
+.activeTab::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #2563eb;
+}
+
+/* Account Cards */
+.accountsSection {
+  margin-bottom: 3rem;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #111827;
+}
+
+.accountsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.accountCard {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+}
+
+.accountCard h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.accountDetails {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.detailItem span {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.detailItem strong {
+  font-weight: 600;
+  color: #111827;
+}
+
+.features {
+  margin-bottom: 1rem;
+}
+
+.features h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #111827;
+}
+
+.features ul {
+  list-style-type: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.features li {
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+  color: #4b5563;
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.features li::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: #2563eb;
+}
+
+.bestFor {
+  margin-top: auto;
+  font-size: 0.875rem;
+  color: #6b7280;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.bestFor span {
+  font-weight: 600;
+  color: #4b5563;
+}
+
+/* Why Choose Us Section */
+.whyUsSection {
+  margin-bottom: 3rem;
+}
+
+.benefitsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.benefitCard {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.benefitIcon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.benefitCard h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: #111827;
+}
+
+.benefitCard p {
+  font-size: 0.875rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+/* Services Section */
+.servicesContent {
+  margin-bottom: 3rem;
+}
+
+.servicesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.serviceCard {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.serviceIcon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.serviceCard h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #111827;
+}
+
+.serviceCard p {
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin-bottom: 1rem;
+}
+
+/* Additional Services */
+.additionalServices {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.additionalServices h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.benefitsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.75rem;
+}
+
+.benefitItem {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.checkIcon {
+  color: #10b981;
+  margin-right: 0.5rem;
+  font-weight: bold;
+}
+
+/* Application Form */
+.applyContent {
+  margin-bottom: 3rem;
+}
+
+.applicationForm {
+  background-color: white;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.formSection {
+  margin-bottom: 2rem;
+}
+
+.formSection h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.formGroup {
+  margin-bottom: 1rem;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #374151;
+}
+
+.formGroup input,
+.formGroup select {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #111827;
+  background-color: #f9fafb;
+}
+
+.formGroup input:focus,
+.formGroup select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.formActions {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.disclaimer {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 1rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .hero {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+
+  .heroCTA {
+    justify-content: center;
+  }
+
+  .heroImage {
+    margin-top: 2rem;
+  }
+
+  .tabNav {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 0.5rem;
+  }
+
+  .container {
+    padding: 1rem;
+  }
+}

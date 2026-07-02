@@ -1,0 +1,234 @@
+/* OTPInput.module.css - Elite OTP Component */
+
+.container {
+  position: relative;
+}
+
+.inputGroup {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.input {
+  width: 56px;
+  height: 64px;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Courier New', monospace;
+  border: 2px solid #d1fae5;
+  border-radius: 12px;
+  background: white;
+  color: #064e3b;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.input:focus {
+  border-color: #10b981;
+  box-shadow: 
+    0 0 0 3px rgba(16, 185, 129, 0.1),
+    0 4px 12px rgba(16, 185, 129, 0.15);
+  transform: translateY(-2px);
+}
+
+.input:disabled {
+  background: #f0fdf4;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.inputGroup.error .input {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.inputGroup.error .input:focus {
+  box-shadow: 
+    0 0 0 3px rgba(239, 68, 68, 0.1),
+    0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+.inputGroup.success .input {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  color: #059669;
+}
+
+.errorMessage,
+.successMessage {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.errorMessage {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+}
+
+.errorMessage svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.successMessage {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 1px solid #6ee7b7;
+  color: #047857;
+}
+
+.successMessage svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.resendButton,
+.clearButton {
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.resendButton {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.resendButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.resendButton:disabled {
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.clearButton {
+  background: white;
+  color: #059669;
+  border: 2px solid #d1fae5;
+}
+
+.clearButton:hover:not(:disabled) {
+  background: #f0fdf4;
+  border-color: #a7f3d0;
+}
+
+.clearButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cooldown {
+  color: #6ee7b7;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.loadingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  border-radius: 12px;
+  z-index: 10;
+}
+
+.loadingOverlay span {
+  color: #059669;
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #d1fae5;
+  border-top-color: #10b981;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .input {
+    width: 48px;
+    height: 56px;
+    font-size: 1.75rem;
+  }
+  
+  .inputGroup {
+    gap: 0.5rem;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .resendButton,
+  .clearButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .input {
+    width: 40px;
+    height: 48px;
+    font-size: 1.5rem;
+  }
+  
+  .inputGroup {
+    gap: 0.375rem;
+  }
+}

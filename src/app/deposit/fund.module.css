@@ -1,0 +1,747 @@
+/* src/app/fund-account/fund.module.css */
+
+.wrapper {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.mainContent {
+  flex: 1;
+  margin-left: 260px;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  padding: 2rem;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  font-size: 1.125rem;
+  color: #64748b;
+}
+
+/* Page Header */
+.pageHeader {
+  margin-bottom: 2rem;
+}
+
+.pageHeader h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.5rem;
+}
+
+.pageHeader p {
+  color: #64748b;
+  margin: 0;
+}
+
+/* Pending Alert */
+.pendingAlert {
+  display: flex;
+  gap: 1rem;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.alertIcon {
+  font-size: 1.5rem;
+}
+
+.alertContent h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #92400e;
+  margin: 0 0 0.25rem;
+}
+
+.alertContent > p {
+  font-size: 0.875rem;
+  color: #a16207;
+  margin: 0 0 0.75rem;
+}
+
+.pendingList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pendingItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(255,255,255,0.5);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.pendingMethod {
+  color: #92400e;
+}
+
+.pendingRef {
+  font-family: monospace;
+  color: #a16207;
+}
+
+.pendingStatus {
+  margin-left: auto;
+  background: #fde68a;
+  color: #92400e;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Container */
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  padding: 2rem;
+}
+
+/* Progress Bar */
+.progressBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+
+.progressStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stepNum {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.3s;
+}
+
+.progressStep.active .stepNum {
+  background: #10b981;
+  color: white;
+}
+
+.stepLabel {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.progressStep.active .stepLabel {
+  color: #10b981;
+}
+
+.progressLine {
+  width: 60px;
+  height: 2px;
+  background: #e2e8f0;
+  margin: 0 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Step Content */
+.stepContent h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.5rem;
+  text-align: center;
+}
+
+.stepDesc {
+  color: #64748b;
+  text-align: center;
+  margin: 0 0 2rem;
+}
+
+/* Method Grid */
+.methodGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.methodCard {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.methodCard:hover {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.methodCard.selected {
+  border-color: #10b981;
+  background: #f0fdf4;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+.methodIcon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.methodCard h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 0.5rem;
+}
+
+.methodCard > p {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0 0 1rem;
+}
+
+.methodDetails {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.methodDetails li {
+  font-size: 0.8125rem;
+  color: #475569;
+  padding: 0.25rem 0;
+  padding-left: 1.25rem;
+  position: relative;
+}
+
+.methodDetails li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #10b981;
+}
+
+/* Crypto Selector */
+.cryptoSelector {
+  margin-bottom: 1.5rem;
+}
+
+.cryptoSelector label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.cryptoOptions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.cryptoBtn {
+  padding: 0.75rem 1.5rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cryptoBtn:hover {
+  border-color: #10b981;
+}
+
+.cryptoBtn.selected {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+/* Amount Input */
+.amountInputWrapper {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.amountInputWrapper:focus-within {
+  border-color: #10b981;
+  background: white;
+}
+
+.currencySymbol {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-right: 0.5rem;
+}
+
+.amountInput {
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0f172a;
+  outline: none;
+  text-align: center;
+  width: 100%;
+}
+
+.amountInput::placeholder {
+  color: #cbd5e1;
+}
+
+.quickAmounts {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.quickAmountBtn {
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quickAmountBtn:hover {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.amountNote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #0369a1;
+  margin-bottom: 1.5rem;
+}
+
+/* Transfer Details */
+.transferDetails {
+  margin-bottom: 2rem;
+}
+
+.detailsCard {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.detailsCard h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 0.5rem;
+}
+
+.detailsNote {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0 0 1.5rem;
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.detailRow:last-child {
+  border-bottom: none;
+}
+
+.detailLabel {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.detailValue {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detailValue span {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.mono {
+  font-family: 'SF Mono', Monaco, monospace;
+}
+
+.copyBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.copyBtn:hover {
+  opacity: 1;
+}
+
+/* Crypto Address */
+.cryptoAddressBox {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.qrPlaceholder {
+  width: 120px;
+  height: 120px;
+  background: #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.addressWrapper {
+  flex: 1;
+}
+
+.addressLabel {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.cryptoAddress {
+  display: block;
+  font-size: 0.8125rem;
+  background: #0f172a;
+  color: #10b981;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  word-break: break-all;
+  margin-bottom: 0.75rem;
+}
+
+.copyAddressBtn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.copyAddressBtn:hover {
+  background: #059669;
+}
+
+.cryptoAmount {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  background: #f0fdf4;
+  border-radius: 8px;
+}
+
+.cryptoAmount span {
+  color: #64748b;
+}
+
+.cryptoAmount strong {
+  color: #059669;
+}
+
+/* Important Note */
+.importantNote {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.importantNote h4 {
+  font-size: 0.9375rem;
+  color: #92400e;
+  margin: 0 0 0.75rem;
+}
+
+.importantNote ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.importantNote li {
+  font-size: 0.8125rem;
+  color: #92400e;
+  margin-bottom: 0.5rem;
+}
+
+/* Error */
+.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.backBtn {
+  padding: 0.875rem 1.5rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.backBtn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.continueBtn,
+.confirmBtn,
+.primaryBtn {
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.continueBtn:hover:not(:disabled),
+.confirmBtn:hover:not(:disabled),
+.primaryBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+}
+
+.continueBtn:disabled,
+.confirmBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.secondaryBtn {
+  padding: 0.875rem 1.5rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.secondaryBtn:hover {
+  background: #f8fafc;
+}
+
+/* Success Section */
+.successSection {
+  text-align: center;
+}
+
+.successIcon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  margin: 0 auto 1.5rem;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);
+}
+
+.successSection h2 {
+  margin-bottom: 0.5rem;
+}
+
+.successSection > p {
+  color: #64748b;
+  margin-bottom: 2rem;
+}
+
+.confirmationCard {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.confirmRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.confirmRow:last-child {
+  border-bottom: none;
+}
+
+.confirmRow span:first-child {
+  color: #64748b;
+}
+
+.confirmRow strong {
+  color: #0f172a;
+}
+
+.statusPending {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.nextSteps {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 10px;
+  padding: 1.25rem;
+  text-align: left;
+  margin-bottom: 2rem;
+}
+
+.nextSteps h4 {
+  color: #0369a1;
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.nextSteps ol {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.nextSteps li {
+  color: #0c4a6e;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .mainContent {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding: 1rem;
+  }
+
+  .container {
+    padding: 1.5rem;
+  }
+
+  .methodGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .progressLine {
+    width: 30px;
+  }
+
+  .cryptoAddressBox {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}
