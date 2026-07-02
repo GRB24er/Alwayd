@@ -100,7 +100,10 @@ export default function SignInContent() {
 
   useEffect(() => {
     if (status === 'authenticated' && session) {
-      const timer = setTimeout(() => router.replace('/dashboard'), 500);
+      // Second factor first: until the emailed code is verified, the
+      // middleware keeps every account page locked.
+      const destination = session.user?.otpVerified ? '/dashboard' : '/auth/verify';
+      const timer = setTimeout(() => router.replace(destination), 500);
       return () => clearTimeout(timer);
     }
   }, [status, session, router]);
@@ -141,7 +144,7 @@ export default function SignInContent() {
         });
         return;
       }
-      if (res?.ok) { setAttempts(0); setErrorMsg(''); setTimeout(() => router.replace('/dashboard'), 500); }
+      if (res?.ok) { setAttempts(0); setErrorMsg(''); setTimeout(() => router.replace('/auth/verify'), 500); }
       else { setErrorMsg('Authentication service unavailable. Please try again.'); }
     } catch (error) { console.error('Sign-in error:', error); setErrorMsg('Network error. Please check your connection.'); }
     finally { setLoading(false); }
@@ -168,8 +171,8 @@ export default function SignInContent() {
       <div className={styles.container}>
         <div className={styles.redirectContainer}>
           <div className={styles.redirectSpinner} />
-          <h2 className={styles.redirectTitle}>Access Granted</h2>
-          <p className={styles.redirectText}>Redirecting to secure dashboard...</p>
+          <h2 className={styles.redirectTitle}>Credentials Accepted</h2>
+          <p className={styles.redirectText}>Continuing to security verification...</p>
         </div>
       </div>
     );
