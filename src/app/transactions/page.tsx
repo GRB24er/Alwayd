@@ -1,5 +1,6 @@
 // src/app/transactions/page.tsx
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
@@ -49,6 +50,7 @@ interface SummaryStats {
 
 export default function TransactionsPage() {
   const { data: session, status } = useSession();
+  const { currency: displayCurrency } = useDisplayCurrency();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -410,7 +412,7 @@ useEffect(() => {
     
     const formattedAmount = new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: transaction.currency || 'USD',
+      currency: displayCurrency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(amount);
@@ -593,7 +595,7 @@ useEffect(() => {
                 <span className={`${styles.summaryAmount} ${styles.credit}`}>
                   {new Intl.NumberFormat('en-US', {
                     style: 'currency',
-                    currency: 'USD',
+                    currency: displayCurrency,
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0
                   }).format(summaryStats.totalIn)}
@@ -613,7 +615,7 @@ useEffect(() => {
                 <span className={`${styles.summaryAmount} ${styles.debit}`}>
                   {new Intl.NumberFormat('en-US', {
                     style: 'currency',
-                    currency: 'USD',
+                    currency: displayCurrency,
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0
                   }).format(summaryStats.totalOut)}
@@ -633,7 +635,7 @@ useEffect(() => {
                 <span className={`${styles.summaryAmount} ${summaryStats.net >= 0 ? styles.credit : styles.debit}`}>
                   {summaryStats.net >= 0 ? '+' : ''}{new Intl.NumberFormat('en-US', {
                     style: 'currency',
-                    currency: 'USD',
+                    currency: displayCurrency,
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0
                   }).format(Math.abs(summaryStats.net))}
@@ -651,7 +653,7 @@ useEffect(() => {
                 <span className={styles.summaryAmount}>
                   {new Intl.NumberFormat('en-US', {
                     style: 'currency',
-                    currency: 'USD',
+                    currency: displayCurrency,
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0
                   }).format(summaryStats.avgTransaction)}
@@ -659,7 +661,7 @@ useEffect(() => {
                 <span className={styles.summaryTrend}>
                   Largest: {new Intl.NumberFormat('en-US', {
                     style: 'currency',
-                    currency: 'USD',
+                    currency: displayCurrency,
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0
                   }).format(summaryStats.largestTransaction)}
@@ -885,7 +887,7 @@ useEffect(() => {
                         {group.transactions.length.toLocaleString()} transactions • 
                         {new Intl.NumberFormat('en-US', {
                           style: 'currency',
-                          currency: 'USD',
+                          currency: displayCurrency,
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 0
                         }).format(
@@ -968,7 +970,7 @@ useEffect(() => {
                             <div className={styles.balanceAfter}>
                               Balance: {new Intl.NumberFormat('en-US', {
                                 style: 'currency',
-                                currency: transaction.currency || 'USD',
+                                currency: displayCurrency,
                                 minimumFractionDigits: 2
                               }).format(transaction.balanceAfter)}
                             </div>

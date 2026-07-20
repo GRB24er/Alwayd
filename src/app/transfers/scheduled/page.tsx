@@ -1,5 +1,6 @@
 // src/app/transfers/scheduled/page.tsx
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -158,13 +159,7 @@ export default function ScheduledTransferPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
+  const { format: formatCurrency } = useDisplayCurrency();
 
   const getStatusColor = (status: string) => {
     switch(status) {

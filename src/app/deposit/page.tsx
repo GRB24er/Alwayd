@@ -1,5 +1,6 @@
 // src/app/fund-account/page.tsx
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
@@ -137,12 +138,7 @@ export default function FundAccountPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+  const { format: formatCurrency } = useDisplayCurrency();
 
   if (status === "loading") {
     return (

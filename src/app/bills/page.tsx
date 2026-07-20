@@ -1,5 +1,6 @@
 // src/app/bills/page.tsx
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -28,6 +29,7 @@ interface BillStats {
 }
 
 export default function BillsPage() {
+  const { format: fmtMoney } = useDisplayCurrency();
   const { data: session, status } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -138,7 +140,7 @@ export default function BillsPage() {
       .filter(bill => selectedBills.includes(bill._id))
       .reduce((sum, bill) => sum + bill.amount, 0);
 
-    if (!confirm(`Pay ${selectedBills.length} bill(s) totaling $${selectedTotal.toFixed(2)}?`)) {
+    if (!confirm(`Pay ${selectedBills.length} bill(s) totaling ${fmtMoney(selectedTotal)}?`)) {
       return;
     }
 
@@ -311,7 +313,7 @@ export default function BillsPage() {
               </div>
               <div className={styles.cardContent}>
                 <div className={styles.cardLabel}>Total Due</div>
-                <div className={styles.cardValue}>${stats.totalDue.toFixed(2)}</div>
+                <div className={styles.cardValue}>{fmtMoney(stats.totalDue)}</div>
                 <div className={styles.cardSubtext}>This month</div>
               </div>
             </div>
@@ -389,10 +391,9 @@ export default function BillsPage() {
                 <span>{selectedBills.length} bill(s) selected</span>
                 <div className={styles.selectionActions}>
                   <span className={styles.selectedTotal}>
-                    Total: ${bills
+                    Total: {fmtMoney(bills
                       .filter(bill => selectedBills.includes(bill._id))
-                      .reduce((sum, bill) => sum + bill.amount, 0)
-                      .toFixed(2)}
+                      .reduce((sum, bill) => sum + bill.amount, 0))}
                   </span>
                   <button 
                     className={styles.paySelectedBtn}
@@ -462,7 +463,7 @@ export default function BillsPage() {
                           </div>
                         </td>
                         <td className={styles.accountNumber}>{bill.accountNumber}</td>
-                        <td className={styles.amount}>${bill.amount.toFixed(2)}</td>
+                        <td className={styles.amount}>{fmtMoney(bill.amount)}</td>
                         <td>
                           <div className={styles.dueDate}>
                             {new Date(bill.dueDate).toLocaleDateString('en-US', {

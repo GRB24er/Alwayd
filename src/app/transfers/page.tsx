@@ -1,5 +1,6 @@
 // app/transfers/wire/page.tsx
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -193,13 +194,7 @@ export default function WireTransferPage() {
     return userBalances[account] || 0;
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
+  const { format: formatCurrency } = useDisplayCurrency();
 
   const handleInputChange = (field: keyof WireFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));

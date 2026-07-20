@@ -1,5 +1,6 @@
 // src/app/accounts/[type]/page.tsx
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -133,13 +134,7 @@ export default function AccountDetailPage() {
     return data;
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
+  const { format: formatCurrency } = useDisplayCurrency();
 
   // Transform transactions for table
   const transactions: Transaction[] = (accountData?.transactions || []).map((t: any) => {
