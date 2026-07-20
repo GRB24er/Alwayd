@@ -41,6 +41,13 @@ interface VerifyResponse {
   issuedByTitle?: string;
   // Adjustment / reversal
   reversedReference?: string;
+  // Trust-specific
+  trustName?: string;
+  settlor?: string;
+  beneficiary?: string;
+  nature?: string;
+  statusLabel?: string;
+  nextReleaseDate?: string;
 }
 
 async function fetchVerification(ref: string): Promise<VerifyResponse> {
@@ -139,6 +146,38 @@ export default async function VerifyPage({
                 <div className={styles.detailItem}>
                   <span>Account Holder</span>
                   <strong>{data.customer}</strong>
+                </div>
+              )}
+
+              {/* ── Trust-specific fields ── */}
+              {data.trustName && (
+                <div className={styles.detailItem}>
+                  <span>Trust</span>
+                  <strong>{data.trustName}</strong>
+                </div>
+              )}
+              {data.settlor && (
+                <div className={styles.detailItem}>
+                  <span>Settlor</span>
+                  <strong>{data.settlor}</strong>
+                </div>
+              )}
+              {data.beneficiary && (
+                <div className={styles.detailItem}>
+                  <span>Beneficiary</span>
+                  <strong>{data.beneficiary}</strong>
+                </div>
+              )}
+              {data.nature && (
+                <div className={styles.detailItem}>
+                  <span>Nature of Trust</span>
+                  <strong>{data.nature}</strong>
+                </div>
+              )}
+              {data.nextReleaseDate && (
+                <div className={styles.detailItem}>
+                  <span>Next Scheduled Release</span>
+                  <strong>{fmtDate(data.nextReleaseDate)}</strong>
                 </div>
               )}
 

@@ -27,6 +27,7 @@ import {
   TRUST_DOCUMENT_LABELS,
 } from '@/lib/trustDocuments';
 import { verificationUrlFor } from '@/lib/siteUrl';
+import { formatMoney } from '@/lib/currency';
 
 const BALANCE_FIELD: Record<AccountBucket, 'checkingBalance' | 'savingsBalance' | 'investmentBalance'> = {
   checking: 'checkingBalance',
@@ -69,7 +70,7 @@ export function buildTrustDocumentData(
     beneficiaryName: trust.beneficiaryName,
     beneficiaryDateOfBirth: trust.beneficiaryDateOfBirth,
     beneficiaryRelationship: trust.beneficiaryRelationship,
-    currency: trust.currency || 'USD',
+    currency: trust.currency || 'EUR',
     principalAmount: trust.principalAmount,
     heldBalance: trust.heldBalance,
     fundingAccount: trust.fundingAccount,
@@ -182,7 +183,7 @@ export async function fundTrust(trust: ITrustAccount): Promise<void> {
   await Transaction.create({
     userId: settlor._id,
     type: 'transfer-out',
-    currency: trust.currency || 'USD',
+    currency: 'USD', // base ledger unit; trust display currency is separate
     amount: trust.principalAmount,
     date: new Date(),
     description: `Trust funding — ${trust.trustName} (${trust.referenceNumber})`,
@@ -313,7 +314,7 @@ async function payBeneficiary(
       await Transaction.create({
         userId: beneficiary._id,
         type: 'transfer-in',
-        currency: trust.currency || 'USD',
+        currency: 'USD', // base ledger unit; trust display currency is separate
         amount,
         date: new Date(),
         description: `Trust distribution — ${trust.trustName} (${trust.referenceNumber})`,
@@ -334,7 +335,7 @@ async function payBeneficiary(
   await Transaction.create({
     userId: trust.settlorUserId,
     type: 'transfer-out',
-    currency: trust.currency || 'USD',
+    currency: 'USD', // base ledger unit; trust display currency is separate
     amount,
     date: new Date(),
     description: `Trust distribution to ${trust.beneficiaryName} — ${trust.trustName} (${trust.referenceNumber})`,
@@ -371,7 +372,7 @@ export async function cancelTrust(trust: ITrustAccount, reason: string): Promise
       await Transaction.create({
         userId: settlor._id,
         type: 'transfer-in',
-        currency: trust.currency || 'USD',
+        currency: 'USD', // base ledger unit; trust display currency is separate
         amount: refund,
         date: new Date(),
         description: `Trust cancellation refund — ${trust.trustName} (${trust.referenceNumber})`,
@@ -402,7 +403,7 @@ async function notifyDistribution(trust: ITrustAccount): Promise<void> {
   const last = released[released.length - 1];
   if (!last) return;
 
-  const amountStr = `${trust.currency} ${Number(last.releasedAmount || 0).toLocaleString()}`;
+  const amountStr = formatMoney(Number(last.releasedAmount || 0), trust.currency);
   const subject = `Trust distribution released — ${trust.trustName}`;
   const html = `
     <p>A scheduled distribution from <strong>${trust.trustName}</strong>
@@ -412,7 +413,7 @@ async function notifyDistribution(trust: ITrustAccount): Promise<void> {
       <tr><td style="padding:6px 0;color:#64748b;">Beneficiary</td><td style="padding:6px 0;font-weight:600;">${trust.beneficiaryName}</td></tr>
       <tr><td style="padding:6px 0;color:#64748b;">Tranche</td><td style="padding:6px 0;">${last.label}</td></tr>
       <tr><td style="padding:6px 0;color:#64748b;">Amount released</td><td style="padding:6px 0;font-weight:600;">${amountStr}</td></tr>
-      <tr><td style="padding:6px 0;color:#64748b;">Remaining in trust</td><td style="padding:6px 0;">${trust.currency} ${trust.heldBalance.toLocaleString()}</td></tr>
+      <tr><td style="padding:6px 0;color:#64748b;">Remaining in trust</td><td style="padding:6px 0;">${formatMoney(trust.heldBalance, trust.currency)}</td></tr>
       <tr><td style="padding:6px 0;color:#64748b;">Status</td><td style="padding:6px 0;">${trust.status}</td></tr>
     </table>
   `;
@@ -464,12 +465,12 @@ export async function sendTrustEstablishedEmail(trust: ITrustAccount): Promise<v
     <table style="width:100%;border-collapse:collapse;margin:16px 0;">
       <tr><td style="padding:6px 0;color:#64748b;">Reference</td><td style="padding:6px 0;font-weight:600;">${trust.referenceNumber}</td></tr>
       <tr><td style="padding:6px 0;color:#64748b;">Beneficiary</td><td style="padding:6px 0;">${trust.beneficiaryName}</td></tr>
-      <tr><td style="padding:6px 0;color:#64748b;">Principal</td><td style="padding:6px 0;font-weight:600;">${trust.currency} ${trust.principalAmount.toLocaleString()}</td></tr>
+      <tr><td style="padding:6px 0;color:#64748b;">Principal</td><td style="padding:6px 0;font-weight:600;">${formatMoney(trust.principalAmount, trust.currency)}</td></tr>
       <tr><td style="padding:6px 0;color:#64748b;">Distributions</td><td style="padding:6px 0;">${scheduleHtml}</td></tr>
     </table>
     <p>Funds will be released automatically to the beneficiary as each milestone is reached.</p>
   `;
-  const text = `Your trust "${trust.trustName}" (${trust.referenceNumber}) for ${trust.beneficiaryName} has been established and funded with ${trust.currency} ${trust.principalAmount.toLocaleString()}.`;
+  const text = `Your trust "${trust.trustName}" (${trust.referenceNumber}) for ${trust.beneficiaryName} has been established and funded with ${formatMoney(trust.principalAmount, trust.currency)}.`;
 
   const recipients = [trust.settlorEmail].filter(Boolean) as string[];
   if (recipients.length) {
@@ -484,7 +485,7 @@ async function notifyRevocation(trust: ITrustAccount, refund: number): Promise<v
   const html = `
     <p>Dear ${trust.settlorName},</p>
     <p>Your trust <strong>${trust.trustName}</strong> (${trust.referenceNumber}) has been revoked.
-    ${refund > 0 ? `The undistributed balance of ${trust.currency} ${refund.toLocaleString()} has been returned to your ${trust.fundingAccount} account.` : ''}
+    ${refund > 0 ? `The undistributed balance of ${formatMoney(refund, trust.currency)} has been returned to your ${trust.fundingAccount} account.` : ''}
     The Deed of Revocation is attached.</p>
   `;
   const text = `Your trust "${trust.trustName}" (${trust.referenceNumber}) has been revoked.`;

@@ -20,6 +20,10 @@ export interface IUser extends Document {
   accountNumber?: string;
   routingNumber?: string;
 
+  // Preferred display currency for balances/documents (presentation only —
+  // the ledger stays in the base unit, no FX conversion is applied).
+  displayCurrency?: string;
+
   // Current effective restriction state. Updated by accountStatus.ts helpers
   // whenever a restriction is issued or lifted. Source of truth is the
   // AccountRestriction collection; this is the denormalized fast-read field.
@@ -83,6 +87,10 @@ const UserSchema = new Schema<IUser>({
   routingNumber: {
     type: String,
     required: false
+  },
+  displayCurrency: {
+    type: String,
+    default: 'USD'
   },
   accountStatus: {
     type: String,

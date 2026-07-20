@@ -124,14 +124,15 @@ const ACCOUNT_LABELS: Record<string, string> = {
 };
 
 function fmtMoney(n: number, currency: string): string {
+  const cur = currency || 'EUR';
   try {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-GB', {
       style: 'currency',
-      currency: currency || 'USD',
+      currency: cur,
       minimumFractionDigits: 2,
     }).format(Number(n || 0));
   } catch {
-    return `${currency} ${Number(n || 0).toLocaleString()}`;
+    return `${cur} ${Number(n || 0).toLocaleString()}`;
   }
 }
 

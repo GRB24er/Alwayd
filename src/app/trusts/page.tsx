@@ -50,8 +50,12 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
-function money(n: number, currency = "USD") {
-  return `${currency} ${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+function money(n: number, currency = "EUR") {
+  try {
+    return new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(Number(n || 0));
+  } catch {
+    return `${currency} ${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  }
 }
 
 const DOC_LABELS: Record<string, string> = {
@@ -91,6 +95,7 @@ export default function TrustsPage() {
     beneficiaryEmail: "",
     principalAmount: "",
     fundingAccount: "savings",
+    currency: "USD",
     revocable: true,
     letterOfWishes: "",
   });
@@ -121,6 +126,14 @@ export default function TrustsPage() {
 
   useEffect(() => {
     load();
+    // Default the trust currency to the user's account display currency.
+    fetch("/api/user/dashboard")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const cur = d?.user?.displayCurrency;
+        if (cur) setForm((f) => ({ ...f, currency: cur }));
+      })
+      .catch(() => {});
   }, []);
 
   function updateRow(i: number, patch: Partial<DistributionRow>) {
@@ -165,7 +178,7 @@ export default function TrustsPage() {
         setMessage({ type: "err", text: data.error || "Could not create trust." });
       } else {
         setMessage({ type: "ok", text: `Trust ${data.trust.referenceNumber} established and funded.` });
-        setForm({
+        setForm((f) => ({
           trustName: "",
           beneficiaryName: "",
           beneficiaryDateOfBirth: "",
@@ -173,9 +186,10 @@ export default function TrustsPage() {
           beneficiaryEmail: "",
           principalAmount: "",
           fundingAccount: "savings",
+          currency: f.currency,
           revocable: true,
           letterOfWishes: "",
-        });
+        }));
         setRows([{ label: "On coming of age", triggerType: "age", triggerAge: "25", triggerDate: "", percentage: "100" }]);
         await load();
         setTab("holdings");
@@ -391,6 +405,18 @@ export default function TrustsPage() {
                       <option value="investment">Investment</option>
                     </select>
                   </div>
+                </div>
+                <div className={styles.field}>
+                  <label>Trust currency</label>
+                  <select
+                    value={form.currency}
+                    onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                  >
+                    <option value="USD">US Dollar ($)</option>
+                    <option value="EUR">Euro (€)</option>
+                    <option value="GBP">British Pound (£)</option>
+                    <option value="CHF">Swiss Franc (CHF)</option>
+                  </select>
                 </div>
                 <label className={styles.checkRow}>
                   <input

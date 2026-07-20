@@ -86,6 +86,14 @@ export default function SettingsPage() {
     confirm: ''
   });
 
+  const [displayCurrency, setDisplayCurrency] = useState('USD');
+  const CURRENCY_OPTIONS = [
+    { code: 'USD', label: 'US Dollar ($)' },
+    { code: 'EUR', label: 'Euro (€)' },
+    { code: 'GBP', label: 'British Pound (£)' },
+    { code: 'CHF', label: 'Swiss Franc (CHF)' },
+  ];
+
   // Redirect if not authenticated
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -109,6 +117,7 @@ export default function SettingsPage() {
         if (data.profile) setProfile(data.profile);
         if (data.security) setSecurity(data.security);
         if (data.notifications) setNotifications(data.notifications);
+        if (data.preferences?.displayCurrency) setDisplayCurrency(data.preferences.displayCurrency);
       } else {
         // Fallback to session data if settings API doesn't exist
         if (session?.user) {
@@ -145,7 +154,7 @@ export default function SettingsPage() {
       const response = await fetch('/api/user/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile })
+        body: JSON.stringify({ profile, preferences: { displayCurrency } })
       });
 
       if (response.ok) {
@@ -393,6 +402,21 @@ export default function SettingsPage() {
                           placeholder="Postal code"
                         />
                       </div>
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Display Currency</label>
+                      <select
+                        value={displayCurrency}
+                        onChange={(e) => setDisplayCurrency(e.target.value)}
+                      >
+                        {CURRENCY_OPTIONS.map((c) => (
+                          <option key={c.code} value={c.code}>{c.label}</option>
+                        ))}
+                      </select>
+                      <small style={{ color: '#94a3b8', marginTop: 4, display: 'block' }}>
+                        Currency shown for your balances across the app. This changes the label only;
+                        amounts are not converted.
+                      </small>
                     </div>
                     <button type="submit" className={styles.saveBtn} disabled={saving}>
                       {saving ? 'Saving...' : 'Save Changes'}
