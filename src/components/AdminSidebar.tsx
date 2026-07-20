@@ -52,6 +52,11 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
     icon: "✅"
   },
   {
+    label: "Trusts & Estates",
+    href: "/dashboard/admin/trusts",
+    icon: "🛡️"
+  },
+  {
     label: "Account Restrictions",
     href: "/dashboard/admin/restrictions",
     icon: "🔒"
