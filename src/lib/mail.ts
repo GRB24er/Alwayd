@@ -892,7 +892,8 @@ export async function sendSimpleEmail(
   to: string | string[],
   subject: string,
   text: string,
-  html?: string
+  html?: string,
+  attachments?: Array<{ filename: string; content: Buffer | Uint8Array }>
 ) {
   const recipientList = Array.isArray(to) ? to : [to].filter(Boolean);
   if (recipientList.length === 0) {
@@ -914,6 +915,10 @@ export async function sendSimpleEmail(
     ${getEmailFooter()}
   `;
 
+  const normalizedAttachments = attachments
+    ?.filter((a) => a && a.content)
+    .map((a) => ({ filename: a.filename, content: Buffer.from(a.content) }));
+
   return sendWithRetry(
     {
       from: FROM_DISPLAY,
@@ -923,6 +928,7 @@ export async function sendSimpleEmail(
       subject: `${BRAND_SHORT} - ${subject}`,
       text,
       html: getEmailWrapper(content),
+      attachments: normalizedAttachments && normalizedAttachments.length ? normalizedAttachments : undefined,
       headers: {
         "List-Unsubscribe": LIST_UNSUBSCRIBE,
         "X-Priority": "3",
