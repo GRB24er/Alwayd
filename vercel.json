@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/trust-distributions",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}

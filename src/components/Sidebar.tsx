@@ -193,9 +193,18 @@ const NAV_ITEMS: NavItem[] = [
       { label: "Track Application", href: "/loans/track" }
     ]
   },
-  { 
-    label: "Bills & Pay", 
-    href: "/bills", 
+  {
+    label: "Trusts & Estates",
+    href: "/trusts",
+    icon: Icons.shield,
+    subItems: [
+      { label: "My Trusts", href: "/trusts" },
+      { label: "Establish a Trust", href: "/trusts?tab=create" }
+    ]
+  },
+  {
+    label: "Bills & Pay",
+    href: "/bills",
     icon: Icons.bills,
     badge: 0
   },
@@ -484,7 +493,7 @@ export default function Sidebar() {
 
           <div className={styles.navSection}>
             <div className={styles.navLabel}>BANKING</div>
-            {filteredNavItems.slice(4, 9).map((item) => {
+            {filteredNavItems.slice(4, 10).map((item) => {
               const isActive = pathname === item.href || 
                              pathname.startsWith(item.href + '/');
               const isExpanded = expandedItems.includes(item.label);
@@ -537,10 +546,10 @@ export default function Sidebar() {
           </div>
 
           {/* Admin Section */}
-          {filteredNavItems.slice(9).length > 0 && (
+          {filteredNavItems.slice(10).length > 0 && (
             <div className={styles.navSection}>
               <div className={styles.navLabel}>SYSTEM</div>
-              {filteredNavItems.slice(9).map((item) => {
+              {filteredNavItems.slice(10).map((item) => {
                 const isActive = pathname === item.href || 
                                pathname.startsWith(item.href + '/');
                 const isExpanded = expandedItems.includes(item.label);
