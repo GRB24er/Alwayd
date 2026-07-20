@@ -54,6 +54,26 @@ function money(n: number, currency = "USD") {
   return `${currency} ${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
+const DOC_LABELS: Record<string, string> = {
+  deed: "Declaration of Trust",
+  certificate: "Certificate of Establishment",
+  funding_receipt: "Contribution Receipt",
+  letter_of_wishes: "Letter of Wishes",
+  distribution_statement: "Distribution Statement",
+  completion_statement: "Completion Statement",
+  deed_of_revocation: "Deed of Revocation",
+};
+
+// Mirrors availableTrustDocuments() on the server so the card shows the right
+// download links for the trust's current state.
+function docsForStatus(status: string): string[] {
+  const base = ["deed", "certificate", "funding_receipt", "letter_of_wishes"];
+  if (status === "distributing" || status === "completed") base.push("distribution_statement");
+  if (status === "completed") base.push("completion_statement");
+  if (status === "cancelled") return ["deed", "certificate", "funding_receipt", "letter_of_wishes", "deed_of_revocation"];
+  return base;
+}
+
 export default function TrustsPage() {
   const [tab, setTab] = useState<"holdings" | "create">("holdings");
   const [settlorTrusts, setSettlorTrusts] = useState<Trust[]>([]);
@@ -237,6 +257,26 @@ export default function TrustsPage() {
               </span>
             </div>
           ))}
+        </div>
+
+        <div className={styles.documents}>
+          <div className={styles.scheduleTitle}>Documents</div>
+          <div className={styles.docLinks}>
+            {docsForStatus(t.status).map((type) => (
+              <a
+                key={type}
+                className={styles.docLink}
+                href={`/api/trusts/${t._id}/document?type=${type}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className={styles.docIcon} aria-hidden>
+                  ↓
+                </span>
+                {DOC_LABELS[type]}
+              </a>
+            ))}
+          </div>
         </div>
 
         {isSettlor && t.revocable && (t.status === "active" || t.status === "pending" || t.status === "distributing") && (

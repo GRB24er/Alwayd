@@ -20,6 +20,13 @@ import TrustAccount, {
   AccountBucket,
 } from '@/models/TrustAccount';
 import { sendSimpleEmail } from '@/lib/mail';
+import {
+  generateTrustDocument,
+  TrustDocumentData,
+  TrustDocumentType,
+  TRUST_DOCUMENT_LABELS,
+} from '@/lib/trustDocuments';
+import { verificationUrlFor } from '@/lib/siteUrl';
 
 const BALANCE_FIELD: Record<AccountBucket, 'checkingBalance' | 'savingsBalance' | 'investmentBalance'> = {
   checking: 'checkingBalance',
@@ -42,6 +49,66 @@ export function generateTrustPayoutReference(): string {
 // Round to cents to avoid floating-point drift on money.
 function money(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+// Maps a trust record into the data a trustee document needs. `extra` carries
+// document-specific fields (e.g. the tranche for a distribution statement).
+export function buildTrustDocumentData(
+  trust: ITrustAccount,
+  documentType: TrustDocumentType,
+  extra?: Partial<TrustDocumentData>
+): TrustDocumentData {
+  return {
+    referenceNumber: trust.referenceNumber,
+    documentType,
+    issuedAt: new Date(),
+    verificationUrl: verificationUrlFor(trust.referenceNumber),
+    trustName: trust.trustName,
+    settlorName: trust.settlorName,
+    settlorEmail: trust.settlorEmail,
+    beneficiaryName: trust.beneficiaryName,
+    beneficiaryDateOfBirth: trust.beneficiaryDateOfBirth,
+    beneficiaryRelationship: trust.beneficiaryRelationship,
+    currency: trust.currency || 'USD',
+    principalAmount: trust.principalAmount,
+    heldBalance: trust.heldBalance,
+    fundingAccount: trust.fundingAccount,
+    revocable: trust.revocable,
+    distributions: trust.distributions.map((d) => ({
+      label: d.label,
+      triggerType: d.triggerType,
+      triggerAge: d.triggerAge,
+      triggerDate: d.triggerDate,
+      percentage: d.percentage,
+      status: d.status,
+      releasedAmount: d.releasedAmount,
+      releasedAt: d.releasedAt,
+    })),
+    fundedAt: trust.fundedAt,
+    fundingReference: trust.fundingReference,
+    letterOfWishes: trust.letterOfWishes,
+    completedAt: trust.completedAt,
+    cancelledAt: trust.cancelledAt,
+    cancellationReason: trust.cancellationReason,
+    ...extra,
+  };
+}
+
+async function trustDocAttachment(
+  trust: ITrustAccount,
+  documentType: TrustDocumentType,
+  extra?: Partial<TrustDocumentData>
+): Promise<{ filename: string; content: Uint8Array } | null> {
+  try {
+    const pdf = await generateTrustDocument(buildTrustDocumentData(trust, documentType, extra));
+    return {
+      filename: `Aldwych-${documentType}-${trust.referenceNumber}.pdf`,
+      content: pdf,
+    };
+  } catch (e) {
+    console.error(`Failed to generate ${documentType} for ${trust.referenceNumber}:`, e);
+    return null;
+  }
 }
 
 // Add whole years to a date, clamping 29 Feb -> 28 Feb on non-leap years.
@@ -324,6 +391,10 @@ export async function cancelTrust(trust: ITrustAccount, reason: string): Promise
   trust.cancelledAt = new Date();
   trust.cancellationReason = reason;
   await trust.save();
+
+  await notifyRevocation(trust, refund).catch((e) =>
+    console.error('Trust revocation email failed:', e)
+  );
 }
 
 async function notifyDistribution(trust: ITrustAccount): Promise<void> {
@@ -335,7 +406,8 @@ async function notifyDistribution(trust: ITrustAccount): Promise<void> {
   const subject = `Trust distribution released — ${trust.trustName}`;
   const html = `
     <p>A scheduled distribution from <strong>${trust.trustName}</strong>
-    (${trust.referenceNumber}) has been released.</p>
+    (${trust.referenceNumber}) has been released. The formal distribution
+    statement is attached.</p>
     <table style="width:100%;border-collapse:collapse;margin:16px 0;">
       <tr><td style="padding:6px 0;color:#64748b;">Beneficiary</td><td style="padding:6px 0;font-weight:600;">${trust.beneficiaryName}</td></tr>
       <tr><td style="padding:6px 0;color:#64748b;">Tranche</td><td style="padding:6px 0;">${last.label}</td></tr>
@@ -347,7 +419,77 @@ async function notifyDistribution(trust: ITrustAccount): Promise<void> {
   const text = `A distribution of ${amountStr} from ${trust.trustName} (${trust.referenceNumber}) has been released to ${trust.beneficiaryName}.`;
 
   const recipients = [trust.settlorEmail, trust.beneficiaryEmail].filter(Boolean) as string[];
+  if (!recipients.length) return;
+
+  const attachments: Array<{ filename: string; content: Uint8Array }> = [];
+  const statement = await trustDocAttachment(trust, 'distribution_statement', {
+    releasedTranche: {
+      label: last.label,
+      amount: Number(last.releasedAmount || 0),
+      releasedAt: last.releasedAt || new Date(),
+      remainingBalance: trust.heldBalance,
+    },
+  });
+  if (statement) attachments.push(statement);
+
+  // When the trust has just completed, include the final accounting too.
+  if (trust.status === 'completed') {
+    const completion = await trustDocAttachment(trust, 'completion_statement');
+    if (completion) attachments.push(completion);
+  }
+
+  await sendSimpleEmail(recipients, subject, text, html, attachments);
+}
+
+// Sent (fire-and-forget) when a trust is established, with the deed and the
+// contribution receipt attached.
+export async function sendTrustEstablishedEmail(trust: ITrustAccount): Promise<void> {
+  const attachments: Array<{ filename: string; content: Uint8Array }> = [];
+  for (const type of ['deed', 'certificate', 'funding_receipt'] as TrustDocumentType[]) {
+    const doc = await trustDocAttachment(trust, type);
+    if (doc) attachments.push(doc);
+  }
+
+  const scheduleHtml = trust.distributions
+    .map((d) => {
+      const trig = d.triggerType === 'age' ? `at age ${d.triggerAge}` : `on ${new Date(d.triggerDate as Date).toLocaleDateString()}`;
+      return `${d.label} — ${d.percentage}% ${trig}`;
+    })
+    .join('<br>');
+
+  const html = `
+    <p>Dear ${trust.settlorName},</p>
+    <p>Your inheritance trust <strong>${trust.trustName}</strong> has been established and funded.
+    The Declaration of Trust, Certificate of Establishment and Contribution Receipt are attached.</p>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+      <tr><td style="padding:6px 0;color:#64748b;">Reference</td><td style="padding:6px 0;font-weight:600;">${trust.referenceNumber}</td></tr>
+      <tr><td style="padding:6px 0;color:#64748b;">Beneficiary</td><td style="padding:6px 0;">${trust.beneficiaryName}</td></tr>
+      <tr><td style="padding:6px 0;color:#64748b;">Principal</td><td style="padding:6px 0;font-weight:600;">${trust.currency} ${trust.principalAmount.toLocaleString()}</td></tr>
+      <tr><td style="padding:6px 0;color:#64748b;">Distributions</td><td style="padding:6px 0;">${scheduleHtml}</td></tr>
+    </table>
+    <p>Funds will be released automatically to the beneficiary as each milestone is reached.</p>
+  `;
+  const text = `Your trust "${trust.trustName}" (${trust.referenceNumber}) for ${trust.beneficiaryName} has been established and funded with ${trust.currency} ${trust.principalAmount.toLocaleString()}.`;
+
+  const recipients = [trust.settlorEmail].filter(Boolean) as string[];
   if (recipients.length) {
-    await sendSimpleEmail(recipients, subject, text, html);
+    await sendSimpleEmail(recipients, `Trust established — ${trust.referenceNumber}`, text, html, attachments);
+  }
+}
+
+// Sent when a revocable trust is cancelled, with the deed of revocation attached.
+async function notifyRevocation(trust: ITrustAccount, refund: number): Promise<void> {
+  const doc = await trustDocAttachment(trust, 'deed_of_revocation', { refundAmount: refund });
+  const attachments = doc ? [doc] : undefined;
+  const html = `
+    <p>Dear ${trust.settlorName},</p>
+    <p>Your trust <strong>${trust.trustName}</strong> (${trust.referenceNumber}) has been revoked.
+    ${refund > 0 ? `The undistributed balance of ${trust.currency} ${refund.toLocaleString()} has been returned to your ${trust.fundingAccount} account.` : ''}
+    The Deed of Revocation is attached.</p>
+  `;
+  const text = `Your trust "${trust.trustName}" (${trust.referenceNumber}) has been revoked.`;
+  const recipients = [trust.settlorEmail].filter(Boolean) as string[];
+  if (recipients.length) {
+    await sendSimpleEmail(recipients, `Trust revoked — ${trust.referenceNumber}`, text, html, attachments);
   }
 }

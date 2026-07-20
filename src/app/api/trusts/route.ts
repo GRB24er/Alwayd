@@ -8,8 +8,8 @@ import {
   generateTrustReference,
   buildDistributions,
   fundTrust,
+  sendTrustEstablishedEmail,
 } from '@/lib/trustEngine';
-import { sendSimpleEmail } from '@/lib/mail';
 
 export const runtime = 'nodejs';
 
@@ -153,22 +153,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: fundErr?.message || 'Unable to fund trust.' }, { status: 400 });
     }
 
-    sendSimpleEmail(
-      settlor.email,
-      `Trust established — ${trust.referenceNumber}`,
-      `Your trust "${trust.trustName}" for ${trust.beneficiaryName} has been established and funded with ${trust.currency} ${amount.toLocaleString()}.`,
-      `
-        <p>Dear ${settlor.name},</p>
-        <p>Your inheritance trust <strong>${trust.trustName}</strong> has been established and funded.</p>
-        <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-          <tr><td style="padding:6px 0;color:#64748b;">Reference</td><td style="padding:6px 0;font-weight:600;">${trust.referenceNumber}</td></tr>
-          <tr><td style="padding:6px 0;color:#64748b;">Beneficiary</td><td style="padding:6px 0;">${trust.beneficiaryName}</td></tr>
-          <tr><td style="padding:6px 0;color:#64748b;">Principal</td><td style="padding:6px 0;font-weight:600;">${trust.currency} ${amount.toLocaleString()}</td></tr>
-          <tr><td style="padding:6px 0;color:#64748b;">Distributions</td><td style="padding:6px 0;">${trust.distributions.map((d) => `${d.label} — ${d.percentage}%`).join('<br>')}</td></tr>
-        </table>
-        <p>Funds will be released automatically to the beneficiary as each milestone is reached.</p>
-      `
-    ).catch((e: unknown) => console.error('Trust confirmation email failed:', e));
+    // Fire-and-forget: generates the deed, certificate and receipt PDFs and
+    // emails them to the settlor.
+    sendTrustEstablishedEmail(trust).catch((e: unknown) =>
+      console.error('Trust confirmation email failed:', e)
+    );
 
     return NextResponse.json({ success: true, trust });
   } catch (error) {
