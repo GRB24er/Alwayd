@@ -17,17 +17,33 @@ export async function GET(request: NextRequest) {
     const query = status ? { status } : {};
     const trusts = await TrustAccount.find(query).sort({ createdAt: -1 }).limit(500).lean();
 
-    const totals = trusts.reduce(
-      (acc, t) => {
-        acc.count += 1;
-        acc.held += Number(t.heldBalance || 0);
-        acc.principal += Number(t.principalAmount || 0);
+    // Status counts (currency-agnostic).
+    const statusCounts = trusts.reduce(
+      (acc: Record<string, number>, t) => {
+        acc[t.status] = (acc[t.status] || 0) + 1;
         return acc;
       },
-      { count: 0, held: 0, principal: 0 }
+      {}
     );
 
-    return NextResponse.json({ success: true, trusts, totals });
+    // Money totals grouped by currency — summing mixed currencies would be
+    // meaningless, so each currency is reported separately.
+    const totalsByCurrency: Record<string, { held: number; principal: number; count: number }> = {};
+    for (const t of trusts) {
+      const cur = t.currency || 'USD';
+      const bucket = (totalsByCurrency[cur] ||= { held: 0, principal: 0, count: 0 });
+      bucket.held += Number(t.heldBalance || 0);
+      bucket.principal += Number(t.principalAmount || 0);
+      bucket.count += 1;
+    }
+
+    return NextResponse.json({
+      success: true,
+      trusts,
+      count: trusts.length,
+      statusCounts,
+      totalsByCurrency,
+    });
   } catch (error) {
     console.error('GET /api/admin/trusts error:', error);
     return NextResponse.json({ error: 'Failed to fetch trusts' }, { status: 500 });

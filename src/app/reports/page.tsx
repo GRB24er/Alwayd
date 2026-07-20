@@ -1,5 +1,6 @@
 // src/app/reports/page.tsx
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
@@ -118,13 +119,7 @@ export default function ReportsPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
+  const { format: formatCurrency } = useDisplayCurrency();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -319,8 +314,7 @@ export default function ReportsPage() {
                             : styles.withdrawal
                         }`}>
                           {t.type === 'deposit' || t.type === 'credit' ? '+' : '-'}
-                          {t.currency === "USD" ? "$" : ""}
-                          {Math.abs(t.amount).toFixed(2)}
+                          {formatCurrency(Math.abs(t.amount))}
                         </span>
                       </td>
                     </tr>

@@ -1,5 +1,6 @@
 // src/app/send-money/page.tsx
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -121,13 +122,7 @@ export default function SendMoneyPage() {
     return userBalances[account] || 0;
   };
 
-  const formatBalance = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
+  const { format: formatBalance } = useDisplayCurrency();
 
   const getFee = () => {
     if (formData.transferSpeed === "express") return 15;

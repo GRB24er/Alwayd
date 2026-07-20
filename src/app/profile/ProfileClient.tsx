@@ -1,5 +1,6 @@
 // src/app/profile/ProfileClient.tsx
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -23,11 +24,9 @@ interface UserProfile {
   createdAt: string;
 }
 
-const formatMoney = (n: number) =>
-  `$${n.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
-
 export default function ProfileClient() {
   const { data: session, status } = useSession();
+  const { format: formatMoney } = useDisplayCurrency();
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
