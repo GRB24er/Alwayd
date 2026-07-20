@@ -33,9 +33,17 @@ interface DashboardResponse {
   user?: {
     name: string;
     email?: string;
+    displayCurrency?: string;
   };
   error?: string;
 }
+
+const CURRENCY_META: Record<string, { symbol: string; locale: string }> = {
+  USD: { symbol: "$", locale: "en-US" },
+  EUR: { symbol: "€", locale: "en-GB" },
+  GBP: { symbol: "£", locale: "en-GB" },
+  CHF: { symbol: "CHF ", locale: "de-CH" },
+};
 
 // Icons
 const Icons = {
@@ -289,19 +297,26 @@ export default function DashboardPage() {
     { icon: Icons.analytics, title: "Reports", desc: "Analytics", link: "/reports" },
   ];
 
-  // Format currency
+  // Format currency using the user's chosen display currency (label only;
+  // amounts are not FX-converted).
+  const currencyCode = data.user?.displayCurrency || 'USD';
+  const currencyMeta = CURRENCY_META[currencyCode] || CURRENCY_META.USD;
   const formatCurrency = (amount: number, compact = false) => {
     if (compact && amount >= 1000000) {
-      return `$${(amount / 1000000).toFixed(2)}M`;
+      return `${currencyMeta.symbol}${(amount / 1000000).toFixed(2)}M`;
     }
     if (compact && amount >= 1000) {
-      return `$${(amount / 1000).toFixed(1)}K`;
+      return `${currencyMeta.symbol}${(amount / 1000).toFixed(1)}K`;
     }
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
+    try {
+      return new Intl.NumberFormat(currencyMeta.locale, {
+        style: 'currency',
+        currency: currencyCode,
+        minimumFractionDigits: 2
+      }).format(amount);
+    } catch {
+      return `${currencyMeta.symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+    }
   };
 
   // Transform transactions
