@@ -32,6 +32,7 @@ interface DashboardResponse {
   user: {
     name: string;
     email: string;
+    displayCurrency?: string;
   };
   debug?: any;
   error?: string;
@@ -149,7 +150,8 @@ export async function GET(): Promise<NextResponse<DashboardResponse>> {
       recent: formattedTransactions,
       user: {
         name: user.name || session.user.name || "User",
-        email: user.email || session.user.email || ""
+        email: user.email || session.user.email || "",
+        displayCurrency: user.displayCurrency || "USD"
       },
       debug: {
         totalTransactions: realTransactions.length,

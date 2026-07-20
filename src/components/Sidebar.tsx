@@ -244,6 +244,7 @@ export default function Sidebar() {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [userName, setUserName] = useState<string>("User");
   const [userEmail, setUserEmail] = useState<string>("");
+  const [displayCurrency, setDisplayCurrency] = useState<string>("USD");
   const [pendingTransactions, setPendingTransactions] = useState(0);
   const [pendingBills, setPendingBills] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -274,6 +275,7 @@ export default function Sidebar() {
             
             setUserName(data.user?.name || session.user.name || "User");
             setUserEmail(data.user?.email || session.user.email || "");
+            setDisplayCurrency(data.user?.displayCurrency || "USD");
             
             const pending = data.recent?.filter((t: any) => 
               t.rawStatus === "pending" || t.status === "Pending"
@@ -322,14 +324,17 @@ export default function Sidebar() {
     setMobileOpen(false);
   }, [pathname]);
 
+  const CURRENCY_SYMBOLS: Record<string, string> = { USD: "$", EUR: "€", GBP: "£", CHF: "CHF " };
+  const currencySymbol = CURRENCY_SYMBOLS[displayCurrency] || "$";
+
   const formatCurrency = (amount: number) => {
     if (amount >= 1000000) {
-      return `$${(amount / 1000000).toFixed(2)}M`;
+      return `${currencySymbol}${(amount / 1000000).toFixed(2)}M`;
     }
     if (amount >= 1000) {
-      return `$${(amount / 1000).toFixed(1)}K`;
+      return `${currencySymbol}${(amount / 1000).toFixed(1)}K`;
     }
-    return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    return `${currencySymbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   };
 
   // Cash balance = Checking + Savings only (NO investments)

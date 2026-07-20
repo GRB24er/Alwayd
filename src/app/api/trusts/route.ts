@@ -10,6 +10,7 @@ import {
   fundTrust,
   sendTrustEstablishedEmail,
 } from '@/lib/trustEngine';
+import { isSupportedCurrency, normalizeCurrency } from '@/lib/currency';
 
 export const runtime = 'nodejs';
 
@@ -57,7 +58,13 @@ export async function POST(req: NextRequest) {
       projectedGrowthRate,
       letterOfWishes,
       distributions,
+      currency,
     } = body || {};
+
+    // Currency is optional; if provided it must be supported.
+    if (currency !== undefined && !isSupportedCurrency(currency)) {
+      return NextResponse.json({ error: 'Unsupported currency.' }, { status: 400 });
+    }
 
     // ----- Validation -----
     if (!trustName || String(trustName).trim().length < 2) {
@@ -108,10 +115,15 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    const settlor = await User.findById(session.user.id).select('name email');
+    const settlor = await User.findById(session.user.id).select('name email displayCurrency');
     if (!settlor) {
       return NextResponse.json({ error: 'User not found.' }, { status: 404 });
     }
+
+    // Chosen currency, else the settlor's account preference, else the default.
+    const trustCurrency = currency
+      ? normalizeCurrency(currency)
+      : normalizeCurrency((settlor as any).displayCurrency);
 
     // Link the beneficiary to an existing customer if the email matches, so
     // distributions can credit them directly.
@@ -133,7 +145,7 @@ export async function POST(req: NextRequest) {
       beneficiaryEmail: beneEmail,
       beneficiaryUserId,
       trustName: String(trustName).trim(),
-      currency: 'EUR',
+      currency: trustCurrency,
       principalAmount: amount,
       fundingAccount: account,
       heldBalance: 0,

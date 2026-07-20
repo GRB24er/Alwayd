@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
+import { normalizeCurrency, isSupportedCurrency } from "@/lib/currency";
 
 // GET - Fetch all user settings
 export async function GET() {
@@ -53,6 +54,9 @@ export async function GET() {
         marketingEmails: user.notifications?.marketingEmails || false,
         securityAlerts: user.notifications?.securityAlerts !== false,
         monthlyStatements: user.notifications?.monthlyStatements !== false
+      },
+      preferences: {
+        displayCurrency: normalizeCurrency(user.displayCurrency)
       }
     });
 
@@ -75,7 +79,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { profile, security, notifications } = body;
+    const { profile, security, notifications, preferences } = body;
 
     await connectDB();
 
@@ -120,11 +124,20 @@ export async function PUT(request: NextRequest) {
       };
     }
 
+    // Update display-currency preference (validated against supported list)
+    if (preferences && preferences.displayCurrency !== undefined) {
+      if (!isSupportedCurrency(preferences.displayCurrency)) {
+        return NextResponse.json({ error: "Unsupported currency" }, { status: 400 });
+      }
+      user.displayCurrency = normalizeCurrency(preferences.displayCurrency);
+    }
+
     await user.save();
 
     return NextResponse.json({
       success: true,
-      message: "Settings updated successfully"
+      message: "Settings updated successfully",
+      preferences: { displayCurrency: normalizeCurrency(user.displayCurrency) }
     });
 
   } catch (error: any) {
