@@ -8,6 +8,7 @@ import connectDB from '@/lib/mongodb';
 import Loan from '@/models/Loan';
 import User from '@/models/User';
 import AccountRestriction, { ACTION_LABELS, REASON_LABELS } from '@/models/AccountRestriction';
+import TrustAccount, { TRUST_STATUS_LABELS } from '@/models/TrustAccount';
 
 export const runtime = 'nodejs';
 
@@ -132,6 +133,42 @@ export async function GET(
         });
       }
       // Fall through to loan lookup in case the prefix is unrelated.
+    }
+
+    // Trust references (TRB-…) resolve against the TrustAccount registry.
+    // We disclose enough to authenticate the instrument without exposing full
+    // beneficiary/settlor identities to whoever scanned the code.
+    if (/^TRB-/i.test(ref)) {
+      const trust = await TrustAccount.findOne({ referenceNumber: ref }).lean();
+      if (trust) {
+        const t = trust as any;
+        const nextRelease = (t.distributions || [])
+          .filter((d: any) => d.status === 'scheduled' && d.triggerDate)
+          .map((d: any) => new Date(d.triggerDate))
+          .sort((a: Date, b: Date) => a.getTime() - b.getTime())[0];
+        return NextResponse.json({
+          verified: true,
+          issuer: 'Aldwych European Capital',
+          issuerEstablished: '1897',
+          referenceNumber: t.referenceNumber,
+          documentType: 'Inheritance Trust Instrument',
+          status: t.status,
+          statusLabel: TRUST_STATUS_LABELS[t.status as keyof typeof TRUST_STATUS_LABELS] || t.status,
+          trustName: t.trustName,
+          settlor: t.settlorName ? maskName(t.settlorName) : 'Verified Settlor',
+          beneficiary: t.beneficiaryName ? maskName(t.beneficiaryName) : 'Verified Beneficiary',
+          nature: t.revocable ? 'Revocable' : 'Irrevocable',
+          amount: t.principalAmount,
+          currency: t.currency || 'EUR',
+          issuedAt: t.fundedAt || t.createdAt,
+          nextReleaseDate: nextRelease ? nextRelease.toISOString() : null,
+          verifiedAt: new Date().toISOString(),
+        });
+      }
+      return NextResponse.json(
+        { verified: false, error: 'Trust not found in our registry. This may not be a genuine Aldwych European Capital document.' },
+        { status: 404 }
+      );
     }
 
     const loan = await Loan.findOne({ referenceNumber: ref }).lean();

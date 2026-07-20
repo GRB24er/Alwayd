@@ -50,8 +50,12 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
-function money(n: number, currency = "USD") {
-  return `${currency} ${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+function money(n: number, currency = "EUR") {
+  try {
+    return new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(Number(n || 0));
+  } catch {
+    return `${currency} ${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  }
 }
 
 const DOC_LABELS: Record<string, string> = {

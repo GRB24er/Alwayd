@@ -69,7 +69,7 @@ export function buildTrustDocumentData(
     beneficiaryName: trust.beneficiaryName,
     beneficiaryDateOfBirth: trust.beneficiaryDateOfBirth,
     beneficiaryRelationship: trust.beneficiaryRelationship,
-    currency: trust.currency || 'USD',
+    currency: trust.currency || 'EUR',
     principalAmount: trust.principalAmount,
     heldBalance: trust.heldBalance,
     fundingAccount: trust.fundingAccount,
@@ -182,7 +182,7 @@ export async function fundTrust(trust: ITrustAccount): Promise<void> {
   await Transaction.create({
     userId: settlor._id,
     type: 'transfer-out',
-    currency: trust.currency || 'USD',
+    currency: 'USD', // base ledger unit; trust display currency is separate
     amount: trust.principalAmount,
     date: new Date(),
     description: `Trust funding — ${trust.trustName} (${trust.referenceNumber})`,
@@ -313,7 +313,7 @@ async function payBeneficiary(
       await Transaction.create({
         userId: beneficiary._id,
         type: 'transfer-in',
-        currency: trust.currency || 'USD',
+        currency: 'USD', // base ledger unit; trust display currency is separate
         amount,
         date: new Date(),
         description: `Trust distribution — ${trust.trustName} (${trust.referenceNumber})`,
@@ -334,7 +334,7 @@ async function payBeneficiary(
   await Transaction.create({
     userId: trust.settlorUserId,
     type: 'transfer-out',
-    currency: trust.currency || 'USD',
+    currency: 'USD', // base ledger unit; trust display currency is separate
     amount,
     date: new Date(),
     description: `Trust distribution to ${trust.beneficiaryName} — ${trust.trustName} (${trust.referenceNumber})`,
@@ -371,7 +371,7 @@ export async function cancelTrust(trust: ITrustAccount, reason: string): Promise
       await Transaction.create({
         userId: settlor._id,
         type: 'transfer-in',
-        currency: trust.currency || 'USD',
+        currency: 'USD', // base ledger unit; trust display currency is separate
         amount: refund,
         date: new Date(),
         description: `Trust cancellation refund — ${trust.trustName} (${trust.referenceNumber})`,

@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
       beneficiaryEmail: beneEmail,
       beneficiaryUserId,
       trustName: String(trustName).trim(),
-      currency: 'USD',
+      currency: 'EUR',
       principalAmount: amount,
       fundingAccount: account,
       heldBalance: 0,

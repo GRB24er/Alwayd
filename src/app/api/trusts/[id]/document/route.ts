@@ -64,6 +64,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       );
     }
 
+    // A completion statement must reconcile: it may only be issued once the
+    // trust is genuinely fully distributed (no scheduled tranches remain and
+    // nothing is still held), so its figures can never contradict each other.
+    if (typeParam === 'completion_statement') {
+      const stillScheduled = trust.distributions.some((d) => d.status === 'scheduled');
+      if (trust.status !== 'completed' || stillScheduled || trust.heldBalance > 0.01) {
+        return NextResponse.json(
+          { error: 'A completion statement is only available once the trust is fully distributed.' },
+          { status: 409 }
+        );
+      }
+    }
+
     // For a distribution statement, advise on the most recent released tranche.
     let extra = {};
     if (typeParam === 'distribution_statement') {
