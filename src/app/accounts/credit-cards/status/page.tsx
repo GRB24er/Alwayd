@@ -1,5 +1,6 @@
 // src/app/accounts/credit-cards/status/page.tsx
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -48,6 +49,7 @@ const CARD_TIERS: any = {
 };
 
 export default function ApplicationStatusPage() {
+  const { symbol } = useDisplayCurrency();
   const router = useRouter();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
@@ -214,7 +216,7 @@ export default function ApplicationStatusPage() {
                           <div className={styles.approvalGrid}>
                             <div className={styles.approvalItem}>
                               <span className={styles.approvalLabel}>Credit Limit</span>
-                              <span className={styles.approvalValue}>${app.workflow.approval.creditLimit?.toLocaleString()}</span>
+                              <span className={styles.approvalValue}>{symbol}{app.workflow.approval.creditLimit?.toLocaleString()}</span>
                             </div>
                             <div className={styles.approvalItem}>
                               <span className={styles.approvalLabel}>APR</span>
@@ -222,7 +224,7 @@ export default function ApplicationStatusPage() {
                             </div>
                             <div className={styles.approvalItem}>
                               <span className={styles.approvalLabel}>Annual Fee</span>
-                              <span className={styles.approvalValue}>${app.workflow.approval.annualFee}</span>
+                              <span className={styles.approvalValue}>{symbol}{app.workflow.approval.annualFee}</span>
                             </div>
                             <div className={styles.approvalItem}>
                               <span className={styles.approvalLabel}>Card Network</span>

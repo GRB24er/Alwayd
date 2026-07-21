@@ -1,10 +1,12 @@
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import styles from "./loans.module.css";
 
 export default function LoansPage() {
+  const { symbol } = useDisplayCurrency();
   const [activeTab, setActiveTab] = useState('active');
   const [calculatorData, setCalculatorData] = useState({
     amount: '',
@@ -150,7 +152,7 @@ export default function LoansPage() {
                     <div className={styles.loanBalance}>
                       <div className={styles.balanceInfo}>
                         <span className={styles.label}>Remaining Balance</span>
-                        <h2>${loan.remainingBalance.toLocaleString()}</h2>
+                        <h2>{symbol}{loan.remainingBalance.toLocaleString()}</h2>
                       </div>
                       <div className={styles.progressBar}>
                         <div 
@@ -169,7 +171,7 @@ export default function LoansPage() {
                     <div className={styles.loanDetails}>
                       <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>Monthly Payment</span>
-                        <span className={styles.detailValue}>${loan.monthlyPayment}</span>
+                        <span className={styles.detailValue}>{symbol}{loan.monthlyPayment}</span>
                       </div>
                       <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>Interest Rate</span>
@@ -235,7 +237,7 @@ export default function LoansPage() {
 
                   <div className={styles.calculatorResult}>
                     <span>Estimated Monthly Payment</span>
-                    <h2>${calculateMonthlyPayment()}</h2>
+                    <h2>{symbol}{calculateMonthlyPayment()}</h2>
                   </div>
 
                   <button className={styles.applyNowBtn}>Apply for This Loan</button>

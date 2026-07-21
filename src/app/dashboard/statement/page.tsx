@@ -1,8 +1,10 @@
 'use client';
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 
 import { useEffect, useState } from 'react';
 
 export default function StatementPage() {
+  const { symbol } = useDisplayCurrency();
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
@@ -46,9 +48,9 @@ export default function StatementPage() {
               <td>{new Date(t.date).toLocaleString()}</td>
               <td>{t.type}</td>
               <td>{t.description}</td>
-              <td>{t.amount >= 0 ? '+' : '-'}${Math.abs(t.amount).toFixed(2)}</td>
+              <td>{t.amount >= 0 ? '+' : '-'}{symbol}{Math.abs(t.amount).toFixed(2)}</td>
               <td>{t.status}</td>
-              <td>${t.balanceAfter.toFixed(2)}</td>
+              <td>{symbol}{t.balanceAfter.toFixed(2)}</td>
             </tr>
           ))}
         </tbody>

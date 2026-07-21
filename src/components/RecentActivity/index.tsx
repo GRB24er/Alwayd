@@ -1,4 +1,5 @@
 'use client';
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 
 import React, { useEffect, useMemo, useState } from 'react';
 import styles from './RecentActivity.module.css';
@@ -104,6 +105,7 @@ function toCSV(rows: RecentItem[]) {
 }
 
 export default function RecentActivity() {
+  const { format: fmtAmt } = useDisplayCurrency();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<RecentItem[]>([]);
   const [search, setSearch] = useState('');
@@ -225,11 +227,11 @@ export default function RecentActivity() {
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>Credits (filtered)</div>
-          <div className={styles.statValue}>{currencyFmt.format(totals.credits)}</div>
+          <div className={styles.statValue}>{fmtAmt(totals.credits)}</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>Debits (filtered)</div>
-          <div className={styles.statValue}>{currencyFmt.format(totals.debits)}</div>
+          <div className={styles.statValue}>{fmtAmt(totals.debits)}</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statLabel}>Pending count</div>
@@ -283,7 +285,7 @@ export default function RecentActivity() {
                       </div>
                     </td>
                     <td className={isDebit ? styles.amountDebit : styles.amountCredit}>
-                      {currencyFmt.format(r.amount)}
+                      {fmtAmt(r.amount)}
                     </td>
                     <td>
                       <span className={chip.className}>{chip.text}</span>

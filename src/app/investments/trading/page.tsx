@@ -1,10 +1,12 @@
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import styles from "./trading.module.css";
 
 export default function TradingPage() {
+  const { symbol } = useDisplayCurrency();
   const [orderType, setOrderType] = useState('buy');
   const [tradeType, setTradeType] = useState('market');
   const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
@@ -162,11 +164,11 @@ export default function TradingPage() {
                     </div>
                     <div className={styles.summaryRow}>
                       <span>Price</span>
-                      <span>${marketData.AAPL.price.toFixed(2)}</span>
+                      <span>{symbol}{marketData.AAPL.price.toFixed(2)}</span>
                     </div>
                     <div className={styles.summaryTotal}>
                       <span>Estimated Total</span>
-                      <span className={styles.totalAmount}>${calculateOrderTotal()}</span>
+                      <span className={styles.totalAmount}>{symbol}{calculateOrderTotal()}</span>
                     </div>
                   </div>
 
@@ -188,7 +190,7 @@ export default function TradingPage() {
                   <div className={styles.marketDataGrid}>
                     <div className={styles.dataItem}>
                       <span className={styles.dataLabel}>Price</span>
-                      <span className={styles.dataValue}>${marketData.AAPL.price}</span>
+                      <span className={styles.dataValue}>{symbol}{marketData.AAPL.price}</span>
                     </div>
                     <div className={styles.dataItem}>
                       <span className={styles.dataLabel}>Change</span>
@@ -208,11 +210,11 @@ export default function TradingPage() {
                     </div>
                     <div className={styles.dataItem}>
                       <span className={styles.dataLabel}>Day High</span>
-                      <span className={styles.dataValue}>${marketData.AAPL.high}</span>
+                      <span className={styles.dataValue}>{symbol}{marketData.AAPL.high}</span>
                     </div>
                     <div className={styles.dataItem}>
                       <span className={styles.dataLabel}>Day Low</span>
-                      <span className={styles.dataValue}>${marketData.AAPL.low}</span>
+                      <span className={styles.dataValue}>{symbol}{marketData.AAPL.low}</span>
                     </div>
                   </div>
                 </div>
@@ -247,9 +249,9 @@ export default function TradingPage() {
                           <tr key={idx}>
                             <td className={styles.symbolCol}>{holding.symbol}</td>
                             <td>{holding.shares.toLocaleString()}</td>
-                            <td>${holding.avgCost.toFixed(2)}</td>
-                            <td>${holding.currentPrice.toFixed(2)}</td>
-                            <td className={styles.valueCol}>${holding.value.toLocaleString()}</td>
+                            <td>{symbol}{holding.avgCost.toFixed(2)}</td>
+                            <td>{symbol}{holding.currentPrice.toFixed(2)}</td>
+                            <td className={styles.valueCol}>{symbol}{holding.value.toLocaleString()}</td>
                             <td className={styles.gainCol}>
                               <span className={styles.gainAmount}>+${holding.gain.toLocaleString()}</span>
                             </td>
@@ -289,7 +291,7 @@ export default function TradingPage() {
                           </div>
                         </div>
                         <div className={styles.tradeRight}>
-                          <div className={styles.tradeTotal}>${trade.total.toLocaleString()}</div>
+                          <div className={styles.tradeTotal}>{symbol}{trade.total.toLocaleString()}</div>
                           <div className={styles.tradeTime}>{trade.time}</div>
                           <div className={styles.tradeStatus}>
                             <span className={styles.statusBadge}>{trade.status}</span>
