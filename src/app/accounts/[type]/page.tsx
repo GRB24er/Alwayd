@@ -134,7 +134,7 @@ export default function AccountDetailPage() {
     return data;
   };
 
-  const { format: formatCurrency, symbol } = useDisplayCurrency();
+  const { format: formatCurrency, symbol, convert } = useDisplayCurrency();
 
   // Transform transactions for table
   const transactions: Transaction[] = (accountData?.transactions || []).map((t: any) => {
@@ -281,7 +281,7 @@ export default function AccountDetailPage() {
                           tick={{ fontSize: 12, fill: '#64748b' }}
                           tickLine={false}
                           axisLine={false}
-                          tickFormatter={(value) => `${symbol}${(value / 1000).toFixed(0)}k`}
+                          tickFormatter={(value) => `${symbol}${(convert(value) / 1000).toFixed(0)}k`}
                         />
                         <Tooltip 
                           formatter={(value: number | undefined) => [formatCurrency(value ?? 0), 'Balance']}

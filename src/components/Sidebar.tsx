@@ -7,6 +7,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import styles from "./Sidebar.module.css";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 
 interface NavItem {
   label: string;
@@ -241,6 +242,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
+  const { format: fmtDisplay } = useDisplayCurrency();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [userName, setUserName] = useState<string>("User");
   const [userEmail, setUserEmail] = useState<string>("");
@@ -324,18 +326,8 @@ export default function Sidebar() {
     setMobileOpen(false);
   }, [pathname]);
 
-  const CURRENCY_SYMBOLS: Record<string, string> = { USD: "$", EUR: "€", GBP: "£", CHF: "CHF " };
-  const currencySymbol = CURRENCY_SYMBOLS[displayCurrency] || "$";
-
-  const formatCurrency = (amount: number) => {
-    if (amount >= 1000000) {
-      return `${currencySymbol}${(amount / 1000000).toFixed(2)}M`;
-    }
-    if (amount >= 1000) {
-      return `${currencySymbol}${(amount / 1000).toFixed(1)}K`;
-    }
-    return `${currencySymbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-  };
+  // Converts base (USD) amounts to the chosen display currency at live rates.
+  const formatCurrency = (amount: number) => fmtDisplay(amount, { compact: true });
 
   // Cash balance = Checking + Savings only (NO investments)
   const cashBalance = quickBalance.checking + quickBalance.savings;

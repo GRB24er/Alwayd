@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import styles from "./analytics.module.css";
 
 export default function AnalyticsPage() {
-  const { symbol } = useDisplayCurrency();
+  const { format } = useDisplayCurrency();
   const [period, setPeriod] = useState("month");
 
   const spendingData = [
@@ -67,7 +67,7 @@ export default function AnalyticsPage() {
                 <div key={index} className={styles.categoryItem}>
                   <div className={styles.categoryInfo}>
                     <span>{item.category}</span>
-                    <span>{symbol}{item.amount}</span>
+                    <span>{format(item.amount)}</span>
                   </div>
                   <div className={styles.categoryBar}>
                     <div 
