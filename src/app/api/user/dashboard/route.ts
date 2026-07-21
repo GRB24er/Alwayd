@@ -75,7 +75,7 @@ export async function GET(): Promise<NextResponse<DashboardResponse>> {
     
     // Get user data
     const user = await User.findOne({ email: session.user.email })
-      .select("_id checkingBalance savingsBalance investmentBalance name email")
+      .select("_id checkingBalance savingsBalance investmentBalance name email displayCurrency")
       .lean();
     
     if (!user) {
