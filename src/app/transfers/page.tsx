@@ -772,7 +772,7 @@ export default function WireTransferPage() {
                     </div>
                     <div className={styles.feeRow}>
                       <span>Wire Fee:</span>
-                      <strong>${estimateFee()}.00</strong>
+                      <strong>{formatCurrency(estimateFee())}</strong>
                     </div>
                     <div className={styles.feeRow}>
                       <span>Estimated Arrival:</span>
@@ -886,7 +886,7 @@ export default function WireTransferPage() {
                       </div>
                       <div className={styles.reviewItem}>
                         <span className={styles.reviewLabel}>Wire Fee:</span>
-                        <span className={styles.reviewValue}>${estimateFee()}.00</span>
+                        <span className={styles.reviewValue}>{formatCurrency(estimateFee())}</span>
                       </div>
                       <div className={styles.reviewItem}>
                         <span className={styles.reviewLabel}>Purpose:</span>
@@ -979,11 +979,11 @@ export default function WireTransferPage() {
                     </div>
                     <div className={styles.confirmationItem}>
                       <span>Amount Debited:</span>
-                      <strong>${submitResponse.transfer?.total?.toFixed(2) || '0.00'}</strong>
+                      <strong>{formatCurrency(submitResponse.transfer?.total || 0)}</strong>
                     </div>
                     <div className={styles.confirmationItem}>
                       <span>New Balance:</span>
-                      <strong>${submitResponse.newBalance?.toFixed(2) || '0.00'}</strong>
+                      <strong>{formatCurrency(submitResponse.newBalance || 0)}</strong>
                     </div>
                     <div className={styles.confirmationItem}>
                       <span>Expected Delivery:</span>

@@ -1,5 +1,6 @@
 // src/components/Header.tsx
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 
 import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
@@ -89,6 +90,7 @@ const Icons = {
 };
 
 export default function Header() {
+  const { format: fmtMoney } = useDisplayCurrency();
   const { data: session } = useSession();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -180,15 +182,7 @@ export default function Header() {
     router.push("/auth/signin");
   };
 
-  const formatCurrency = (amount: number) => {
-    if (amount >= 1000000) {
-      return `$${(amount / 1000000).toFixed(2)}M`;
-    }
-    if (amount >= 1000) {
-      return `$${(amount / 1000).toFixed(0)}K`;
-    }
-    return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-  };
+  const formatCurrency = (amount: number) => fmtMoney(amount, { compact: true });
 
   return (
     <header className={styles.header}>

@@ -1,4 +1,5 @@
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Sidebar from "@/components/Sidebar";
@@ -6,6 +7,7 @@ import Header from "@/components/Header";
 import styles from "./portfolio.module.css";
 
 export default function PortfolioPage() {
+  const { symbol } = useDisplayCurrency();
   const [activeTab, setActiveTab] = useState('overview');
   const [isClient, setIsClient] = useState(false);
   
@@ -240,8 +242,8 @@ export default function PortfolioPage() {
                             <td className={styles.symbolCell}>{holding.symbol}</td>
                             <td>{holding.name}</td>
                             <td>{holding.shares.toLocaleString()}</td>
-                            <td>${holding.avgCost.toFixed(2)}</td>
-                            <td>${holding.currentPrice.toFixed(2)}</td>
+                            <td>{symbol}{holding.avgCost.toFixed(2)}</td>
+                            <td>{symbol}{holding.currentPrice.toFixed(2)}</td>
                             <td className={styles.valueCell}>
                               ${holding.value.toLocaleString()}
                             </td>

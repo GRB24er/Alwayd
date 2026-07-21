@@ -1,4 +1,5 @@
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import Sidebar from "@/components/Sidebar";
@@ -6,6 +7,7 @@ import Header from "@/components/Header";
 import styles from "./analytics.module.css";
 
 export default function AnalyticsPage() {
+  const { symbol } = useDisplayCurrency();
   const [period, setPeriod] = useState("month");
 
   const spendingData = [
@@ -65,7 +67,7 @@ export default function AnalyticsPage() {
                 <div key={index} className={styles.categoryItem}>
                   <div className={styles.categoryInfo}>
                     <span>{item.category}</span>
-                    <span>${item.amount}</span>
+                    <span>{symbol}{item.amount}</span>
                   </div>
                   <div className={styles.categoryBar}>
                     <div 

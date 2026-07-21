@@ -1,5 +1,6 @@
 // src/app/transfers/internal/page.tsx
 "use client";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -161,13 +162,7 @@ export default function TransferPage() {
     return userBalances[account] || 0;
   };
 
-  const formatBalance = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
+  const { format: formatBalance } = useDisplayCurrency();
 
   const validateAmount = () => {
     const amount = parseFloat(formData.amount);
