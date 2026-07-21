@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -37,13 +38,6 @@ interface DashboardResponse {
   };
   error?: string;
 }
-
-const CURRENCY_META: Record<string, { symbol: string; locale: string }> = {
-  USD: { symbol: "$", locale: "en-US" },
-  EUR: { symbol: "€", locale: "en-GB" },
-  GBP: { symbol: "£", locale: "en-GB" },
-  CHF: { symbol: "CHF ", locale: "de-CH" },
-};
 
 // Icons
 const Icons = {
@@ -113,6 +107,7 @@ const Icons = {
 };
 
 export default function DashboardPage() {
+  const { format: fmtDisplay } = useDisplayCurrency();
   const { status, data: session } = useSession();
   const router = useRouter();
   const [data, setData] = useState<DashboardResponse | null>(null);
@@ -297,27 +292,9 @@ export default function DashboardPage() {
     { icon: Icons.analytics, title: "Reports", desc: "Analytics", link: "/reports" },
   ];
 
-  // Format currency using the user's chosen display currency (label only;
-  // amounts are not FX-converted).
-  const currencyCode = data.user?.displayCurrency || 'USD';
-  const currencyMeta = CURRENCY_META[currencyCode] || CURRENCY_META.USD;
-  const formatCurrency = (amount: number, compact = false) => {
-    if (compact && amount >= 1000000) {
-      return `${currencyMeta.symbol}${(amount / 1000000).toFixed(2)}M`;
-    }
-    if (compact && amount >= 1000) {
-      return `${currencyMeta.symbol}${(amount / 1000).toFixed(1)}K`;
-    }
-    try {
-      return new Intl.NumberFormat(currencyMeta.locale, {
-        style: 'currency',
-        currency: currencyCode,
-        minimumFractionDigits: 2
-      }).format(amount);
-    } catch {
-      return `${currencyMeta.symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
-    }
-  };
+  // Format currency in the user's chosen display currency, converting from the
+  // base ledger unit at live FX rates.
+  const formatCurrency = (amount: number, compact = false) => fmtDisplay(amount, { compact });
 
   // Transform transactions
   const transactions: Transaction[] = recent.slice(0, 8).map((t) => {

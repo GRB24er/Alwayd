@@ -7,7 +7,7 @@ import Header from "@/components/Header";
 import styles from "./portfolio.module.css";
 
 export default function PortfolioPage() {
-  const { symbol } = useDisplayCurrency();
+  const { format } = useDisplayCurrency();
   const [activeTab, setActiveTab] = useState('overview');
   const [isClient, setIsClient] = useState(false);
   
@@ -242,8 +242,8 @@ export default function PortfolioPage() {
                             <td className={styles.symbolCell}>{holding.symbol}</td>
                             <td>{holding.name}</td>
                             <td>{holding.shares.toLocaleString()}</td>
-                            <td>{symbol}{holding.avgCost.toFixed(2)}</td>
-                            <td>{symbol}{holding.currentPrice.toFixed(2)}</td>
+                            <td>{format(holding.avgCost)}</td>
+                            <td>{format(holding.currentPrice)}</td>
                             <td className={styles.valueCell}>
                               ${holding.value.toLocaleString()}
                             </td>

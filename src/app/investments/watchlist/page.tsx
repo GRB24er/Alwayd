@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import styles from "./watchlist.module.css";
 
 export default function WatchlistPage() {
-  const { symbol } = useDisplayCurrency();
+  const { format } = useDisplayCurrency();
   const [selectedTab, setSelectedTab] = useState('myWatchlist');
   const [viewMode, setViewMode] = useState('grid');
   
@@ -187,7 +187,7 @@ export default function WatchlistPage() {
                   </div>
                   
                   <div className={styles.priceSection}>
-                    <div className={styles.currentPrice}>{symbol}{item.price}</div>
+                    <div className={styles.currentPrice}>{format(item.price)}</div>
                     <div className={item.change >= 0 ? styles.changePositive : styles.changeNegative}>
                       {item.change >= 0 ? '+' : ''}{item.change} ({item.changePercent}%)
                     </div>
@@ -204,7 +204,7 @@ export default function WatchlistPage() {
                     </div>
                     <div className={styles.statItem}>
                       <span className={styles.statLabel}>Day Range</span>
-                      <span className={styles.statValue}>{symbol}{item.dayLow} - {symbol}{item.dayHigh}</span>
+                      <span className={styles.statValue}>{format(item.dayLow)} - {format(item.dayHigh)}</span>
                     </div>
                     <div className={styles.statItem}>
                       <span className={styles.statLabel}>P/E Ratio</span>
@@ -247,7 +247,7 @@ export default function WatchlistPage() {
                         )}
                       </td>
                       <td>{item.name}</td>
-                      <td className={styles.priceCol}>{symbol}{item.price}</td>
+                      <td className={styles.priceCol}>{format(item.price)}</td>
                       <td className={item.change >= 0 ? styles.positive : styles.negative}>
                         {item.change >= 0 ? '+' : ''}{item.change}
                       </td>
@@ -256,7 +256,7 @@ export default function WatchlistPage() {
                       </td>
                       <td>{item.volume}</td>
                       <td>{item.marketCap}</td>
-                      <td>{symbol}{item.dayLow} - {symbol}{item.dayHigh}</td>
+                      <td>{format(item.dayLow)} - {format(item.dayHigh)}</td>
                       <td>{item.pe}</td>
                       <td>
                        <div className={styles.tableActions}>

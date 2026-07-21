@@ -158,7 +158,7 @@ const TRANSFER_SPEEDS_DOM = [
 ] as const;
 
 export default function WireTransferForm({ mode }: { mode: WireMode }) {
-  const { symbol } = useDisplayCurrency();
+  const { format } = useDisplayCurrency();
   const router = useRouter();
   const { status: sessionStatus } = useSession();
   const [countries, setCountries] = useState<CountryEntry[]>([]);
@@ -386,15 +386,15 @@ export default function WireTransferForm({ mode }: { mode: WireMode }) {
                     </div>
                     <div className={styles.reviewItem}>
                       <span className={styles.reviewLabel}>Amount</span>
-                      <span className={styles.reviewValue}>{symbol}{Number(t.amount || form.amount).toLocaleString()}</span>
+                      <span className={styles.reviewValue}>{format(Number(t.amount || form.amount))}</span>
                     </div>
                     <div className={styles.reviewItem}>
                       <span className={styles.reviewLabel}>Fee</span>
-                      <span className={styles.reviewValue}>{symbol}{(t.fee || fee).toLocaleString()}</span>
+                      <span className={styles.reviewValue}>{format(t.fee || fee)}</span>
                     </div>
                     <div className={styles.reviewItem}>
                       <span className={styles.reviewLabel}>Total debited</span>
-                      <span className={styles.reviewValue}><strong>{symbol}{Number(t.total || total).toLocaleString()}</strong></span>
+                      <span className={styles.reviewValue}><strong>{format(Number(t.total || total))}</strong></span>
                     </div>
                     <div className={styles.reviewItem}>
                       <span className={styles.reviewLabel}>Estimated delivery</span>
@@ -833,15 +833,15 @@ export default function WireTransferForm({ mode }: { mode: WireMode }) {
                       <h3>Fee summary</h3>
                       <div className={styles.feeRow}>
                         <span>Transfer amount</span>
-                        <strong>{symbol}{amountNumber.toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong>
+                        <strong>{format(amountNumber)}</strong>
                       </div>
                       <div className={styles.feeRow}>
                         <span>Fee</span>
-                        <strong>{symbol}{fee.toLocaleString()}</strong>
+                        <strong>{format(fee)}</strong>
                       </div>
                       <div className={styles.feeRow + " " + styles.total}>
                         <span>Total to debit</span>
-                        <strong>{symbol}{total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong>
+                        <strong>{format(total)}</strong>
                       </div>
                     </div>
 
