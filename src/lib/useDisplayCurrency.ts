@@ -14,6 +14,20 @@ import { formatMoney, DEFAULT_CURRENCY, currencySymbol } from "@/lib/currency";
 let cachedCurrency: string | null = null;
 let cachedRates: Record<string, number> | null = null;
 
+const CURRENCY_EVENT = "aldwych:display-currency-changed";
+
+// Call after the user's display-currency preference is saved (e.g. from the
+// Settings page) so every mounted component switches immediately. Without
+// this, the module-scope cache keeps serving the old currency until the next
+// full page reload, which makes the UI appear to "revert" to the previous
+// currency.
+export function setDisplayCurrencyCache(code: string) {
+  cachedCurrency = code;
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(CURRENCY_EVENT, { detail: code }));
+  }
+}
+
 export function useDisplayCurrency() {
   const [currency, setCurrency] = useState<string>(cachedCurrency || DEFAULT_CURRENCY);
   const [rates, setRates] = useState<Record<string, number>>(cachedRates || { USD: 1 });
@@ -32,6 +46,10 @@ export function useDisplayCurrency() {
           }
         })
         .catch(() => {});
+    } else {
+      // The cache may have been updated by another component (or the Settings
+      // page) after this component first rendered.
+      setCurrency(cachedCurrency);
     }
 
     if (!cachedRates) {
@@ -46,8 +64,15 @@ export function useDisplayCurrency() {
         .catch(() => {});
     }
 
+    const onCurrencyChanged = (e: Event) => {
+      const c = (e as CustomEvent).detail;
+      if (typeof c === "string" && c && active) setCurrency(c);
+    };
+    window.addEventListener(CURRENCY_EVENT, onCurrencyChanged);
+
     return () => {
       active = false;
+      window.removeEventListener(CURRENCY_EVENT, onCurrencyChanged);
     };
   }, []);
 

@@ -130,8 +130,9 @@ const TrustAccountSchema = new Schema<ITrustAccount>(
     trustName: { type: String, required: true, trim: true, maxlength: 120 },
     // Display currency for trust documents and UI. The underlying ledger
     // (Transaction rows) is denominated in the bank's base unit; this only
-    // governs presentation, matching how loan documents are shown in EUR.
-    currency: { type: String, default: 'EUR' },
+    // governs presentation. Defaults to the ledger's base unit (USD), matching
+    // the account-wide displayCurrency default on User.
+    currency: { type: String, default: 'USD' },
     principalAmount: { type: Number, required: true, min: 0 },
     fundingAccount: {
       type: String,
