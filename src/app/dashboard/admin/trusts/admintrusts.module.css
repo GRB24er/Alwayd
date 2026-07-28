@@ -248,6 +248,20 @@
 .released { color: #1e7d40; font-weight: 600; text-align: right; }
 .scheduled { color: #94a3b8; text-align: right; }
 
+.editHint { font-size: 12.5px; color: #64748b; margin: 0 0 10px; }
+.dateEditRow { display: flex; gap: 8px; align-items: center; }
+.dateInput {
+  font-size: 13px;
+  color: #0d2440;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  padding: 7px 10px;
+  background: #fff;
+}
+.dateInput:focus { outline: none; border-color: #c9a962; }
+.editMsgOk { font-size: 12.5px; color: #1e7d40; margin-top: 8px; }
+.editMsgErr { font-size: 12.5px; color: #b42318; margin-top: 8px; }
+
 .docLinks { display: flex; flex-wrap: wrap; gap: 8px; }
 .docLink {
   display: inline-flex;

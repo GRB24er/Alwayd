@@ -75,6 +75,13 @@ function docsForStatus(status: string): string[] {
 const fmtDate = (s?: string) =>
   s ? new Date(s).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
+// yyyy-mm-dd for <input type="date">
+const toInputDate = (s?: string) => {
+  if (!s) return "";
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+};
+
 export default function AdminTrustsPage() {
   const { status } = useSession();
   const router = useRouter();
@@ -88,6 +95,9 @@ export default function AdminTrustsPage() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [banner, setBanner] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [dateDraft, setDateDraft] = useState("");
+  const [savingDate, setSavingDate] = useState(false);
+  const [dateMsg, setDateMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/signin");
@@ -150,6 +160,43 @@ export default function AdminTrustsPage() {
       setBanner({ type: "err", text: "Network error running distributions." });
     } finally {
       setRunning(false);
+    }
+  }
+
+  function openTrust(t: Trust) {
+    setSelected(t);
+    setDateDraft(toInputDate(t.fundedAt || t.createdAt));
+    setDateMsg(null);
+  }
+
+  async function saveEstablishedDate() {
+    if (!selected || !dateDraft) return;
+    setSavingDate(true);
+    setDateMsg(null);
+    try {
+      const res = await fetch(`/api/admin/trusts/${selected._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fundedAt: dateDraft }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const updatedFundedAt: string = data.trust?.fundedAt || dateDraft;
+        setSelected((prev) => (prev ? { ...prev, fundedAt: updatedFundedAt } : prev));
+        setTrusts((prev) =>
+          prev.map((t) => (t._id === selected._id ? { ...t, fundedAt: updatedFundedAt } : t))
+        );
+        setDateMsg({
+          type: "ok",
+          text: "Establishment date updated. Documents downloaded from now on will show the new date.",
+        });
+      } else {
+        setDateMsg({ type: "err", text: data.error || "Failed to update establishment date." });
+      }
+    } catch {
+      setDateMsg({ type: "err", text: "Network error updating establishment date." });
+    } finally {
+      setSavingDate(false);
     }
   }
 
@@ -271,7 +318,7 @@ export default function AdminTrustsPage() {
                       </span>
                     </td>
                     <td>
-                      <button className={styles.viewBtn} onClick={() => setSelected(t)}>View</button>
+                      <button className={styles.viewBtn} onClick={() => openTrust(t)}>View</button>
                     </td>
                   </tr>
                 );
@@ -304,6 +351,36 @@ export default function AdminTrustsPage() {
               <div><span>Nature</span><strong>{selected.revocable ? "Revocable" : "Irrevocable"}</strong></div>
               <div><span>Funded from</span><strong>{selected.fundingAccount}</strong></div>
               <div><span>Established</span><strong>{fmtDate(selected.fundedAt || selected.createdAt)}</strong></div>
+            </div>
+
+            <div className={styles.section}>
+              <div className={styles.sectionTitle}>Date established</div>
+              <p className={styles.editHint}>
+                Printed as &ldquo;Date Established&rdquo; on the Declaration of Trust, Certificate of
+                Establishment and Contribution Receipt. Documents are generated fresh on each
+                download, so a change takes effect immediately.
+              </p>
+              <div className={styles.dateEditRow}>
+                <input
+                  type="date"
+                  className={styles.dateInput}
+                  value={dateDraft}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setDateDraft(e.target.value)}
+                />
+                <button
+                  className={styles.primaryBtn}
+                  onClick={saveEstablishedDate}
+                  disabled={savingDate || !dateDraft}
+                >
+                  {savingDate ? "Saving…" : "Save date"}
+                </button>
+              </div>
+              {dateMsg && (
+                <div className={dateMsg.type === "ok" ? styles.editMsgOk : styles.editMsgErr}>
+                  {dateMsg.text}
+                </div>
+              )}
             </div>
 
             <div className={styles.section}>
