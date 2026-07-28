@@ -798,7 +798,11 @@ export async function generateTrustDocument(data: TrustDocumentData): Promise<Ui
   pdfDoc.setSubject('Trust Document');
   pdfDoc.setProducer('Aldwych European Capital Document System');
   pdfDoc.setCreator('Aldwych European Capital');
+  // Both creation and modification metadata are dated to the document's own
+  // date, so the file's "Document Properties" agree with the dates printed on
+  // the page rather than exposing when the PDF was generated.
   pdfDoc.setCreationDate(data.issuedAt);
+  pdfDoc.setModificationDate(data.issuedAt);
 
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);

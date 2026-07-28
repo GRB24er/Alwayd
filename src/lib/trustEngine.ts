@@ -52,6 +52,52 @@ function money(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
+// The date a document is dated/executed. For a real-world instrument every
+// date on the page (header "Issued", both signature lines, the footer and the
+// PDF's own creation metadata) must agree with the event the document records —
+// not the moment the PDF happened to be generated. So we derive it from the
+// trust's own record:
+//
+//   - the founding instruments (deed, certificate, contribution receipt and
+//     letter of wishes) are dated the day the trust was established/funded —
+//     i.e. the editable "Date Established" (fundedAt). Edit that one date and
+//     the whole document moves with it.
+//   - a distribution statement is dated the day that tranche was released.
+//   - a completion statement is dated the day the trust was fully distributed.
+//   - a deed of revocation is dated the day the trust was revoked.
+//
+// Each falls back to the record's creation date, then to now, so a document can
+// always be produced.
+export function effectiveDocumentDate(
+  trust: ITrustAccount,
+  documentType: TrustDocumentType,
+  extra?: Partial<TrustDocumentData>
+): Date {
+  const toDate = (d: unknown): Date | null => {
+    if (!d) return null;
+    const dt = d instanceof Date ? d : new Date(d as any);
+    return isNaN(dt.getTime()) ? null : dt;
+  };
+
+  let candidate: Date | null = null;
+  switch (documentType) {
+    case 'distribution_statement':
+      candidate = toDate(extra?.releasedTranche?.releasedAt);
+      break;
+    case 'completion_statement':
+      candidate = toDate(trust.completedAt);
+      break;
+    case 'deed_of_revocation':
+      candidate = toDate(trust.cancelledAt);
+      break;
+    default: // deed, certificate, funding_receipt, letter_of_wishes
+      candidate = toDate(trust.fundedAt);
+      break;
+  }
+
+  return candidate || toDate(trust.createdAt) || new Date();
+}
+
 // Maps a trust record into the data a trustee document needs. `extra` carries
 // document-specific fields (e.g. the tranche for a distribution statement).
 export function buildTrustDocumentData(
@@ -62,7 +108,7 @@ export function buildTrustDocumentData(
   return {
     referenceNumber: trust.referenceNumber,
     documentType,
-    issuedAt: new Date(),
+    issuedAt: effectiveDocumentDate(trust, documentType, extra),
     verificationUrl: verificationUrlFor(trust.referenceNumber),
     trustName: trust.trustName,
     settlorName: trust.settlorName,
