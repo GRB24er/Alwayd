@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { setDisplayCurrencyCache } from "@/lib/useDisplayCurrency";
 import styles from "./settings.module.css";
 
 // SVG Icons
@@ -158,6 +159,10 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
+        // Propagate the new currency to every mounted component immediately —
+        // otherwise the app keeps showing the previously cached currency
+        // until a full page reload.
+        setDisplayCurrencyCache(displayCurrency);
         setSavedMessage('Profile updated successfully');
         setTimeout(() => setSavedMessage(''), 3000);
       } else {

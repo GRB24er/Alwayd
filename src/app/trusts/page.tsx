@@ -50,7 +50,7 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
-function money(n: number, currency = "EUR") {
+function money(n: number, currency = "USD") {
   try {
     return new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(Number(n || 0));
   } catch {

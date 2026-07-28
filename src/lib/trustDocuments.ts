@@ -124,7 +124,7 @@ const ACCOUNT_LABELS: Record<string, string> = {
 };
 
 function fmtMoney(n: number, currency: string): string {
-  const cur = currency || 'EUR';
+  const cur = currency || 'USD';
   try {
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',

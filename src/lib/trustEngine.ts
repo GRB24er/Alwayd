@@ -70,7 +70,7 @@ export function buildTrustDocumentData(
     beneficiaryName: trust.beneficiaryName,
     beneficiaryDateOfBirth: trust.beneficiaryDateOfBirth,
     beneficiaryRelationship: trust.beneficiaryRelationship,
-    currency: trust.currency || 'EUR',
+    currency: trust.currency || 'USD',
     principalAmount: trust.principalAmount,
     heldBalance: trust.heldBalance,
     fundingAccount: trust.fundingAccount,

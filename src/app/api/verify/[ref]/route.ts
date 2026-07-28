@@ -159,7 +159,7 @@ export async function GET(
           beneficiary: t.beneficiaryName ? maskName(t.beneficiaryName) : 'Verified Beneficiary',
           nature: t.revocable ? 'Revocable' : 'Irrevocable',
           amount: t.principalAmount,
-          currency: t.currency || 'EUR',
+          currency: t.currency || 'USD',
           issuedAt: t.fundedAt || t.createdAt,
           nextReleaseDate: nextRelease ? nextRelease.toISOString() : null,
           verifiedAt: new Date().toISOString(),
