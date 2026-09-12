@@ -9,6 +9,7 @@ import Transaction from '@/models/Transaction';
 import { displayDescription } from '@/lib/channels';
 
 import { AUTH_SECRET } from '@/lib/authSecret';
+import { isDebitType } from '@/lib/statementEmail';
 
 async function verifyMobileToken(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
 
     const formattedTransactions = (transactions as any[]).map((tx) => {
       let adjustedAmount = tx.amount;
-      const isDebit = ['transfer-out', 'withdrawal', 'payment', 'fee', 'charge', 'purchase'].includes(tx.type);
+      const isDebit = isDebitType(String(tx.type));
       
       if (tx.origin === 'internal_transfer') {
         if (tx.reference?.includes('-OUT')) {

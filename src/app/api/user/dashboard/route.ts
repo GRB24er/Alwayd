@@ -8,6 +8,7 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Transaction from "@/models/Transaction";
 import { displayDescription } from "@/lib/channels";
+import { normalizeCurrency } from "@/lib/currency";
 
 interface FormattedTransaction {
   reference: string;
@@ -151,7 +152,7 @@ export async function GET(): Promise<NextResponse<DashboardResponse>> {
       user: {
         name: user.name || session.user.name || "User",
         email: user.email || session.user.email || "",
-        displayCurrency: user.displayCurrency || "USD"
+        displayCurrency: normalizeCurrency(user.displayCurrency)
       },
       debug: {
         totalTransactions: realTransactions.length,

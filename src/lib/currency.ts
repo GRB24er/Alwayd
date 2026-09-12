@@ -11,16 +11,23 @@ export interface CurrencyDef {
   symbol: string;
   label: string;
   locale: string; // used for Intl formatting
+  // ISO 4217 minor-unit digits. Yen has none: ¥1,200 — never ¥1,200.00.
+  decimals: number;
 }
 
+// Order matters: this list drives every currency picker in the app, and the
+// bank's home currency leads it. Yen is first because the bank is based in
+// Japan.
 export const SUPPORTED_CURRENCIES: CurrencyDef[] = [
-  { code: 'USD', symbol: '$', label: 'US Dollar', locale: 'en-US' },
-  { code: 'EUR', symbol: '€', label: 'Euro', locale: 'en-GB' },
-  { code: 'GBP', symbol: '£', label: 'British Pound', locale: 'en-GB' },
-  { code: 'CHF', symbol: 'CHF', label: 'Swiss Franc', locale: 'de-CH' },
+  { code: 'JPY', symbol: '¥', label: 'Japanese Yen', locale: 'ja-JP', decimals: 0 },
+  { code: 'USD', symbol: '$', label: 'US Dollar', locale: 'en-US', decimals: 2 },
+  { code: 'EUR', symbol: '€', label: 'Euro', locale: 'en-GB', decimals: 2 },
+  { code: 'GBP', symbol: '£', label: 'British Pound', locale: 'en-GB', decimals: 2 },
+  { code: 'CHF', symbol: 'CHF', label: 'Swiss Franc', locale: 'de-CH', decimals: 2 },
 ];
 
-export const DEFAULT_CURRENCY = 'USD';
+// The bank's home currency, and what anything unlabelled is presented in.
+export const DEFAULT_CURRENCY = 'JPY';
 
 const BY_CODE: Record<string, CurrencyDef> = SUPPORTED_CURRENCIES.reduce(
   (acc, c) => {
@@ -42,6 +49,15 @@ export function currencySymbol(code: string): string {
   return BY_CODE[normalizeCurrency(code)].symbol;
 }
 
+export function currencyDef(code: string): CurrencyDef {
+  return BY_CODE[normalizeCurrency(code)];
+}
+
+// Minor-unit digits for a currency — 0 for yen, 2 for the rest.
+export function currencyDecimals(code: string): number {
+  return currencyDef(code).decimals;
+}
+
 // Format an amount in the given display currency. Falls back gracefully if the
 // runtime lacks the locale/currency data.
 export function formatMoney(
@@ -51,16 +67,21 @@ export function formatMoney(
 ): string {
   const def = BY_CODE[normalizeCurrency(code)];
   const n = Number(amount || 0);
+  // Default to the currency's own minor-unit digits so yen renders as ¥1,200
+  // rather than ¥1,200.00. An explicit option still wins.
+  const min = opts.minimumFractionDigits ?? def.decimals;
+  const max = Math.max(min, opts.maximumFractionDigits ?? def.decimals);
   try {
     return new Intl.NumberFormat(def.locale, {
       style: 'currency',
       currency: def.code,
-      minimumFractionDigits: opts.minimumFractionDigits ?? 2,
-      maximumFractionDigits: opts.maximumFractionDigits ?? 2,
+      minimumFractionDigits: min,
+      maximumFractionDigits: max,
     }).format(n);
   } catch {
     return `${def.symbol}${n.toLocaleString(undefined, {
-      maximumFractionDigits: opts.maximumFractionDigits ?? 2,
+      minimumFractionDigits: min,
+      maximumFractionDigits: max,
     })}`;
   }
 }

@@ -14,8 +14,12 @@ export const BASE_CURRENCY = "USD";
 
 // Recent approximate mid-market rates vs USD, used only if the live fetch
 // fails. Kept deliberately close to real values so a fallback still looks sane.
-const FALLBACK_RATES: Record<string, number> = {
+// Every code in SUPPORTED_CURRENCIES must appear here: a display currency with
+// no rate silently converts at 1.0, which would show a $50,000 balance as
+// ¥50,000 instead of ¥7,500,000.
+export const FALLBACK_RATES: Record<string, number> = {
   USD: 1,
+  JPY: 150,
   EUR: 0.92,
   GBP: 0.79,
   CHF: 0.88,
@@ -34,7 +38,7 @@ const TTL_MS = 60 * 60 * 1000; // 1 hour
 async function fetchLive(): Promise<Record<string, number> | null> {
   // Primary: Frankfurter (ECB data, free, no key). Falls back to open.er-api.
   const endpoints = [
-    "https://api.frankfurter.dev/v1/latest?base=USD&symbols=EUR,GBP,CHF",
+    "https://api.frankfurter.dev/v1/latest?base=USD&symbols=JPY,EUR,GBP,CHF",
     "https://open.er-api.com/v6/latest/USD",
   ];
   for (const url of endpoints) {

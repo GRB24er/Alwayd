@@ -3,6 +3,7 @@
 
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { DEFAULT_CURRENCY } from '@/lib/currency';
 
 export interface IUser extends Document {
   name: string;
@@ -89,8 +90,9 @@ const UserSchema = new Schema<IUser>({
     required: false
   },
   displayCurrency: {
+    // The bank is based in Japan, so a new account starts in yen.
     type: String,
-    default: 'USD'
+    default: DEFAULT_CURRENCY
   },
   accountStatus: {
     type: String,

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import styles from "./admin.module.css";
+import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY } from "@/lib/currency";
 
 interface User {
   _id: string;
@@ -76,7 +77,7 @@ export default function AdminDashboard() {
     amount: "",
     accountType: "checking",
     description: "",
-    currency: "USD",
+    currency: DEFAULT_CURRENCY,
     sendEmail: true
   });
 
@@ -221,7 +222,7 @@ export default function AdminDashboard() {
           amount: "",
           accountType: "checking",
           description: "",
-          currency: "USD",
+          currency: DEFAULT_CURRENCY,
           sendEmail: true
         });
         
@@ -627,9 +628,11 @@ export default function AdminDashboard() {
                         onChange={(e) => setTransactionForm({...transactionForm, currency: e.target.value})}
                         className={styles.currencySelect}
                       >
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="GBP">GBP</option>
+                        {SUPPORTED_CURRENCIES.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.code}
+                          </option>
+                        ))}
                       </select>
                       <input
                         type="number"
