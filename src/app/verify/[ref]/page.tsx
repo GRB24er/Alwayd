@@ -1,74 +1,37 @@
 // src/app/verify/[ref]/page.tsx
 // Public document verification landing page (reached by scanning QR).
+//
+// The lookup runs in-process via @/lib/documentVerification. This page used to
+// fetch its own /api/verify route over HTTP, which meant guessing its own
+// origin from NEXTAUTH_URL and falling back to http://localhost:3000 — in
+// production nothing listens there, so every scan showed "Could not reach
+// verification service." A server component can query the registry directly.
 
 import Link from "next/link";
 import Image from "next/image";
 import styles from "./verify.module.css";
+import { verifyDocument, type VerificationResult } from "@/lib/documentVerification";
 
-interface VerifyResponse {
-  verified: boolean;
-  error?: string;
-  issuer?: string;
-  issuerEstablished?: string;
-  referenceNumber?: string;
-  documentType?: string;
-  status?: string;
-  amount?: number;
-  currency?: string;
-  verifiedAt?: string;
-  // Loan-specific
-  borrower?: string;
-  loanType?: string;
-  termMonths?: number;
-  interestRate?: number;
-  monthlyPayment?: number;
-  issuedAt?: string;
-  offerExpiry?: string;
-  agreementSignedAt?: string;
-  // Transfer receipt
-  customer?: string;
-  receiptNumber?: string;
-  action?: string;
-  accountType?: string;
-  initiatedAt?: string;
-  settledAt?: string;
-  // Restriction notice
-  reasonCategory?: string;
-  effectiveFrom?: string;
-  effectiveUntil?: string;
-  liftedAt?: string;
-  issuedBy?: string;
-  issuedByTitle?: string;
-  // Adjustment / reversal
-  reversedReference?: string;
-  // Trust-specific
-  trustName?: string;
-  settlor?: string;
-  beneficiary?: string;
-  nature?: string;
-  statusLabel?: string;
-  nextReleaseDate?: string;
-}
+// Verification is a live registry lookup; never serve it from the route cache.
+export const dynamic = "force-dynamic";
 
-async function fetchVerification(ref: string): Promise<VerifyResponse> {
+async function fetchVerification(ref: string): Promise<VerificationResult> {
   try {
-    const base =
-      process.env.NEXTAUTH_URL ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      "http://localhost:3000";
-    const res = await fetch(`${base}/api/verify/${encodeURIComponent(ref)}`, {
-      cache: "no-store",
-    });
-    return (await res.json()) as VerifyResponse;
-  } catch {
-    return { verified: false, error: "Could not reach verification service." };
+    const { body } = await verifyDocument(ref);
+    return body;
+  } catch (err) {
+    console.error("verify page lookup failed:", err);
+    return {
+      verified: false,
+      error: "We could not complete the verification just now. Please try again shortly.",
+    };
   }
 }
 
 const fmtMoney = (n: number, currency = "USD") =>
   new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(n);
 
-const fmtDate = (s: string) =>
+const fmtDate = (s: string | Date) =>
   new Date(s).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
 
