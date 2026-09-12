@@ -74,7 +74,7 @@ export default function AdminStatementsPage() {
         alert(result.error || 'Failed to send statement');
       }
     } catch (error) {
-      alert(`Failed to send statement: ${error instanceof Error ? error.message : 'the request did not complete'}`);
+      alert('Failed to send statement');
     } finally {
       setSendingId(null);
     }
@@ -92,7 +92,7 @@ export default function AdminStatementsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userEmail: selectedUser,
+          userId: selectedUser,
           startDate,
           endDate,
           accountType
@@ -102,7 +102,7 @@ export default function AdminStatementsPage() {
       const result = await response.json();
 
       if (result.success) {
-        alert(result.message || 'Statement sent successfully!');
+        alert('Statement sent successfully!');
         setSelectedUser('');
         setStartDate('');
         setEndDate('');
@@ -111,7 +111,7 @@ export default function AdminStatementsPage() {
         alert(result.error || 'Failed to send statement');
       }
     } catch (error) {
-      alert(`Failed to send statement: ${error instanceof Error ? error.message : 'the request did not complete'}`);
+      alert('Failed to send statement');
     } finally {
       setLoading(false);
     }

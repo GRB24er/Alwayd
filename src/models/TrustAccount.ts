@@ -17,7 +17,6 @@
 // date of birth, or an explicit calendar date) and a share of the principal.
 
 import mongoose, { Document, Model, Schema, Types } from 'mongoose';
-import { DEFAULT_CURRENCY } from '@/lib/currency';
 
 export type TrustStatus =
   | 'pending'      // Created & funded, awaiting trustee acceptance / activation
@@ -68,7 +67,7 @@ export interface ITrustAccount extends Document {
 
   // ----- Trust terms -----
   trustName: string;                // Friendly label, e.g. "Emma's Education Trust"
-  currency: string;                 // ISO 4217; defaults to the bank's home currency (JPY)
+  currency: string;                 // 'USD'
   principalAmount: number;          // Amount placed into trust at funding
   fundingAccount: AccountBucket;    // Settlor account the principal came from
   heldBalance: number;              // Principal not yet distributed
@@ -129,10 +128,11 @@ const TrustAccountSchema = new Schema<ITrustAccount>(
     beneficiaryUserId: { type: Schema.Types.ObjectId, ref: 'User', default: null, index: true },
 
     trustName: { type: String, required: true, trim: true, maxlength: 120 },
-    // Currency for the trust's documents, UI and its ledger legs. Defaults to
-    // the bank's home currency (JPY) — the bank is based in Japan, so a trust
-    // created without an explicit currency is a yen trust.
-    currency: { type: String, default: DEFAULT_CURRENCY },
+    // Display currency for trust documents and UI. The underlying ledger
+    // (Transaction rows) is denominated in the bank's base unit; this only
+    // governs presentation. Defaults to the ledger's base unit (USD), matching
+    // the account-wide displayCurrency default on User.
+    currency: { type: String, default: 'USD' },
     principalAmount: { type: Number, required: true, min: 0 },
     fundingAccount: {
       type: String,

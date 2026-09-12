@@ -10,7 +10,6 @@
 
 import { useEffect, useState } from "react";
 import { formatMoney, DEFAULT_CURRENCY, currencySymbol } from "@/lib/currency";
-import { FALLBACK_RATES } from "@/lib/fx";
 
 let cachedCurrency: string | null = null;
 let cachedRates: Record<string, number> | null = null;
@@ -31,10 +30,7 @@ export function setDisplayCurrencyCache(code: string) {
 
 export function useDisplayCurrency() {
   const [currency, setCurrency] = useState<string>(cachedCurrency || DEFAULT_CURRENCY);
-  // Seed from the static table rather than { USD: 1 }: on first paint the live
-  // rates have not arrived yet, and an unquoted currency converts at 1.0, which
-  // would flash a dollar-magnitude number under a yen symbol.
-  const [rates, setRates] = useState<Record<string, number>>(cachedRates || FALLBACK_RATES);
+  const [rates, setRates] = useState<Record<string, number>>(cachedRates || { USD: 1 });
 
   useEffect(() => {
     let active = true;

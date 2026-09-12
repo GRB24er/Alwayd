@@ -27,7 +27,6 @@ export type AuditAction =
   | "admin.balance_adjustment"
   | "admin.user_verified"
   | "admin.email_sent"
-  | "admin.statement_sent"
   | "rate_limit.exceeded"
   | "idempotency.replay";
 

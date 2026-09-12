@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import styles from "./trusts.module.css";
-import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY, formatMoney } from "@/lib/currency";
 
 type TriggerType = "age" | "date";
 
@@ -51,8 +50,12 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
-function money(n: number, currency: string = DEFAULT_CURRENCY) {
-  return formatMoney(Number(n || 0), currency);
+function money(n: number, currency = "USD") {
+  try {
+    return new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(Number(n || 0));
+  } catch {
+    return `${currency} ${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  }
 }
 
 const DOC_LABELS: Record<string, string> = {
@@ -92,7 +95,7 @@ export default function TrustsPage() {
     beneficiaryEmail: "",
     principalAmount: "",
     fundingAccount: "savings",
-    currency: DEFAULT_CURRENCY,
+    currency: "USD",
     revocable: true,
     letterOfWishes: "",
   });
@@ -123,8 +126,7 @@ export default function TrustsPage() {
 
   useEffect(() => {
     load();
-    // Default the trust currency to the user's account display currency; the
-    // form already starts on the bank's home currency if they have not set one.
+    // Default the trust currency to the user's account display currency.
     fetch("/api/user/dashboard")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -410,11 +412,10 @@ export default function TrustsPage() {
                     value={form.currency}
                     onChange={(e) => setForm({ ...form, currency: e.target.value })}
                   >
-                    {SUPPORTED_CURRENCIES.map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.label} ({c.symbol})
-                      </option>
-                    ))}
+                    <option value="USD">US Dollar ($)</option>
+                    <option value="EUR">Euro (€)</option>
+                    <option value="GBP">British Pound (£)</option>
+                    <option value="CHF">Swiss Franc (CHF)</option>
                   </select>
                 </div>
                 <label className={styles.checkRow}>

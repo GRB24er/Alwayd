@@ -23,7 +23,6 @@ import { PDFDocument, PDFFont, PDFPage, StandardFonts, degrees, rgb } from 'pdf-
 import QRCode from 'qrcode';
 import fs from 'fs/promises';
 import path from 'path';
-import { normalizeCurrency, currencyDecimals } from '@/lib/currency';
 
 export type TrustDocumentType =
   | 'deed'
@@ -125,16 +124,12 @@ const ACCOUNT_LABELS: Record<string, string> = {
 };
 
 function fmtMoney(n: number, currency: string): string {
-  const cur = normalizeCurrency(currency);
-  // Yen has no minor unit, so a trust denominated in JPY must print ¥1,200,000
-  // rather than ¥1,200,000.00.
-  const digits = currencyDecimals(cur);
+  const cur = currency || 'USD';
   try {
     return new Intl.NumberFormat('en-GB', {
       style: 'currency',
       currency: cur,
-      minimumFractionDigits: digits,
-      maximumFractionDigits: digits,
+      minimumFractionDigits: 2,
     }).format(Number(n || 0));
   } catch {
     return `${cur} ${Number(n || 0).toLocaleString()}`;
