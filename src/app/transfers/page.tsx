@@ -12,6 +12,7 @@ import Footer from "@/components/Footer";
 import Sidebar from "@/components/Sidebar";
 import { downloadTransferReceipt } from "@/lib/receiptDownload";
 import { apiErrorMessage, newIdempotencyKey } from "@/lib/apiClient";
+import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY } from "@/lib/currency";
 
 // SVG Icons
 const Icons = {
@@ -154,7 +155,7 @@ export default function WireTransferPage() {
     accountType: "checking",
     swiftCode: "",
     amount: "",
-    currency: "USD",
+    currency: DEFAULT_CURRENCY,
     purpose: "",
     reference: "",
     urgency: "standard",
@@ -700,7 +701,11 @@ export default function WireTransferPage() {
                           onChange={(e) => handleInputChange("currency", e.target.value)}
                           className={styles.currencySelect}
                         >
-                          <option value="USD">USD</option>
+                          {SUPPORTED_CURRENCIES.map((c) => (
+                            <option key={c.code} value={c.code}>
+                              {c.code}
+                            </option>
+                          ))}
                         </select>
                         <input
                           type="number"
