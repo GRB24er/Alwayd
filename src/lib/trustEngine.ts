@@ -27,7 +27,6 @@ import {
   TRUST_DOCUMENT_LABELS,
 } from '@/lib/trustDocuments';
 import { verificationUrlFor } from '@/lib/siteUrl';
-import { normalizeCurrency } from '@/lib/currency';
 import { formatMoney } from '@/lib/currency';
 
 const BALANCE_FIELD: Record<AccountBucket, 'checkingBalance' | 'savingsBalance' | 'investmentBalance'> = {
@@ -99,13 +98,6 @@ export function effectiveDocumentDate(
   return candidate || toDate(trust.createdAt) || new Date();
 }
 
-// The trust's currency, falling back to the bank's home currency. Every
-// document, balance and ledger leg belonging to a trust uses this one value, so
-// a yen trust never shows a dollar figure on its statement or its QR page.
-function trustCurrency(trust: ITrustAccount): string {
-  return normalizeCurrency(trust.currency);
-}
-
 // Maps a trust record into the data a trustee document needs. `extra` carries
 // document-specific fields (e.g. the tranche for a distribution statement).
 export function buildTrustDocumentData(
@@ -124,7 +116,7 @@ export function buildTrustDocumentData(
     beneficiaryName: trust.beneficiaryName,
     beneficiaryDateOfBirth: trust.beneficiaryDateOfBirth,
     beneficiaryRelationship: trust.beneficiaryRelationship,
-    currency: trustCurrency(trust),
+    currency: trust.currency || 'USD',
     principalAmount: trust.principalAmount,
     heldBalance: trust.heldBalance,
     fundingAccount: trust.fundingAccount,
@@ -237,7 +229,7 @@ export async function fundTrust(trust: ITrustAccount): Promise<void> {
   await Transaction.create({
     userId: settlor._id,
     type: 'transfer-out',
-    currency: trustCurrency(trust),
+    currency: 'USD', // base ledger unit; trust display currency is separate
     amount: trust.principalAmount,
     date: new Date(),
     description: `Trust funding — ${trust.trustName} (${trust.referenceNumber})`,
@@ -368,7 +360,7 @@ async function payBeneficiary(
       await Transaction.create({
         userId: beneficiary._id,
         type: 'transfer-in',
-        currency: trustCurrency(trust),
+        currency: 'USD', // base ledger unit; trust display currency is separate
         amount,
         date: new Date(),
         description: `Trust distribution — ${trust.trustName} (${trust.referenceNumber})`,
@@ -389,7 +381,7 @@ async function payBeneficiary(
   await Transaction.create({
     userId: trust.settlorUserId,
     type: 'transfer-out',
-    currency: trustCurrency(trust),
+    currency: 'USD', // base ledger unit; trust display currency is separate
     amount,
     date: new Date(),
     description: `Trust distribution to ${trust.beneficiaryName} — ${trust.trustName} (${trust.referenceNumber})`,
@@ -426,7 +418,7 @@ export async function cancelTrust(trust: ITrustAccount, reason: string): Promise
       await Transaction.create({
         userId: settlor._id,
         type: 'transfer-in',
-        currency: trustCurrency(trust),
+        currency: 'USD', // base ledger unit; trust display currency is separate
         amount: refund,
         date: new Date(),
         description: `Trust cancellation refund — ${trust.trustName} (${trust.referenceNumber})`,

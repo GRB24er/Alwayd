@@ -8,7 +8,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import styles from "./Sidebar.module.css";
 import { useDisplayCurrency } from "@/lib/useDisplayCurrency";
-import { DEFAULT_CURRENCY } from "@/lib/currency";
 
 interface NavItem {
   label: string;
@@ -247,7 +246,7 @@ export default function Sidebar() {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [userName, setUserName] = useState<string>("User");
   const [userEmail, setUserEmail] = useState<string>("");
-  const [displayCurrency, setDisplayCurrency] = useState<string>(DEFAULT_CURRENCY);
+  const [displayCurrency, setDisplayCurrency] = useState<string>("USD");
   const [pendingTransactions, setPendingTransactions] = useState(0);
   const [pendingBills, setPendingBills] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -278,7 +277,7 @@ export default function Sidebar() {
             
             setUserName(data.user?.name || session.user.name || "User");
             setUserEmail(data.user?.email || session.user.email || "");
-            setDisplayCurrency(data.user?.displayCurrency || DEFAULT_CURRENCY);
+            setDisplayCurrency(data.user?.displayCurrency || "USD");
             
             const pending = data.recent?.filter((t: any) => 
               t.rawStatus === "pending" || t.status === "Pending"

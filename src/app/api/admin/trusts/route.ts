@@ -3,7 +3,6 @@ import connectDB from '@/lib/mongodb';
 import TrustAccount from '@/models/TrustAccount';
 import { requireAdmin } from '@/lib/adminGuard';
 import { runTrustDistributions } from '@/lib/trustEngine';
-import { normalizeCurrency } from '@/lib/currency';
 
 export const runtime = 'nodejs';
 
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest) {
     // meaningless, so each currency is reported separately.
     const totalsByCurrency: Record<string, { held: number; principal: number; count: number }> = {};
     for (const t of trusts) {
-      const cur = normalizeCurrency(t.currency);
+      const cur = t.currency || 'USD';
       const bucket = (totalsByCurrency[cur] ||= { held: 0, principal: 0, count: 0 });
       bucket.held += Number(t.heldBalance || 0);
       bucket.principal += Number(t.principalAmount || 0);
