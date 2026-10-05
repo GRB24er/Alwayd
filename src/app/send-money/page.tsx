@@ -959,15 +959,8 @@ export default function SendMoneyPage() {
                 <h3>Transfer Limits</h3>
                 <div className={styles.limitRow}>
                   <span>Daily</span>
-                  <strong>$25,000</strong>
+                  <strong>No limit</strong>
                 </div>
-                <div className={styles.limitRow}>
-                  <span>Monthly</span>
-                  <strong>$100,000</strong>
-                </div>
-                <p className={styles.limitNote}>
-                  Higher limits available for verified accounts
-                </p>
               </div>
             </div>
           </div>

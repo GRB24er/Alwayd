@@ -27,7 +27,7 @@ export default function SupportPage() {
       category: "Transfers",
       questions: [
         { q: "How long do transfers take?", a: "Internal transfers are instant. External transfers take 1-3 business days." },
-        { q: "What are the transfer limits?", a: "Daily limit is $100,000 for wire transfers and $10,000 for external transfers." },
+        { q: "What are the transfer limits?", a: "There are no transfer limits." },
         { q: "Are there transfer fees?", a: "Internal transfers are free. Wire transfers have a $25 fee." }
       ]
     },
