@@ -49,8 +49,6 @@ const SPEED_DELIVERY: Record<Speed, string> = {
 };
 
 const MIN_AMOUNT = 1;
-const MAX_AMOUNT_ACH = 100_000;
-const MAX_AMOUNT_WIRE = 250_000;
 
 interface Body {
   fromAccount: AccountType;
@@ -106,18 +104,8 @@ export async function POST(request: NextRequest) {
   const amountMinor = toMinor(parsed.value.amount);
   const amountNumber = toNumber(amountMinor);
 
-  const maxForSpeed = speed === "wire" ? MAX_AMOUNT_WIRE : MAX_AMOUNT_ACH;
   if (amountNumber < MIN_AMOUNT) {
     return NextResponse.json({ success: false, error: `Minimum amount is $${MIN_AMOUNT}` }, { status: 422 });
-  }
-  if (amountNumber > maxForSpeed) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: `${speed === "wire" ? "Wire" : "ACH"} transfers limited to $${maxForSpeed.toLocaleString()}`,
-      },
-      { status: 422 }
-    );
   }
 
   await connectDB();

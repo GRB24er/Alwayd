@@ -1046,15 +1046,12 @@ export default function WireTransferPage() {
                 <h3>Wire Transfer Limits</h3>
                 <div className={styles.limitItem}>
                   <span>Domestic:</span>
-                  <strong>$100,000/day</strong>
+                  <strong>No daily limit</strong>
                 </div>
                 <div className={styles.limitItem}>
                   <span>International:</span>
-                  <strong>$50,000/day</strong>
+                  <strong>No daily limit</strong>
                 </div>
-                <p className={styles.limitNote}>
-                  Need higher limits? Contact your relationship manager.
-                </p>
               </div>
 
               <div className={styles.securitySection}>

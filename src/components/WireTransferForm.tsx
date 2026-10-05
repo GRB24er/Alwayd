@@ -570,8 +570,8 @@ export default function WireTransferForm({ mode }: { mode: WireMode }) {
                         <strong>About this transfer</strong>
                         <p>
                           {mode === "domestic"
-                            ? `FedWire transfers settle same-day for US institutions. Minimum $100, maximum $250,000 per transaction.`
-                            : `International wires settle in the destination country's local rail (SEPA, NEFT, SPEI, etc.) via correspondent banking. Minimum $50, maximum $250,000 per transaction.`}
+                            ? `FedWire transfers settle same-day for US institutions. Minimum $100 per transaction.`
+                            : `International wires settle in the destination country's local rail (SEPA, NEFT, SPEI, etc.) via correspondent banking. Minimum $50 per transaction.`}
                         </p>
                       </div>
                     </div>

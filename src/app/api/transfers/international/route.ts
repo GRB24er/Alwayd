@@ -47,7 +47,6 @@ const SPEED_BASE_FEE: Record<Speed, number> = {
 const EDD_SURCHARGE = 15;
 
 const MIN_AMOUNT = 50;
-const MAX_AMOUNT = 250_000;
 
 interface BaseBody {
   fromAccount: AccountType;
@@ -168,12 +167,6 @@ export async function POST(request: NextRequest) {
   const amountNumber = toNumber(amountMinor);
   if (amountNumber < MIN_AMOUNT) {
     return NextResponse.json({ success: false, error: `Minimum international wire is $${MIN_AMOUNT}` }, { status: 422 });
-  }
-  if (amountNumber > MAX_AMOUNT) {
-    return NextResponse.json(
-      { success: false, error: `International wires above $${MAX_AMOUNT.toLocaleString()} require manual review` },
-      { status: 422 }
-    );
   }
 
   await connectDB();

@@ -32,7 +32,6 @@ const WIRE_TYPE_VALUES = ["domestic", "international"] as const;
 type WireType = (typeof WIRE_TYPE_VALUES)[number];
 
 const MIN_WIRE = 100; // USD
-const MAX_WIRE = 250_000; // USD; above this routes to manual review
 const DOMESTIC_FEE = 30;
 const INTERNATIONAL_FEE = 45;
 const URGENT_FEE = 25;
@@ -136,15 +135,6 @@ export async function POST(request: NextRequest) {
   if (amountNumber < MIN_WIRE) {
     return NextResponse.json(
       { success: false, error: `Minimum wire transfer is $${MIN_WIRE}` },
-      { status: 422 }
-    );
-  }
-  if (amountNumber > MAX_WIRE) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: `Wires above $${MAX_WIRE.toLocaleString()} require manual review. Contact support.`,
-      },
       { status: 422 }
     );
   }

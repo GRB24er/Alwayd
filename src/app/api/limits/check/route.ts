@@ -71,56 +71,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Check per-transaction limit
-    if (amount > limits.maxTransactionAmount) {
-      return NextResponse.json({
-        success: true,
-        allowed: false,
-        reason: 'exceeds_transaction_limit',
-        message: `Transaction amount exceeds maximum limit of $${limits.maxTransactionAmount.toLocaleString()}`,
-        limit: limits.maxTransactionAmount,
-        amount: amount
-      });
-    }
-
-    // Check account-specific daily limit
-    if (accountType === 'checking' && limits.todayTransferred + amount > limits.checkingDailyLimit) {
-      return NextResponse.json({
-        success: true,
-        allowed: false,
-        reason: 'exceeds_checking_daily_limit',
-        message: `Would exceed checking account daily limit of $${limits.checkingDailyLimit.toLocaleString()}`,
-        limit: limits.checkingDailyLimit,
-        used: limits.todayTransferred,
-        remaining: limits.checkingDailyLimit - limits.todayTransferred
-      });
-    }
-
-    if (accountType === 'savings' && limits.todayTransferred + amount > limits.savingsDailyLimit) {
-      return NextResponse.json({
-        success: true,
-        allowed: false,
-        reason: 'exceeds_savings_daily_limit',
-        message: `Would exceed savings account daily limit of $${limits.savingsDailyLimit.toLocaleString()}`,
-        limit: limits.savingsDailyLimit,
-        used: limits.todayTransferred,
-        remaining: limits.savingsDailyLimit - limits.todayTransferred
-      });
-    }
-
-    // Check overall daily transfer limit
-    if (limits.todayTransferred + amount > limits.dailyTransferLimit) {
-      return NextResponse.json({
-        success: true,
-        allowed: false,
-        reason: 'exceeds_daily_limit',
-        message: `Would exceed daily transfer limit of $${limits.dailyTransferLimit.toLocaleString()}`,
-        limit: limits.dailyTransferLimit,
-        used: limits.todayTransferred,
-        remaining: limits.dailyTransferLimit - limits.todayTransferred
-      });
-    }
-
     // All checks passed
     return NextResponse.json({
       success: true,
